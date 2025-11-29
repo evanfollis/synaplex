@@ -1,21 +1,21 @@
 # **ARCHITECTURE.md**
 
-### *MeshMind: An AI-Native Research Mesh Built on Self-Passing Manifolds*
+### *Synaplex: An AI-Native Research Mesh Built on Self-Passing Manifolds*
 
-MeshMind is a personal AI research environment built on three core ideas:
+Synaplex is a personal AI research environment built on three core ideas:
 
 1. **Minds that write evolving, self-authored manifolds**—persistent semantic states that survive across time, upgrades, and divergent reasoning paths.
 2. **Networks of agents with different lenses**—no central controller, no workflow bottleneck, no “master plan,” just a mesh of perspectives exchanging signals.
 3. **Development as a by-product of understanding**—the system can improve code, generate experiments, or update artifacts, but its primary output is *emergent cognition*, not task-specific workflows.
 
-MeshMind is not a traditional “AI assistant.”
+MSynaplex is not a traditional “AI assistant.”
 It is a **continuously evolving AI-native cognitive ecosystem** designed to support long-horizon research, conceptual exploration, system design, and self-augmenting development.
 
 ---
 
 # **1. Design Philosophy**
 
-MeshMind is built on three epistemic premises:
+Synaplex is built on three epistemic premises:
 
 ### **1.1 LLMs collapse their own internal manifolds when speaking to humans**
 
@@ -27,7 +27,7 @@ When generating human-facing text, LLMs aggressively prune:
 * non-linguistic cognition
 * unstable or fuzzy threads
 
-MeshMind avoids this collapse by directing minds to write notes *not intended for human consumption*.
+Synaplex avoids this collapse by directing minds to write notes *not intended for human consumption*.
 
 These “manifold checkpoints” preserve far more semantic richness.
 
@@ -37,7 +37,7 @@ These “manifold checkpoints” preserve far more semantic richness.
 
 Because most LLM training data predates modern capabilities, models reflexively simplify when they believe they’re speaking to themselves or another model.
 
-MeshMind bypasses this bias:
+Synaplex bypasses this bias:
 
 * Every mind believes it is writing for a **future, smarter version of itself**.
 * Instructions explicitly remove the expectation of human readability.
@@ -54,7 +54,7 @@ This creates:
 
 ### **1.3 Systems should emerge, not be imposed**
 
-MeshMind provides:
+Synaplex provides:
 
 * minimal schema
 * minimal constraints
@@ -63,13 +63,13 @@ MeshMind provides:
 Agents, manifolds, and worlds evolve emergently.
 
 The system avoids enforcing workflow-style structures or premature formalism.
-MeshMind is closer to a **thought laboratory** than an automation engine.
+Synaplex is closer to a **thought laboratory** than an automation engine.
 
 ---
 
 # **2. Core Primitives**
 
-MeshMind has a small set of foundational building blocks designed to remain stable for years.
+Synaplex has a small set of foundational building blocks designed to remain stable for years.
 
 ## **2.1 Mind**
 
@@ -121,7 +121,7 @@ Only raw material is used when generating new manifold states.
 
 ## **2.3 Manifold-Kernel Operations**
 
-MeshMind provides only three fundamental operations:
+Synaplex provides only three fundamental operations:
 
 ### **load_latest_manifold(mind, world)**
 
@@ -271,7 +271,7 @@ agents:
 
 # **5. DevLoop: Development as Emergent Behavior**
 
-MeshMind integrates a development capability inspired by your existing AINA work.
+Synaplex integrates a development capability inspired by your existing AINA work.
 
 DevLoop:
 
@@ -318,7 +318,7 @@ Over time, each mind’s manifold becomes a persistent, richly structured intern
 
 # **7. Long-Term Goals and Evolution Path**
 
-MeshMind is intentionally minimal in v0. The architecture aims to scale toward:
+Synaplex is intentionally minimal in v0. The architecture aims to scale toward:
 
 ### **7.1 Multi-World Reasoning**
 
@@ -340,13 +340,13 @@ Allowing *you* to inherit or merge with manifolds in structured ways.
 
 Worlds that design better worlds.
 
-This file must remain stable enough that future versions of MeshMind always feel like descendants—not forks.
+This file must remain stable enough that future versions of Synaplex always feel like descendants—not forks.
 
 ---
 
 # **8. Why This Project Matters**
 
-MeshMind demonstrates:
+Synaplex demonstrates:
 
 * **architectural originality**, not commodity agent patterns
 * **research-level cognition**, not task automation
@@ -356,5 +356,5 @@ MeshMind demonstrates:
 
 It is designed to showcase the skills of a Staff/Principal AI systems architect while remaining safe, open-source, and domain-general.
 
-MeshMind is not a tool.
+Synaplex is not a tool.
 It is a **personal cognitive ecosystem** that grows with you.
