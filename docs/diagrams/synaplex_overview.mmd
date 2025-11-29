@@ -1,0 +1,49 @@
+flowchart LR
+    subgraph World["World (Configuration + Runtime)"]
+        direction LR
+        A1["Agent: Explorer\n(mind + lens + capabilities)"]
+        A2["Agent: Theorist"]
+        A3["Agent: Critic"]
+        A4["Agent: DevLoop"]
+    end
+
+    subgraph Minds["Manifold Store"]
+        M1["Mind M1\n(manifold history)"]
+        M2["Mind M2"]
+        M3["Mind M3"]
+    end
+
+    subgraph Corpus["Research Corpus"]
+        C1["Docs / Notes"]
+        C2["Code / Repos"]
+        C3["External Data (optional)"]
+    end
+
+    subgraph Infra["Infra"]
+        S["Storage\n(JSON / files / DB)"]
+        LLM["LLM Client\n(OpenAI, etc.)"]
+    end
+
+    A1 -->|load/save manifold| M1
+    A2 -->|load/save manifold| M2
+    A3 -->|load/save manifold| M3
+    A4 -->|load/save manifold| M1
+
+    A1 -->|read| Corpus
+    A2 -->|read| Corpus
+    A3 -->|read| Corpus
+    A4 -->|read/write| C2
+
+    A1 <--> A2
+    A2 <--> A3
+    A3 <--> A4
+    A4 <--> A1
+
+    World --> A1
+    World --> A2
+    World --> A3
+    World --> A4
+
+    Minds --> S
+    Infra --> S
+    Infra --> LLM

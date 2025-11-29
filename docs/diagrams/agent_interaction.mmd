@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant W as World
+    participant A1 as Agent Explorer
+    participant A2 as Agent Theorist
+    participant MS as Manifold Store
+    participant LLM as LLM Client
+
+    W->>A1: tick(world_ctx)
+    A1->>MS: load_latest_manifold(mind_id)
+    MS-->>A1: ManifoldEnvelope M_t
+
+    A1->>LLM: "Use M_t + corpus to think\n(write new manifold for future you)"
+    LLM-->>A1: manifold_text M_t+1
+
+    A1->>MS: save_manifold(mind_id, world_id, M_t+1)
+
+    A1->>A2: Signal(keys, summary)
+    A2->>A2: compute attention score
+    A2->>A1: request Projection
+    A1-->>A2: Projection(slice of reasoning)
+
+    W-->>A1: tick complete
