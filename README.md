@@ -162,7 +162,7 @@ flowchart LR
     end
 
     subgraph Stores["Stores"]
-        MStore["ManifoldStore<br>(opaque text)"]
+        MStore
         DStore["DeterministicStateStore<br>(structured)"]
     end
 
@@ -183,10 +183,10 @@ flowchart LR
 
     %% Projections (lens-conditioned requests)
     A2 -->|RequestShape| A1
-    A1 -->|Projection<br>(slice via A2 lens)| A2
+    A1 -->|"Projection\n(slice via A2 lens)"| A2
 
     A3 -->|RequestShape| A1
-    A1 -->|Projection<br>(slice via A3 lens)| A3
+    A1 -->|"Projection\n(slice via A3 lens)"| A3
 ```
 
 Key points:
