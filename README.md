@@ -156,14 +156,14 @@ From the world’s perspective, Synaplex is a **network of agents** connected by
 flowchart LR
     subgraph World["World Graph (Subscriptions + Runtime)"]
         direction LR
-        A1["Agent A1\n(DNA + Lens + Manifold)"]
-        A2["Agent A2\n(DNA + Lens + Manifold)"]
-        A3["Agent A3\n(DNA + Lens + Manifold)"]
+        A1["Agent A1<br>(DNA + Lens + Manifold)"]
+        A2["Agent A2<br>(DNA + Lens + Manifold)"]
+        A3["Agent A3<br>(DNA + Lens + Manifold)"]
     end
 
     subgraph Stores["Stores"]
-        MStore["ManifoldStore\n(opaque text)"]
-        DStore["DeterministicStateStore\n(structured)"]
+        MStore["ManifoldStore<br>(opaque text)"]
+        DStore["DeterministicStateStore<br>(structured)"]
     end
 
     %% State links
@@ -183,10 +183,10 @@ flowchart LR
 
     %% Projections (lens-conditioned requests)
     A2 -->|RequestShape| A1
-    A1 -->|Projection\n(slice via A2 lens)| A2
+    A1 -->|Projection<br>(slice via A2 lens)| A2
 
     A3 -->|RequestShape| A1
-    A1 -->|Projection\n(slice via A3 lens)| A3
+    A1 -->|Projection<br>(slice via A3 lens)| A3
 ```
 
 Key points:
