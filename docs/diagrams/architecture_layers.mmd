@@ -1,0 +1,44 @@
+flowchart LR
+    subgraph WorldRuntime["WorldRuntime"]
+        direction TB
+        WR["tick_all / schedule"]
+        AG["AgentCells\n(agent_id, DNA, lens, world_id)"]
+    end
+
+    subgraph Capabilities["Capabilities Layer"]
+        direction TB
+        DET["Deterministic\ncapabilities.deterministic.*"]
+        SCAF["Scaffolding\ncapabilities.scaffolding.*"]
+        SER["Serialization\ncapabilities.serialization.*"]
+    end
+
+    subgraph Stores["State Stores"]
+        direction TB
+        MStore["ManifoldStore\n(opaque, text)"]
+        DStore["DeterministicStateStore\n(structured)"]
+    end
+
+    subgraph External["External Substrates"]
+        direction TB
+        Data["Data Feeds / DBs"]
+        Tools["Tools / Analytics"]
+        LLM["LLM Client"]
+    end
+
+    WR --> AG
+
+    AG -->|load/save manifold| MStore
+    AG -->|load/save det_state| DStore
+
+    AG -->|call deterministic| DET
+    DET --> Data
+    DET --> Tools
+
+    AG -->|call scaffolding| SCAF
+    SCAF --> Tools
+    SCAF --> LLM
+
+    AG -->|build Projections / Signals| SER
+
+    SER --> AG
+    SER --> WR
