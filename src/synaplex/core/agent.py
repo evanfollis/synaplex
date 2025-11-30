@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from synaplex.core.mind import Mind
 from synaplex.core.types import Lens, Signal, Projection
@@ -10,7 +10,7 @@ from synaplex.core.types import Lens, Signal, Projection
 @dataclass
 class Agent:
     """
-    Base agent: a Mind + a Lens + capabilities executed inside a World.
+    Base agent: a Mind + a Lens executed inside a World.
 
     Subclasses override `tick` and `project_for` to implement behavior.
     """

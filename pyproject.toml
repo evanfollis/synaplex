@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synaplex"
+version = "0.0.1"
+description = "AI-native research mesh built on self-passing manifolds"
+authors = [{ name = "Evan Follis" }]
+requires-python = ">=3.10"
+dependencies = [
+    "openai >= 2.8.1",
+    "pytest >= 9.0.1",
+    "python-dotenv >= 1.2.1",
+]
