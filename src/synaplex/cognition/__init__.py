@@ -11,8 +11,16 @@ This layer:
 """
 
 from .llm_client import LLMClient
-from .manifolds import ManifoldEnvelope, ManifoldStore
+from .manifolds import ManifoldEnvelope, ManifoldStore, InMemoryManifoldStore, FileManifoldStore
 from .mind import Mind
 from .openai_client import OpenAILLMClient
 
-__all__ = ["LLMClient", "ManifoldEnvelope", "ManifoldStore", "Mind", "OpenAILLMClient"]
+__all__ = [
+    "LLMClient",
+    "ManifoldEnvelope",
+    "ManifoldStore",
+    "InMemoryManifoldStore",
+    "FileManifoldStore",
+    "Mind",
+    "OpenAILLMClient",
+]

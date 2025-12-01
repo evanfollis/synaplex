@@ -9,7 +9,7 @@ from synaplex.core.messages import Percept, Projection, Request
 from synaplex.core.world_modes import WorldMode
 
 from .llm_client import LLMClient
-from .manifolds import ManifoldEnvelope, ManifoldStore
+from .manifolds import ManifoldEnvelope, ManifoldStore, InMemoryManifoldStore
 from .branching import BranchingStrategy, BranchOutput
 from .update import UpdateMechanism
 
@@ -57,7 +57,8 @@ class Mind(AgentInterface):
         super().__init__(agent_id=agent_id)
 
         self._llm = llm_client
-        self._store = manifold_store or ManifoldStore()
+        # Default to in-memory store for backward compatibility
+        self._store = manifold_store or InMemoryManifoldStore()
         # UpdateMechanism gets LLM client for checkpoint rituals
         self._update_mechanism = update_mechanism or UpdateMechanism(llm_client=llm_client)
         # BranchingStrategy gets LLM client if provided
