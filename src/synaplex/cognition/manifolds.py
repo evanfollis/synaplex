@@ -17,6 +17,14 @@ class ManifoldEnvelope:
     Opaque container for a mind's internal worldview snapshot.
 
     The system does not parse or interpret 'content' here.
+
+    The 'metadata' dict may optionally contain geometric hints authored by the Mind:
+    - 'curvature_hints': Dict[str, Any] - hints about K (sensitivity patterns, risk profiles)
+    - 'attractor_hints': List[str] - hints about A (stable patterns, habits, equilibria)
+    - 'teleology_hints': Dict[str, Any] - hints about τ (improvement directions, epistemic gradients)
+
+    These are hints, not enforced schemas. The Mind authors them for its own future use
+    and for indexer analysis. The runtime never parses or validates them.
     """
     agent_id: AgentId
     version: int

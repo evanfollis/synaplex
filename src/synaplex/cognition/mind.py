@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from synaplex.core.agent_interface import AgentInterface
 from synaplex.core.ids import AgentId, MessageId
 from synaplex.core.messages import Percept, Projection, Request
-from synaplex.core.world_modes import WorldMode
 
 from .llm_client import LLMClient
 from .manifolds import ManifoldEnvelope, ManifoldStore, InMemoryManifoldStore
@@ -34,11 +33,10 @@ class Mind(AgentInterface):
     Responsibilities:
     - Respect the unified loop:
         Perception → Reasoning → Internal Update
-    - Respect world modes (loop truncations):
-        GRAPH_ONLY, REASONING_ONLY, MANIFOLD
     - Maintain manifold privacy:
         Only this class loads/saves ManifoldEnvelope;
         no manifold text ever leaves the Mind.
+    - Every Mind always has a manifold and runs the full cognitive loop.
     """
 
     def __init__(
@@ -50,11 +48,6 @@ class Mind(AgentInterface):
         update_mechanism: Optional[UpdateMechanism] = None,
         branching_strategy: Optional[BranchingStrategy] = None,
         tool_registry: Optional[ToolRegistry] = None,
-        # Legacy parameter kept for compatibility with existing tests:
-        #   enable_persistent_worldview=False  → REASONING_ONLY
-        #   enable_persistent_worldview=True   → MANIFOLD
-        enable_persistent_worldview: bool = True,
-        world_mode: Optional[WorldMode] = None,
     ) -> None:
         super().__init__(agent_id=agent_id)
 
@@ -68,19 +61,9 @@ class Mind(AgentInterface):
         # Tool registry for tool calling during reasoning
         self._tool_registry = tool_registry
 
-        # WorldMode resolution:
-        #   - explicit world_mode wins
-        #   - otherwise, map legacy enable_persistent_worldview flag
-        if world_mode is not None:
-            self._mode = world_mode
-        else:
-            self._mode = (
-                WorldMode.MANIFOLD if enable_persistent_worldview else WorldMode.REASONING_ONLY
-            )
-
         self._last_percept: Optional[Percept] = None
 
-        # Invariants: every Mind has a manifold envelope, even if some modes never use it.
+        # Invariant: every Mind always has a manifold envelope.
         self._ensure_initial_manifold()
 
     # -------------------------------------------------------------------------
@@ -99,7 +82,12 @@ class Mind(AgentInterface):
 
     def reason(self) -> Dict[str, Any]:
         """
-        Reasoning (+ Internal Update, when enabled).
+        Reasoning + Internal Update.
+
+        Every Mind always runs the full cognitive loop:
+        - Loads its manifold
+        - Reasons with it
+        - Updates it via Internal Update checkpoint ritual
 
         Returns a reasoning_output dict:
 
@@ -109,62 +97,36 @@ class Mind(AgentInterface):
                 "outward": { ... },    # outward behavior to be consumed by act()
                 "context": { ... },    # percept-derived reasoning context (for debugging/analysis)
             }
-
-        Internal Update (manifold checkpoint) occurs here *only* in MANIFOLD mode.
         """
         context = self._build_context_from_percept(self._last_percept)
-        prior_envelope: Optional[ManifoldEnvelope] = None
+        
+        # Load the manifold (always exists due to _ensure_initial_manifold)
+        prior_envelope = self._load_manifold()
+        
+        # Include the current manifold content only for the Mind's own use.
+        # This never leaves the Mind.
+        context_with_manifold = dict(context)
+        context_with_manifold["manifold"] = prior_envelope.content
 
-        # GRAPH_ONLY: deterministic, no reasoning, no manifold usage.
-        if self._mode == WorldMode.GRAPH_ONLY:
-            result = ReasoningResult(
-                notes="",
-                outward=self._empty_outward_behavior(),
-                context=context,
-            )
-            return self._result_to_dict(result)
+        # Run reasoning with manifold
+        result = self._run_reasoning_with_manifold(context_with_manifold)
 
-        # REASONING_ONLY: perception + LLM reasoning; manifold exists but is not used.
-        if self._mode == WorldMode.REASONING_ONLY:
-            result = self._run_reasoning_without_manifold(context)
-            # No Internal Update in this mode.
-            return self._result_to_dict(result)
-
-        # MANIFOLD: full loop; manifold participates in reasoning and is updated.
-        if self._mode == WorldMode.MANIFOLD:
-            prior_envelope = self._load_manifold()
-            # We include the current manifold content only for the Mind's own use.
-            # This never leaves the Mind.
-            context_with_manifold = dict(context)
-            context_with_manifold["manifold"] = prior_envelope.content
-
-            result = self._run_reasoning_with_manifold(context_with_manifold)
-
-            # Internal Update: checkpoint ritual → new ManifoldEnvelope
-            # Pass agent_id as AgentId, not string
-            envelope = self._update_mechanism.update_worldview(
-                prior=prior_envelope,
-                reasoning_output={
-                    "agent_id": self.agent_id,  # Already an AgentId
-                    "notes": result.notes,
-                    "context": result.context,
-                },
-            )
-            self._store.save(envelope)
-            
-            # Include manifold version info in result for logging
-            result.context["manifold_version"] = envelope.version
-            result.context["manifold_content_length"] = len(envelope.content)
-            result.context["manifold_metadata"] = envelope.metadata
-
-            return self._result_to_dict(result)
-
-        # Should not be reachable; defensive fallback.
-        result = ReasoningResult(
-            notes="",
-            outward=self._empty_outward_behavior(),
-            context=context,
+        # Internal Update: checkpoint ritual → new ManifoldEnvelope
+        envelope = self._update_mechanism.update_worldview(
+            prior=prior_envelope,
+            reasoning_output={
+                "agent_id": self.agent_id,  # Already an AgentId
+                "notes": result.notes,
+                "context": result.context,
+            },
         )
+        self._store.save(envelope)
+        
+        # Include manifold version info in result for logging
+        result.context["manifold_version"] = envelope.version
+        result.context["manifold_content_length"] = len(envelope.content)
+        result.context["manifold_metadata"] = envelope.metadata
+
         return self._result_to_dict(result)
 
     def act(self, reasoning_output: Dict[str, Any]) -> Dict[str, Any]:
@@ -191,19 +153,30 @@ class Mind(AgentInterface):
         - Contains only structured data (never raw manifold text)
         - May include EnvState data the agent has access to
         - Is transformed by the receiver's lens (handled by runtime)
+        - Generates "overloaded but on-topic" frottage envelopes (F)
 
         The projection payload is built from:
         - Agent's visible state (via get_visible_state())
+        - Frottage envelope: rich, redundant, overlapping frames
         - Any structured data the agent chooses to expose
+
+        Geometrically, this implements the frottage operator F:
+        F(M, R) → E_F(R), where E_F(R) is a high-entropy sampling of
+        a region R of the manifold M, including points, tangent directions,
+        analogies, tensions, and negative space.
         """
         # Get visible structured state
         visible_state = self.get_visible_state()
+
+        # Generate frottage envelope: overloaded but on-topic
+        frottage_envelope = self._generate_frottage_envelope(request, visible_state)
 
         # Build projection payload
         # Note: We never include raw manifold content here
         payload = {
             "agent_id": self.agent_id.value,
             "state": visible_state,
+            "frottage": frottage_envelope,
             # Worlds can extend this with domain-specific structured views
         }
 
@@ -227,6 +200,84 @@ class Mind(AgentInterface):
             # Never include manifold content here
         }
 
+    def _generate_frottage_envelope(
+        self, request: Request, visible_state: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Generate a frottage envelope (F) for a projection.
+
+        Frottage is a geometric operator that produces a high-entropy sampling
+        of a region R of the manifold M. The envelope E_F(R) includes:
+        - Points in R (concepts, ideas)
+        - Nearby tangent directions (related concepts)
+        - Successful and failed analogies (local "almost symmetries")
+        - Tension directions (non-commuting flows)
+        - Negative space ("not-this" shards)
+
+        This is "overloaded but on-topic": rich, redundant, contradictory,
+        but concentrated in a region overlapping the receiver's domain.
+
+        Args:
+            request: The request from the receiver (shapes what region to sample)
+            visible_state: The agent's visible structured state
+
+        Returns:
+            Frottage envelope dict with multiple overlapping frames
+        """
+        # Default implementation: create a rich, redundant envelope from visible state
+        # Worlds can override to generate more sophisticated frottage
+
+        # Build multiple overlapping frames
+        frames = []
+
+        # Frame 1: Direct state view
+        frames.append({
+            "type": "direct_state",
+            "content": visible_state,
+            "perspective": "current structured view",
+        })
+
+        # Frame 2: Contextual hints (what this state implies)
+        frames.append({
+            "type": "contextual_hints",
+            "content": {
+                "implications": "This state suggests...",
+                "related_concepts": [],
+                "tensions": [],
+            },
+            "perspective": "implicit context",
+        })
+
+        # Frame 3: Negative space (what this is NOT)
+        frames.append({
+            "type": "negative_space",
+            "content": {
+                "not_this": "This does not include...",
+                "boundaries": [],
+            },
+            "perspective": "exclusion boundaries",
+        })
+
+        # Frame 4: Tension directions (non-commuting flows)
+        frames.append({
+            "type": "tensions",
+            "content": {
+                "tension_directions": [],
+                "unresolved": [],
+            },
+            "perspective": "non-commuting flows",
+        })
+
+        return {
+            "frames": frames,
+            "redundancy_level": "high",  # Explicitly overloaded
+            "on_topic": True,  # Concentrated in relevant region
+            "metadata": {
+                "request_shape": request.shape,
+                "generated_by": self.agent_id.value,
+            },
+        }
+
     # -------------------------------------------------------------------------
     # Internal helpers
     # -------------------------------------------------------------------------
@@ -235,8 +286,7 @@ class Mind(AgentInterface):
         """
         Guarantee that a ManifoldEnvelope exists for this Mind.
 
-        Even in ablation modes (GRAPH_ONLY / REASONING_ONLY), a manifold object exists
-        conceptually; those modes simply choose not to consult or update it.
+        Every Mind always has a manifold. This is an architectural invariant.
         """
         existing = self._store.load_latest(self.agent_id)
         if existing is not None:
@@ -285,10 +335,22 @@ class Mind(AgentInterface):
 
     @staticmethod
     def _empty_outward_behavior() -> Dict[str, Any]:
+        """
+        Return empty outward behavior structure.
+
+        Outward behavior may include:
+        - signals: List of Signal objects or dicts
+        - requests: List of Request objects or dicts
+        - env_updates: Dict of EnvState key-value updates
+        - holonomy_marker: bool - True if this action is holonomy (irreversible-ish)
+        - holonomy_type: str - Optional type of holonomy action
+        - holonomy_description: str - Optional description of the holonomy
+        """
         return {
             "signals": [],
             "requests": [],
-            "env_updates": [],
+            "env_updates": {},
+            "holonomy_marker": False,
         }
 
     @staticmethod
@@ -324,29 +386,12 @@ class Mind(AgentInterface):
         return ctx
 
     # -------------------------------------------------------------------------
-    # Reasoning variants
+    # Reasoning
     # -------------------------------------------------------------------------
-
-    def _run_reasoning_without_manifold(self, context: Dict[str, Any]) -> ReasoningResult:
-        """
-        Reasoning in REASONING_ONLY mode.
-
-        The Mind thinks each tick but does not consult or update the manifold.
-        """
-        # Extract tool names from context if available (from DNA via runtime)
-        tool_names = context.get("available_tools", None)
-        prompt = self._build_prompt(context, include_manifold=False, tool_names=tool_names)
-        notes = self._call_llm_for_notes(prompt)
-
-        return ReasoningResult(
-            notes=notes,
-            outward=self._empty_outward_behavior(),
-            context=context,
-        )
 
     def _run_reasoning_with_manifold(self, context: Dict[str, Any]) -> ReasoningResult:
         """
-        Reasoning in MANIFOLD mode.
+        Reasoning with manifold.
 
         The manifold content is included in the context and may be used by the Mind
         for internal thinking, but never leaves this class.
@@ -391,7 +436,7 @@ class Mind(AgentInterface):
     # Prompting and LLM interaction
     # -------------------------------------------------------------------------
 
-    def _build_prompt(self, context: Dict[str, Any], *, include_manifold: bool, tool_names: Optional[List[str]] = None) -> str:
+    def _build_prompt(self, context: Dict[str, Any], *, include_manifold: bool = True, tool_names: Optional[List[str]] = None) -> str:
         """
         Build a minimal, architecture-respecting prompt.
 

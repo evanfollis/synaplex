@@ -41,10 +41,8 @@ Before diving in, understand these key concepts:
    - **Nature**: Structural constraints (DNA, lenses, graph topology)
    - **Nurture**: Internal worldview (manifold) that evolves
 3. **Unified Loop**: Perception → Reasoning → Internal Update
-4. **World Modes**: 
-   - `GRAPH_ONLY`: Deterministic, no LLM
-   - `REASONING_ONLY`: LLM reasoning, no persistent worldview
-   - `MANIFOLD`: Full loop with persistent worldview
+   - Every Mind always runs the full loop with a persistent manifold
+   - This is an architectural invariant
 
 ## Quick Start Example
 
@@ -73,12 +71,11 @@ dna = DNA(
     tools=[],  # No tools yet
 )
 
-# Create a mind
+# Create a mind (always has a manifold - architectural invariant)
 llm_client = OpenAILLMClient()
 mind = Mind(
     agent_id=agent_id,
     llm_client=llm_client,
-    world_mode=WorldMode.MANIFOLD,  # Full cognitive loop
 )
 
 # Register agent with runtime

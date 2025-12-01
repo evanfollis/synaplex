@@ -39,7 +39,11 @@ class AgentInterface(ABC):
     @abstractmethod
     def reason(self) -> Dict[str, Any]:
         """
-        Perform LLM-backed reasoning (or no-op in graph-only regimes).
+        Perform LLM-backed reasoning as part of the unified cognitive loop.
+
+        Every Mind follows the same loop: Perception → Reasoning → Internal Update.
+        This method implements the Reasoning step, which uses the percept and manifold
+        to produce reasoning notes and outward behavior.
 
         Returns a reasoning_output dict that will be passed to act().
         """

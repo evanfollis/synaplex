@@ -23,6 +23,10 @@ class IdeaArchitectLens(Lens):
     """
     Φ for IDEA_ARCHITECT.
 
+    Demonstrates both aspects of the projection operator Φ:
+    - Φ_sem (semantic compression): restructures frottage into structural view
+    - Φ_tel (teleological filtering): prioritizes structural/organizational information
+
     - Attends to idea signals.
     - Emphasizes structural cues (tags, domain, inferred clusters).
     """
@@ -31,10 +35,51 @@ class IdeaArchitectLens(Lens):
         return signal_payload.get("type") == "idea"
 
     def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Transform projection using Φ_sem and Φ_tel.
+
+        Φ_sem: Compress frottage envelope into structural representation
+        Φ_tel: Filter for information aligned with structural organization goals
+        """
+        # Extract frottage envelope if present
+        frottage = raw_projection.get("frottage", {})
+        frames = frottage.get("frames", [])
+
+        # Φ_sem: Semantic compression
+        # Extract structural information from multiple frames
         transformed = dict(raw_projection)
-        tags: List[str] = list(transformed.get("tags", []))
-        transformed["_structural_tags"] = tags
+        
+        # Compress frames into structural view
+        structural_info = {}
+        for frame in frames:
+            frame_type = frame.get("type", "")
+            if frame_type == "direct_state":
+                # Extract tags, domain, clusters from direct state
+                state = frame.get("content", {})
+                tags: List[str] = list(state.get("tags", []))
+                structural_info["tags"] = tags
+                structural_info["domain"] = state.get("domain")
+            elif frame_type == "contextual_hints":
+                # Extract structural implications
+                hints = frame.get("content", {})
+                structural_info["related_concepts"] = hints.get("related_concepts", [])
+
+        # Merge structural info into transformed projection
+        transformed["_structural_tags"] = structural_info.get("tags", [])
         transformed["_idea_id"] = transformed.get("id") or transformed.get("title")
+        transformed["_domain"] = structural_info.get("domain")
+        transformed["_related_concepts"] = structural_info.get("related_concepts", [])
+
+        # Φ_tel: Teleological filtering
+        # Filter and prioritize based on structural organization goals
+        # (In this case, prioritize structural information over other aspects)
+        if "_structural_tags" not in transformed or not transformed["_structural_tags"]:
+            # If no structural tags, this projection is less aligned with architect's teleology
+            transformed["_teleological_weight"] = 0.3
+        else:
+            # Rich structural information aligns with architect's goals
+            transformed["_teleological_weight"] = 1.0
+
         return transformed
 
 

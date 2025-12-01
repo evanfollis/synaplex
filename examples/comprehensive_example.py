@@ -6,7 +6,6 @@ Comprehensive Synaplex example demonstrating:
 - Projection gathering
 - Manifold persistence
 - Tool usage
-- World modes
 - Multi-tick evolution
 """
 
@@ -16,7 +15,6 @@ from synaplex.core.env_state import EnvState
 from synaplex.core.dna import DNA
 from synaplex.core.lenses import Lens
 from synaplex.core.messages import Signal
-from synaplex.core.world_modes import WorldMode
 from synaplex.cognition.openai_client import OpenAILLMClient
 from synaplex.cognition.mind import Mind
 from synaplex.cognition.manifolds import FileManifoldStore
@@ -114,7 +112,7 @@ def main():
         # Create agents with different configurations
         llm_client = OpenAILLMClient()
         
-        # Agent A: Publisher with tools, manifold mode
+        # Agent A: Publisher with tools
         dna_a = DNA(
             agent_id=AgentId("agent-a"),
             role="publisher",
@@ -129,10 +127,9 @@ def main():
             llm_client=llm_client,
             manifold_store=store_a,
             tool_registry=tool_registry,
-            world_mode=WorldMode.MANIFOLD,
         )
         
-        # Agent B: Subscriber with custom lens, reasoning-only mode
+        # Agent B: Subscriber with custom lens
         dna_b = DNA(
             agent_id=AgentId("agent-b"),
             role="subscriber",
@@ -143,7 +140,6 @@ def main():
         mind_b = Mind(
             agent_id=AgentId("agent-b"),
             llm_client=llm_client,
-            world_mode=WorldMode.REASONING_ONLY,  # No persistent worldview
         )
         
         # Agent C: Subscriber with manifold, default lens
@@ -159,7 +155,6 @@ def main():
             agent_id=AgentId("agent-c"),
             llm_client=llm_client,
             manifold_store=store_c,
-            world_mode=WorldMode.MANIFOLD,
         )
         
         # Create custom lens for agent B
@@ -172,9 +167,9 @@ def main():
         runtime.register_agent(mind_c, dna=dna_c, lens=default_lens)
         
         print("Registered 3 agents:")
-        print("  - Agent A: Publisher, MANIFOLD mode, has tools")
-        print("  - Agent B: Subscriber to A, REASONING_ONLY mode, custom lens")
-        print("  - Agent C: Subscriber to A and B, MANIFOLD mode\n")
+        print("  - Agent A: Publisher, has tools, persistent manifold")
+        print("  - Agent B: Subscriber to A, custom lens, persistent manifold")
+        print("  - Agent C: Subscriber to A and B, persistent manifold\n")
         
         # Custom agent class that emits signals
         class SignalEmittingMind(Mind):
@@ -213,7 +208,6 @@ def main():
             llm_client=llm_client,
             manifold_store=store_a,
             tool_registry=tool_registry,
-            world_mode=WorldMode.MANIFOLD,
         )
         runtime.register_agent(mind_a_signal, dna=dna_a, lens=default_lens)
         
@@ -245,8 +239,7 @@ def main():
         print("3. Agent C (with default lens) saw all signals")
         print("4. Agent B received projections from Agent A (subscription)")
         print("5. Agent C received projections from both A and B")
-        print("6. Agents A and C maintained persistent manifolds (MANIFOLD mode)")
-        print("7. Agent B had no persistent worldview (REASONING_ONLY mode)")
+        print("6. All agents maintained persistent manifolds (architectural invariant)")
         print("8. EnvState was updated with agent tick counts")
         print("9. Tools were available to Agent A (listed in DNA)")
         

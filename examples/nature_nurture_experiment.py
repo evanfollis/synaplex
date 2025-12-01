@@ -14,7 +14,6 @@ from synaplex.core.lenses import Lens
 from synaplex.cognition.openai_client import OpenAILLMClient
 from synaplex.cognition.mind import Mind
 from synaplex.cognition.manifolds import InMemoryManifoldStore, ManifoldEnvelope
-from synaplex.core.world_modes import WorldMode
 from synaplex.meta.dna_utils import DNAUtils
 from synaplex.meta.manifold_utils import ManifoldUtils
 from synaplex.meta.experiments import NatureNurtureExperiment, NurtureNatureExperiment
@@ -33,7 +32,6 @@ def make_mind(agent_id: AgentId, store) -> Mind:
         agent_id=agent_id,
         llm_client=llm,
         manifold_store=store,
-        world_mode=WorldMode.MANIFOLD,
     )
 
 

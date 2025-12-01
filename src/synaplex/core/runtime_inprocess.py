@@ -72,6 +72,8 @@ class InProcessRuntime(RuntimeInterface):
         self._current_tick_signals: Dict[AgentId, List[Signal]] = {}
         # Track pending requests for next tick's perception phase
         self._pending_requests: Dict[AgentId, List[Request]] = {}
+        # Track holonomy events (H): irreversible-ish actions that scar world + manifold
+        self._holonomy_events: List[Dict[str, Any]] = []
 
     def register_agent(
         self,
@@ -343,10 +345,58 @@ class InProcessRuntime(RuntimeInterface):
             if env_updates:
                 for key, value in env_updates.items():
                     self.env_state.set(key, value)
+
+            # Track holonomy (H): irreversible-ish actions that scar world + manifold
+            holonomy_marker = behavior.get("holonomy_marker", False)
+            if holonomy_marker:
+                self._holonomy_events.append({
+                    "agent_id": agent_id.value,
+                    "tick": tick_id,
+                    "type": behavior.get("holonomy_type", "action"),
+                    "description": behavior.get("holonomy_description", "Irreversible action"),
+                })
         
         # Log EnvState snapshot if logger available
         if self.logger:
             self.logger.log_env_state_snapshot(tick_id, self.env_state.data.copy())
+
+    def get_holonomy_events(self) -> List[Dict[str, Any]]:
+        """
+        Get all holonomy events tracked so far.
+
+        Holonomy (H) represents irreversible-ish actions that scar both the world
+        (via EnvState changes) and the manifold (via worldview commitment).
+        These are actions that cannot be cleanly reversed.
+
+        Returns:
+            List of holonomy event dicts with agent_id, tick, type, description
+        """
+        return self._holonomy_events.copy()
+
+    def get_holonomy_rate(self, tick_window: Optional[int] = None) -> float:
+        """
+        Compute holonomy rate (H_rate) over a tick window.
+
+        H_rate is the frequency of irreversible-ish changes per unit epistemic "churn".
+        This is a geometric health scalar.
+
+        Args:
+            tick_window: Optional window size in ticks. If None, uses all events.
+
+        Returns:
+            Holonomy rate (events per tick)
+        """
+        if not self._holonomy_events:
+            return 0.0
+
+        if tick_window is None:
+            # Use all events
+            total_ticks = max((e["tick"] for e in self._holonomy_events), default=1)
+            return len(self._holonomy_events) / max(total_ticks, 1)
+
+        # Count events in window
+        recent_events = [e for e in self._holonomy_events if e["tick"] >= (max(e["tick"] for e in self._holonomy_events) - tick_window)]
+        return len(recent_events) / tick_window
 
             # Collect requests for next tick's perception phase
             requests = behavior.get("requests", [])
