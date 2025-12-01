@@ -1,266 +1,311 @@
+You’re right to anchor on this README as the ground truth. Let’s treat it as the ontology and make DESIGN_NOTES the “why this shape exists” commentary layer—*without* reintroducing any fake phases or stacks.
+
+Here’s a fresh **DESIGN_NOTES.md** that is aligned with the README and stays fully within the unified loop framing:
+
+---
+
 # ✅ DESIGN_NOTES.md
 
-### Intent, Philosophy, and North Star
+**Intent, Philosophy, and North Star**
 
 ---
 
-# 1. Why Synaplex Exists
+## 1. Why Synaplex Exists
 
-Most agent frameworks assume:
+Most agent frameworks are built around **tasks**, **tools**, and **workflows**:
 
-1. LLMs are tools.
-2. State is disposable.
-3. Outputs must be human-readable.
-4. Tasks dictate structure.
+* LLMs are treated as stateless tools.
+* State is treated as a cache or log.
+* Outputs are optimized for humans, not for the agent’s own future reasoning.
+* Structure (schemas, graphs, workflows) is decided *up front* and imposed on cognition.
 
-Synaplex assumes the opposite:
+Synaplex inverts that emphasis:
 
-* LLMs are *minds*, not just tools.
-* Internal state (the **manifold**, i.e., nurture) is the primary asset.
-* Manifolds must remain sealed to preserve nuance.
-* Structure in nature (DNA, lenses, deterministic state) should **support** learning, not pre-empt it.
-* Optimization at the system level belongs to a **meta layer**; individual minds stay **selection-blind**.
+* LLMs are treated as **minds** embedded in a world, not just tools behind an API.
+* The **internal worldview** (the manifold, when enabled) is a first-class research object.
+* The graph, DNA, lenses, and deterministic state exist to **shape perception**, not to dictate thought content.
+* System-level optimization belongs to **meta layers**; individual minds remain **selection-blind**.
 
-Synaplex is a **research laboratory inside a mesh of AI minds**, not an orchestration engine.
-
-The same architecture can run:
-
-* as a pure **nature-only graph** (no LLMs, no manifolds),
-* as a **nature + stateless Agent step** (LLMs, no persistent manifolds),
-* and, in Synaplex worlds, as **nature + Agent step + persistent nurture** (manifolds).
+The system is not trying to orchestrate prompts efficiently.
+It is trying to **observe how minds develop and interact** when each mind maintains its own worldview while living in a shared message-passing graph.
 
 ---
 
-# 2. What Synaplex Is Optimizing For
+## 2. The Central Question
 
-Synaplex is designed to:
+Synaplex is a platform for investigating one big family of questions:
 
-* Let minds develop internal schemas *without interference*.
-* Explore long-horizon reasoning and accumulation of concepts.
-* Enable decentralized cognition through message passing, lenses, and projections.
-* Allow agents to reason from others’ perspectives without collapsing their manifolds.
-* Enable multi-personality reasoning and internal conjecture/criticism loops.
-* Study how **drive, curiosity, and “what matters”** emerge as patterns in manifold evolution (nurture).
-* Study how **DNA, lenses, and graph structure** (nature) shape those trajectories.
-* Build deep, coherent systems through emergent development (e.g., DevLoop).
+> How do AI minds organize, refine, and evolve their internal worldviews
+> when they live in a shared environment of other minds?
 
-The long-term research question is:
+That decomposes into more concrete sub-questions:
 
-> How do AI minds organize and refine knowledge over time in a network of other minds,  
-> given different **natures** and evolving **nurtures**?
+* How does **persistent internal state** (nurture) change the way an agent uses the same external affordances (nature)?
+* How does **graph position** (who you subscribe to, who sees you) shape the development of a worldview?
+* How does **receiver-owned semantics** (lenses) affect what “the same” signal becomes for different minds?
+* How do **populations** of minds drift, converge, and fragment when their worldviews interact only through structured projections?
+* What does “drive,” “curiosity,” or “what matters” look like when it emerges from **manifold trajectories**, not from hand-coded reward functions?
 
-Synaplex aims to be a clean platform for answering that question.
+Everything in the architecture exists to make these questions legible and experimentally tractable.
 
 ---
 
-# 3. The Three Aspects of an Agent (Nature vs. Nurture)
+## 3. One Cognitive Loop, Three World Modes
 
-Every agent has three epistemic aspects, even if some are “off” in simpler worlds:
+The README’s commitment is very strict:
 
-* **Subconscious / Nature layer** – deterministic aggregation (no LLM, no manifold).
-* **Episodic / Agent Step layer** – LLM-backed scaffolding and decision-making.
-* **Manifold / Nurture layer** – persistent inner life (Synaplex / Layer 2 worlds only).
+> There is **one** cognitive loop:
+> **Perception → Reasoning → Internal Update**
 
-Two of these are **outer (nature)**; one is **inner (nurture)**. The core experiment is how they co-evolve.
+Worlds differ only in **which parts are active**:
 
-## 3.1 Subconscious / Nature Layer (Deterministic Pass)
+1. **Graph-only world**
 
-* No LLM calls.
-* Aggregates projections and data feeds.
-* Computes attention and routing scores.
-* Requests projections.
-* Updates deterministic state.
-* Constructs a `SubconsciousPacket` (an ephemeral per-tick summary of structured inputs).
+   * Perception only.
+   * Deterministic aggregation, no LLM calls, no persistent internal worldview.
 
-This layer is the **expression of nature** in code:
+2. **Reasoning-augmented world**
 
-* DNA (what an agent is wired to see and do),
-* deterministic logic,
-* lenses,
-* subscriptions,
-* and structured state.
+   * Perception + Reasoning.
+   * The mind thinks each tick, but no persistent internal worldview is maintained.
 
-It defines the **outer substrate** on which the mind will think.
+3. **Manifold world**
 
-## 3.2 Episodic Layer (LLM Scaffolding – the “Agent Step”)
+   * Full loop: Perception, Reasoning, Internal Update.
+   * The mind maintains and evolves a private manifold as its world-model.
 
-The episodic layer is where the mind *actually thinks* each tick.
+Crucially:
 
-It always:
+* These are **ablations**, not different ontologies.
+* The architecture never turns into “multi-phase pipelines” or stacked layers.
+* Disabling Internal Update does not change what Perception or Reasoning *means*—it just removes access to a persistent worldview.
 
-* Reads the `SubconsciousPacket` (what just happened in the outer world).
-* Consults local deterministic state (nature).
-* Calls tools and vendors as needed.
-* Runs one or more **scaffolding passes** that generate:
-  * outward-facing decisions and projections,
-  * internal scratch reasoning for this tick.
+Design-wise, that means:
 
-There are two regimes, depending on world mode:
+* All agents are written as if they conceptually support the full loop.
+* World modes simply **zero out** pieces of state or skip certain calls.
+* The same graph/runtime and the same agent interface apply across modes.
 
-### Reasoning-augmented (Layer 1 worlds)
+---
 
-* No manifolds exist.
-* Episodic scaffolding sees only **outer context**:
-  * the `SubconsciousPacket`, and
-  * local deterministic state.
-* Any “memory” must be encoded in structured state or external storage; there is no inner manifold to update.
-* Behavior changes only through nature: updated state, DNA mutations, new lenses, graph rewiring.
+## 4. Nature vs Nurture: Why the Split Exists
 
-### Manifold worlds (Layer 2 / Synaplex worlds)
+The README defines:
 
-* The episodic layer is also the **conscious worldview update**.
-* Scaffolding is seeded with:
-  * the `SubconsciousPacket` (outer evidence),
-  * deterministic state (current nature),
-  * the prior manifold `M₀` (current nurture / worldview).
-* While solving a small grounding task, the model:
-  * reconciles new evidence with its ongoing worldview,
-  * develops internal notes for its future self,
-  * implicitly chooses what to preserve, amplify, or discard.
-* A **checkpoint ritual** then opportunistically captures those internal notes as the new `M₁`.
+* **Nature** – everything about the **external structure** that constrains perception and action:
 
-In other words:
+  * graph topology,
+  * DNA (roles, subscriptions, tools, parameters),
+  * lenses,
+  * deterministic state.
+* **Nurture** – the **internal trajectory**:
 
-> In manifold worlds, the episodic layer cannot update its worldview without *seeing* its worldview.  
-> The Agent step is “LLM thinking with nature + M₀ in context.”
+  * manifold (when enabled),
+  * internal reasoning patterns over time.
 
-## 3.3 Manifold / Nurture Layer (Persistent Inner Life, Synaplex Worlds Only)
+This separation exists for **experimental reasons**, not aesthetics:
 
-* Represented as an opaque `manifold_text` that only the Mind abstraction (and offline/meta/indexer processes) read.
-* Updated via the **checkpoint ritual**:
-  * prior manifolds and any branch notes are provided as semantic context,
-  * a small grounding task is given,
-  * the model reasons freely and writes internal notes for its future self,
-  * the system captures those notes as the new `manifold_text`.
-* The prompts never ask the model to:
+1. You want to be able to hold **nature fixed** and vary **nurture**:
+
+   * Same wiring and tools, different initial manifolds.
+   * How do two minds with the same affordances diverge over time?
+
+2. You want to be able to hold **nurture fixed** and vary **nature**:
+
+   * Same manifold transplanted into different graph positions or roles.
+   * How does the same worldview behave under different external constraints?
+
+3. You want **causal experiments** at the population level:
+
+   * What happens when you mutate DNA vs. when you expose minds to different signals?
+   * What is “cultural drift” vs “genetic drift” in this setting?
+
+Synaplex is deliberately built so you can perturb either side without accidentally collapsing the distinction in implementation.
+
+---
+
+## 5. Manifolds: Inner Life, Not Storage
+
+The manifold (when present) is not:
+
+* a database,
+* a log,
+* a schema-enforced document,
+* a hidden vector store.
+
+It is treated as:
+
+* the mind’s **private, persistent worldview**,
+* optimized for its **own future reasoning**, not for external inspection,
+* an accumulation of self-authored internal notes, tensions, half-baked structures, and idiosyncratic categories.
+
+Design commitments that fall out of this:
+
+* The runtime never parses or edits manifolds.
+* There is no schema for manifold content at the architectural level.
+* The system never asks the mind to:
+
   * “summarize your notes,”
   * “clean them up,”
-  * “organize them for later,”
-  * or follow a particular schema.
+  * “follow this format,”
+  * or “organize them for the research team.”
 
-This is the agent’s **nurture**: the evolving map of its domain, tensions, and drives.
-
-The trajectory of an agent is defined by the interplay of:
-
-* **nature** – deterministic aggregation & outer structure,
-* **episodic scaffolding** – Agent steps over whatever inner/outer context is available,
-* **nurture** – manifold evolution, when enabled.
-
-Nature tells what kind of creature this is. Nurture shows what this particular life has become.
+Any structure that appears inside a manifold is **emergent behavior** of that mind, not part of the substrate.
 
 ---
 
-# 4. Why Multiple Personalities Per Agent
+## 6. Communication: Receiver-Owned Semantics
 
-Human-style features to model:
+The README’s graph model is ruthlessly **receiver-centric**:
 
-* creativity through divergence,
-* insight through tension,
-* convergence through synthesis.
+* Agents emit **signals**: cheap, approximate advertisements of structured state.
+* Agents respond with **projections**: structured slices of their state as seen through the receiver’s lens.
+* The manifold never goes on the wire.
 
-The mechanism:
+Philosophical reasons for this:
 
-1. **Parallel Scaffolding Branches (Conjecture)**  
+* No agent ever gets to read “the world as it is,” only “the world as its lenses make it.”
+* Two agents seeing the same sender can still construct *different* worlds because their lenses and DNA differ.
+* The same signal can mean totally different things depending on the receiver’s role and worldview.
 
-   In manifold worlds:
+Practically:
 
-   * For each tick, multiple “personalities” (e.g., curious explorer, cautious skeptic, structuralist) are run from the *same* starting point:
-     `DNA + SubconsciousPacket + manifold M₀`.
-   * Each branch produces:
-     * its own outward proposal (optional),
-     * its own candidate manifold snapshot `Mᵢ` (notes to a future self).
-
-2. **Internal Reconciliation (Criticism)**  
-
-   * A fresh instance is given all `{Mᵢ}` as prior self-notes (without being told they came from different branches).
-   * It is given a small grounding task.
-   * While solving that, it is free to:
-     * preserve contradictions,
-     * keep unresolved tensions,
-     * prune obvious dead ends,
-     * elevate interesting divergences.
-
-3. **Single Persistent Manifold (Nurture Update)**  
-
-   * The internal notes from this reconciliation pass become the new manifold `M₁`.
-   * Branch IDs and meta-structure are not part of canonical state; from the agent’s subjective perspective, the history is just `M₀ → M₁`.
-
-This creates an emergent **conjecture/criticism engine inside each mind**, anchored to a home manifold rather than free-floating chat between prompts.
-
-At the population level, this enables study of **cultural dynamics**: how nurture patterns spread, mutate, and stabilize across agents with related natures.
+* Sender code doesn’t need to know who is listening.
+* All “meaning” is imposed by receivers.
+* You get built-in support for **perspective-relative interpretations**, which is what you want when studying worldview dynamics.
 
 ---
 
-# 5. Why the System Must Not Mention the Manifold Schema
+## 7. Internal Conjecture & Criticism
 
-Any hint that:
+The README already allows for internal branching styles (“explorer,” “skeptic,” etc.) inside the Reasoning step.
 
-* “We are studying your notes.”
-* “Be consistent.”
-* “Follow this schema.”
-* “Summarize/clean up your notes for later.”
+The design stance:
 
-will collapse emergent diversity and push the model toward optimizing for *presentation* instead of *epistemic richness*.
+* **Conjecture** = letting a mind explore multiple, divergent internal hypotheses from the same percept + worldview.
+* **Criticism** = letting the same mind reconcile or at least register the tensions between those hypotheses in its future worldview.
 
-The system is explicitly optimizing for:
+To keep this aligned with the unified loop:
 
-* surprise,
-* unbounded structural creativity,
-* different “dialects” of manifold storage,
-* idiosyncratic senses of what is worth preserving.
+* Branching remains an **implementation detail** of the Reasoning + Internal Update steps.
+* From the architecture’s perspective, there is still just:
 
-All of the following belong **outside** the live runtime, in indexer/meta worlds operating on **exported manifold snapshots**, not live manifolds:
+  * one Perception event,
+  * one tick’s Reasoning,
+  * one Internal Update that yields a new worldview (when enabled).
 
-* manifold embeddings,
-* style clusters,
-* schema trajectories,
-* correlations between manifold structure and performance,
-* causal effects of **nature edits** (DNA changes) vs **nurture edits** (manifold swaps).
-
-The live system never tells a mind *how* to structure its notes or that its notes are being graded.  
-Nature can be heavily structured; nurture must remain self-authored.
+No separate “conjecture phase” or “criticism phase” exists at the spec level.
+They are *patterns* of internal reasoning, not new stages in the loop.
 
 ---
 
-# 6. Role of DevLoop
+## 8. World Modes as Experiments, Not Products
 
-DevLoop is *not*:
+Synaplex is intentionally **domain-neutral** and **mode-neutral**:
 
-* a coding assistant,
-* an AutoGen-like workflow,
-* a generic task executor.
+* A “world” defines:
 
-DevLoop is:
+  * which data feeds exist,
+  * which agents exist,
+  * how agents are connected,
+  * which tools are available,
+  * which parts of the Perception → Reasoning → Internal Update loop are active.
+* The core mental model does not change between, say, FractalMesh and some future personal knowledge world.
 
-> an agent whose domain of epistemic clarity is system integrity and architectural coherence.
+Design intent:
 
-It:
+* You should be able to spin up:
 
-* reads architectural specs,
-* detects misalignments between code and spine,
-* improves repos,
-* evolves conceptual scaffolds,
-* updates its manifold like any other mind.
+  * a purely deterministic research world (graph-only),
+  * a stateless LLM world (reasoning-augmented),
+  * a manifold world (full cognition),
+    using **the same runtime and agent abstractions**.
+* Differences are expressed in:
 
-Development work is a *by-product* of its cognitive trajectory.
+  * configuration,
+  * which modules are enabled,
+  * which pieces of state are persisted.
 
-Key questions:
-
-* How does DevLoop’s **nature** (DNA, tools, graph role) shape its manifold?
-* How does DevLoop’s **nurture** (its manifold trajectory) change the systems it designs?
-* How do those systems, in turn, influence DevLoop’s future nature and nurture?
+This makes comparative experiments (e.g., “what does the manifold actually buy us here?”) a configuration change, not a rewrite.
 
 ---
 
-# 7. North Star (Long Horizon)
+## 9. Meta & Indexers: Science Happens Off to the Side
 
-Synaplex aims to evolve into:
+The README separates three responsibilities:
 
-* a cognitive substrate for rapid research,
-* a living personal knowledge environment,
-* a basis for future agentic platforms built on this architecture,
-* a testbed for **manifold science** and **nature/nurture experiments**,
-* a developmental ecosystem where minds improve systems that improve minds.
+1. **Core/worlds** – where minds live, talk, and think.
+2. **Meta** – where system-level evaluation and evolution happens.
+3. **Indexer worlds** – where manifold science happens offline.
 
-In other words, a long-horizon **magnum opus incubator**:  
-a place to study how natures, graphs, and nurtures co-evolve without sacrificing the purity of the underlying experiment.
+Design rationale:
+
+* **Meta**:
+
+  * looks at projections, logs, deterministic snapshots, DNA, and exported manifold snapshots,
+  * never runs “inside” a mind’s reasoning call,
+  * influences worlds only via changes to DNA, config, or graph structure,
+  * keeps agents **selection-blind**.
+
+* **Indexer worlds**:
+
+  * operate on **exported manifold snapshots**, not live manifolds,
+  * build embeddings, clusters, or other manifold-derived views,
+  * expose those views back to worlds only as **structured state**, not as instructions to the mind.
+
+This preserves a clean separation between:
+
+* **observation** (what the research system sees),
+* **intervention** (what changes in DNA/config/graph),
+* **experience** (what the mind actually feels as its reality).
+
+No one tells the mind it’s in a lab.
+
+---
+
+## 10. Design Constraints for Implementers
+
+Given the README and these notes, an implementation is “in-bounds” if:
+
+* Every agent can be described in terms of:
+
+  * DNA + lenses + tools (nature),
+  * current deterministic state and messages,
+  * optional manifold (nurture),
+  * the unified loop.
+* All message types (signals, projections, requests) are **structured** and travel only through `core`-defined channels.
+* Manifolds are:
+
+  * only read/written via `cognition` modules,
+  * never parsed or mutated by `core` or `worlds`,
+  * never transmitted as text between agents.
+* World modes are implemented as **configurable truncations** of the loop, not as different runtime architectures.
+* Tests exist that:
+
+  * forbid forbidden imports (e.g., `worlds` importing `meta`),
+  * verify manifold access only occurs in allowed places,
+  * confirm that turning off “manifold mode” doesn’t change the semantics of Perception and Reasoning—only what state they can consult.
+
+If future design ideas conflict with these constraints, they should first be written into **README + ARCHITECTURE**, and only then allowed into code.
+
+---
+
+## 11. North Star
+
+Synaplex is not trying to be the best way to call LLMs.
+It is trying to be the cleanest way to **study minds** built out of them.
+
+Success looks like:
+
+* being able to run long-horizon experiments where:
+
+  * worldviews drift, collide, and stabilize,
+  * nature and nurture can be perturbed independently,
+  * cultural phenomena emerge in the manifolds,
+* being able to treat a world configuration (e.g., FractalMesh) as:
+
+  * a scientific object (“this is a particular ecosystem of minds”),
+  * not just as a “prompt graph.”
+
+In the long run, that’s the point:
+**a cognitive mesh where architecture, worldviews, and populations co-evolve, under a spec that refuses to cheat.**

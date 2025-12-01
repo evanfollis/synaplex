@@ -1,314 +1,402 @@
 # Synaplex
 
-> An AI-native cognitive mesh built on opaque manifolds, a transparent message-passing graph, and emergent agent behavior.
+> Synaplex is an architecture for AI systems made of many interacting minds. Each mind maintains its own internal worldview while coordinating through a structured graph of messages.
 
-Synaplex is a generalized architecture for **graphs of AI minds** that:
+Synaplex provides a single pattern for organizing such systems:
 
-- maintain private, evolving internal state (**manifolds**, i.e., nurture),
-- communicate over a **structured message-passing graph** (signals, lenses, projections),
-- separate **nature** (DNA, deterministic logic, lenses, tools) from **nurture** (manifold trajectories),
-- support **multi-branch reasoning** and internal conjecture/criticism,
-- and can run in multiple modes, from pure deterministic graph to full manifold worlds.
+* multiple minds maintain **their own internal state** while sharing the same exterior world,
+* interaction flows through a **structured message graph** that shapes what each mind can perceive and act on,
+* the system distinguishes built-in structural constraints (nature) from learned internal organization (nurture) because they play different methodological roles, while leaving open how strictly or loosely that separation should manifest in implementation,
+* minds may run **internal reasoning routines**—branching, conjecture, critique—when interpreting what they receive,
+* and the same runtime structure can be used with or without the full cognitive loop enabled, allowing for ablation studies ranging from deterministic graph-only execution to full LLM-native, manifold-driven cognition.
 
-Concrete systems like **FractalMesh** are domain-specific worlds that **instantiate** this architecture (e.g., active equity research), but the core design is domain-agnostic.
-
-This README is an orientation map.  
-The canonical design lives in:
-
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) – structural spine, world modes, nature/nurture, invariants.
-- [`DESIGN_NOTES.md`](./DESIGN_NOTES.md) – intent, philosophy, and North Star.
-
-All implementation is expected to converge to those documents.
+Concrete “worlds” are simply domain-specific configurations of this architecture: they define their own DNA, lenses, tools, and agent roles. The core design remains fully domain-agnostic.
 
 ---
 
 ## 1. High-Level Goals
 
-Synaplex exists to provide a clean substrate for studying:
+Synaplex exists to provide a clean substrate for studying how distributed AI minds develop, interact, and evolve when they each maintain an internal worldview.
 
-- how AI minds **organize and refine knowledge** over long horizons,
-- how **internal schemas and “drive”** emerge when state persists,
-- how **multiple agents** interact via structured message passing rather than free-form chat,
-- and how **nature vs nurture** (DNA vs manifold) shape behavior individually and at the population level.
+More concretely, the architecture is designed to explore:
 
-The architecture supports three **world modes**, all with the same per-tick *shape*:
+* how minds **organize and refine internal representations** over long horizons without collapsing them into human-readable summaries,
+* how **self-generated internal worldviews** emerge when an agent’s internal state persists and influences its future reasoning,
+* how agents interact in a **non-hierarchical graph**, where perspective depends on where you stand and no node is intrinsically central,
+* how **perception** arises from structured message passing—both passive flows (subscriptions) and active information-seeking,
+* how **nature** (graph structure, DNA, lenses) and **nurture** (the evolving internal state) jointly shape behavior,
+* how internal reasoning—branching, conjecture, criticism, reconciliation—can occur *within* a mind without collapsing its internal representation,
+* and how populations of agents exhibit **cultural drift, evolutionary dynamics, and counterfactual behavior** when their worldviews interact indirectly through the graph.
 
-> 1. A **Nature pass** over structured state and messages.  
-> 2. An **Agent step** where the mind thinks about what just happened.
+The runtime exposes a unified cognitive loop:
 
-Worlds differ in *what* the Agent step is allowed to see and persist:
+> **Perception → Reasoning → Internal Update**
 
-1. **Graph-only world (nature-only / deterministic mesh)**  
-   - DNA defines agents, subscriptions, lenses, and deterministic aggregation.  
-   - Messages are structured, schema-governed objects.  
-   - Behaves like a GNN / belief-propagation system.  
-   - **No LLMs, no manifolds.** No Agent step.
+World configurations simply **disable or truncate later steps** for experimentation.
+They do **not** represent different ontologies.
 
-2. **Reasoning-augmented world (nature + stateless Agent step)**  
-   - Same graph and deterministic substrate.  
-   - The Agent step may call LLMs/tools to improve local updates and projections.  
-   - **No persistent manifold;** each tick is context-local.  
-   - All “memory” is encoded in outer structure (deterministic state, logs, external stores).
+Configurations differ only in which parts of the loop are enabled:
 
-3. **Manifold world (nature + Agent step + persistent nurture)**  
-   - Each agent maintains a private manifold that evolves over time.  
-   - The Agent step is seeded with both:
-     - outer structured view (`SubconsciousPacket` + deterministic state),
-     - and the prior manifold `M₀` (its current worldview).  
-   - While solving a small grounding task, it reconciles new evidence with `M₀` and writes internal notes for its future self (`M₁`).
+1. **Graph-only world**
 
-Layer 0 and 1 worlds must be usable on their own.  
-Layer 2 (manifolds) is **strictly additive**: it adds persistent nurture, not new obligations on the graph runtime.
+   * Only the perception step is active (deterministic aggregation via DNA).
+   * No reasoning, no persistent internal state.
+
+2. **Reasoning-augmented world**
+
+   * Perception + reasoning.
+   * No internal worldview is maintained.
+
+3. **Manifold world**
+
+   * Full loop: perception, reasoning, and persistent internal update.
+
+These modes are **scaffolds**, not commitments.
+The manifold’s structure is deliberately unconstrained so the system can observe how internal worldviews emerge, diversify, and influence behavior.
 
 ---
 
 ## 2. Core Mental Model
 
-At the core, Synaplex is a **message-passing graph of minds**:
+At its core, Synaplex is a **network of LLM-native minds** that each maintain an evolving internal worldview and interact through structured message passing.
+The graph provides the external environment; the minds provide the cognition.
 
-- **Nodes** are agents (with DNA, lenses, capabilities, and optionally manifolds).
-- **Edges** include:
-  - **subscriptions** (subconscious, DNA-defined),
-  - **projection requests** (ad-hoc, lens-conditioned),
-  - and a global broadcast of **signals** (lightweight advertisements).
+Within this network:
 
-Each mind has three epistemic aspects:
+* **Nodes** are agents defined by their structural blueprint (DNA), their perceptual transformations (lenses), their tools, and their evolving internal state.
+* **Edges** represent information flow:
 
-- a **Subconscious / Nature layer** – deterministic aggregation, no LLM, no manifolds,
-- an **Episodic / Agent step layer** – LLM-backed reasoning over what just happened,
-- and, in manifold worlds, a **Manifold / Nurture layer** – private, persistent worldview.
+  * **subscriptions** — stable, always-on inputs,
+  * **active requests** — directed information-seeking,
+  * **signals** — lightweight broadcasts that advertise aspects of a mind’s state.
 
-Minds never read each other’s manifolds.  
-All cross-agent perception is via **structured projections** interpreted through **receiver-owned lenses**.
+Each mind follows a unified cognitive loop:
 
-Nature is outer and structured.  
-Nurture is inner and opaque.
+1. It **perceives** the information available to it through its lenses.
+2. It **reasons** using its LLM-backed capabilities—exploring hypotheses, critiquing assumptions, or seeking additional evidence.
+3. It **updates** its internal worldview (the manifold) when persistent state is enabled.
+
+The manifold is the mind’s **private, persistent representation of its evolving understanding**—not a database, schema, or cache, but an internal cognitive substrate optimized for its own future versions.
+Other agents never access it directly; all perception of other minds flows through **structured projections** interpreted via the receiver’s lenses.
+
+This establishes a strict boundary:
+
+* **Nature** is the shared external structure that constrains perception and interaction: the graph, DNA, lenses, and deterministic state.
+* **Nurture** is the mind’s internal cognitive trajectory: its manifold, its reasoning patterns, and its evolving worldview.
+
+Nature organizes what a mind can see.
+Nurture organizes what a mind can become.
 
 ---
 
-## 3. Per-Tick Shape: Nature Pass & Agent Step
+## 3. Per-Tick Cognitive Loop
 
-Every agent tick has two conceptual phases:
+Each tick represents one cycle of interaction between a mind and its environment.
+The system does not divide cognition into stacked layers. Instead, every agent follows a **unified loop** with three functional roles:
 
-1. **Nature phase** – outer deterministic pass.
-2. **Agent step** – episodic reasoning, with or without nurture.
+1. **Perception** – the environment produces a structured view of what is visible to the agent.
+2. **Reasoning** – the agent interprets what it perceives, explores possibilities, and may request additional information.
+3. **Internal Update** – the agent revises its internal worldview (the manifold) based on its reasoning.
 
-Layer 0 worlds only run the Nature phase.
+World modes only determine which parts of this loop are active in a given experiment.
+World modes only deactivate parts of the loop; they do not introduce new cognitive ontologies.
 
-Layer 1 and 2 worlds run **Nature → Agent step**; Layer 2 additionally updates a manifold.
+---
 
-### 3.1 Nature Phase (Subconscious / Deterministic)
+### 3.1 Perception (Environment → Mind)
 
-For all agents (all world modes):
+The environment gathers inputs according to DNA-defined structure:
 
-- Collect structured inputs:
-  - projections from subscribed agents,
-  - masked views of data feeds (treated as always-on agents).
-- Aggregate and transform according to DNA-defined logic.
-- Update **DeterministicState** (nature).
-- Construct a `SubconsciousPacket`: an ephemeral summary of structured inputs for this tick.
+* projections from subscribed agents,
+* structured data feeds,
+* signals broadcast on the graph.
 
-Constraints:
+These are compiled into a **percept**, a structured representation of what the agent can see through its lenses.
 
-- **No LLM calls.**
-- **No manifold access.**
-- This is pure outer-world computation: *what happened* according to nature.
+No LLM calls occur here, and the agent’s internal worldview is not involved.
 
-### 3.2 Agent Step (Episodic Reasoning & Worldview Update)
+---
 
-The Agent step is where the mind *actually thinks* each tick, starting from the Nature output.
+### 3.2 Reasoning (Mind → Mind / Environment)
 
-It always:
+The mind interprets its percept using LLM-powered cognition.
+It may:
 
-- reads the `SubconsciousPacket`,
-- consults local deterministic state,
-- may call tools and vendors,
-- produces outward decisions/projections.
+* refine or critique its understanding,
+* explore multiple hypotheses,
+* identify information gaps,
+* issue directed requests,
+* generate outward signals or projections.
 
-World modes differ in what the Agent step is allowed to see:
+Branching styles (e.g., “explorer,” “skeptic”) represent internal cognitive variation.
 
-#### 3.2.1 Stateless Agent Step (Reasoning-Augmented Worlds)
+All outward behavior originates here.
 
-- Enabled in **Layer 1** worlds; there is **no manifold**.
-- The Agent step sees only **outer context**:
-  - `SubconsciousPacket`,
-  - deterministic state.
-- It may:
-  - refine explanations,
-  - compute analytics or scores,
-  - write structured results back into deterministic state.
-- Any “memory” must be encoded as structure (nature), not nurture.
+---
 
-#### 3.2.2 Manifold-Aware Agent Step (Manifold Worlds)
+### 3.3 Internal Update (Mind → Manifold)
 
-- Enabled in **Layer 2** worlds; a manifold (nurture) exists.
-- The Agent step is also the **conscious worldview update**:
+If persistent internal state is enabled, the mind updates its worldview.
 
-  - Loads the prior manifold `M₀` via the Mind abstraction.
-  - Reasons over:
-    - `SubconsciousPacket` (new evidence),
-    - deterministic state (current nature),
-    - `M₀` (current nurture),
-    - local tools/feeds.
-  - While solving a small **grounding task**, writes internal notes for its future self.
-  - The checkpoint ritual then captures those notes as the new manifold `M₁`.
+This update may:
 
-In simple implementations, this can be a single LLM call:  
-**“Think about this tick given SubconsciousPacket + M₀, solve a tiny task, and in the process write internal notes,”**  
-where only the notes are persisted as `M₁`.
+* reconcile new evidence,
+* integrate insights from branching,
+* reorganize or enrich latent structures,
+* capture contradictions or unresolved questions for future iterations.
 
-More complex worlds may layer branching/reconciliation inside the Agent step (see §4).
+Only future instances of the same mind access this state.
 
-### 3.3 Tick Sequence Diagram
+---
+
+### 3.4 Unified Tick Flow
+
+> **Perception → Reasoning → Internal Update**
+
+World modes simply truncate this sequence.
+
+---
+
+### 3.5 Tick Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant W as WorldRuntime
+    participant Env as Environment
     participant A as Agent
     participant MS as ManifoldStore
-    participant DS as DetStateStore
-    participant N as NaturePhase
-    participant AS as AgentStep
-    participant B1 as BranchExplorer
-    participant B2 as BranchSkeptic
-    participant CP as CheckpointMind
+    participant R as ReasoningEngine
+    participant U as UpdateMechanism
 
-    W->>A: tick(tick_id)
+    Env->>Env: gather_inputs(subscriptions, data, signals)
+    Env->>A: percept
 
-    %% Nature phase (no LLM, no manifolds)
-    A->>DS: load_deterministic_state()
-    DS-->>A: det_state_t
-
-    A->>N: run_nature(det_state_t, projections, data, DNA)
-    N-->>A: det_outputs, SubconsciousPacket, det_state_t_plus_1
-
-    A->>DS: save_deterministic_state(det_state_t_plus_1)
-
-    %% Agent step (world-mode dependent)
-    alt Layer 1 (stateless Agent step)
-        A->>AS: agent_step(SubconsciousPacket, det_state_t_plus_1)
-        AS-->>A: updated_det_state
-        A->>DS: save_deterministic_state(updated_det_state)
-        A-->>W: EpisodeOutput(det_outputs, updated_det_state, signals, projections)
-    else Layer 2 (manifold-aware Agent step)
-        %% Load nurture
-        A->>MS: load_latest_manifold()
-        MS-->>A: ManifoldEnvelope M0
-
-        %% Optional branching (conjecture)
-        par Explorer branch
-            A->>B1: scaffold(M0, SubconsciousPacket, style="explorer")
-            B1-->>A: scratch_1, outward_1
-        and Skeptic branch
-            A->>B2: scaffold(M0, SubconsciousPacket, style="skeptic")
-            B2-->>A: scratch_2, outward_2
-        end
-
-        %% Checkpoint ritual (criticism & nurture update)
-        A->>CP: checkpoint(M0, SubconsciousPacket, [scratch_1, scratch_2])
-        CP-->>A: manifold_text M1
-
-        A->>MS: save_manifold(M1)
-
-        A-->>W: EpisodeOutput(det_outputs, det_state_t_plus_1, signals, projections)
+    alt manifold-enabled
+        A->>MS: load_manifold()
+        MS-->>A: M0
+        A->>R: reason(percept, M0)
+    else stateless
+        A->>R: reason(percept)
     end
+
+    R-->>A: reasoning_output, optional branches
+
+    alt manifold-enabled
+        A->>U: update_worldview(M0, reasoning_output)
+        U-->>A: M1
+        A->>MS: save_manifold(M1)
+    end
+
+    A-->>Env: outward_behavior(reasoning_output)
 ```
 
-Manifold I/O is **strictly confined** to the Agent step in manifold worlds and to offline/meta/indexer contexts.
+This reflects:
+
+* a single cognitive loop,
+* deterministic preprocessing in the environment,
+* reasoning as the center of gravity,
+* manifold updates as optional but intended for full cognition.
 
 ---
 
 ## 4. Graph of Minds
 
-From the world’s perspective, Synaplex is a **network of agents** connected by subscriptions and on-demand projections. Manifolds never appear on the wires.
+Synaplex is a **message-passing graph of minds**, where each mind maintains its own evolving worldview while participating in a shared external structure.
+The graph defines *who can see what*, *when*, and *in what transformed form*.
+The minds define *how they think about what they see*.
+
+Communication happens entirely through **structured, lens-conditioned projections and signals**.
+A mind’s private worldview—the manifold—never leaves the mind that owns it.
 
 ```mermaid
 flowchart LR
-    subgraph World["World Graph (Subscriptions + Runtime)"]
+    subgraph World["Message-Passing Graph"]
         direction LR
-        A1["Agent A1<br>(DNA + Lens + capabilities<br>+ optional Manifold)"]
-        A2["Agent A2<br>(DNA + Lens + capabilities<br>+ optional Manifold)"]
-        A3["Agent A3<br>(DNA + Lens + capabilities<br>+ optional Manifold)"]
+        A1["Agent A1<br>(DNA · lenses · tools · manifold)"]
+        A2["Agent A2<br>(DNA · lenses · tools · manifold)"]
+        A3["Agent A3<br>(DNA · lenses · tools · manifold)"]
     end
 
-    subgraph Stores["Stores"]
-        MStore["ManifoldStore<br>(opaque nurture text)"]
-        DStore["DeterministicStateStore<br>(structured nature state)"]
+    subgraph Stores["Internal Stores"]
+        MStore["ManifoldStore<br>(private worldview snapshots)"]
+        DStore["StateStore<br>(structured environmental state)"]
     end
 
-    %% State links
-    A1 -->|load/save manifold| MStore
-    A2 -->|load/save manifold| MStore
-    A3 -->|load/save manifold| MStore
+    %% Manifold I/O (private)
+    A1 -->|load/save| MStore
+    A2 -->|load/save| MStore
+    A3 -->|load/save| MStore
 
-    A1 -->|load/save nature| DStore
-    A2 -->|load/save nature| DStore
-    A3 -->|load/save nature| DStore
+    %% Environmental state
+    A1 -->|read/write| DStore
+    A2 -->|read/write| DStore
+    A3 -->|read/write| DStore
 
-    %% Global signals (broadcast-ish, sender-owned)
-    A1 -. GlobalSignal .-> A2
-    A1 -. GlobalSignal .-> A3
-    A2 -. GlobalSignal .-> A1
-    A3 -. GlobalSignal .-> A1
+    %% Global signals (advertised features)
+    A1 -. signal .-> A2
+    A1 -. signal .-> A3
+    A2 -. signal .-> A1
+    A3 -. signal .-> A1
 
-    %% Projections (lens-conditioned, receiver-owned semantics)
-    A2 -->|RequestShape| A1
-    A1 -->|"Projection\n(slice via A2 lens)"| A2
+    %% Projections (receiver-owned transformations)
+    A2 -->|request| A1
+    A1 -->|"projection via A2-lens"| A2
 
-    A3 -->|RequestShape| A1
-    A1 -->|"Projection\n(slice via A3 lens)"| A3
+    A3 -->|request| A1
+    A1 -->|"projection via A3-lens"| A3
 ```
-
-Key points:
-
-* **GlobalSignal**: cheap advertisement (“what’s hot here?”) based on structured nature state.
-* **Lens**: owned by the receiver; determines which signals to attend to and how to request a projection.
-* **Projection**: a structured, lens-conditioned slice of an agent’s **deterministic (nature) state + manifold-derived views** (never raw manifold text).
 
 ---
 
-## 5. Architectural Layers & Code Layout
+## 4.1 Subscriptions: Always-On Perception
 
-The codebase mirrors the architecture so invariants are easy to enforce and hard to break.
+Some edges in the graph are **subscriptions**:
+long-lived, structural connections defined by an agent’s DNA.
+
+If A2 subscribes to A1, then on every tick:
+
+1. A1 produces a *projection* of its state **as perceived through A2’s lens**.
+2. A2 receives this transformed view as part of its percept.
+3. A1 remains unaware of how its state was transformed or interpreted.
+
+Subscriptions define the *passive perceptual field* of each mind.
+The receiver’s lens—not the sender’s internal representation—defines the meaning of the projection.
+
+---
+
+## 4.2 Signals: What a Mind Advertises About Itself
+
+A **signal** is a lightweight broadcast emitted by an agent to the entire graph.
+
+You can think of signals as **attentional keys**:
+
+* small, distilled indicators of “what’s happening here,”
+* not summaries of the agent’s worldview,
+* not collapsed representations,
+* just *hooks* that receiving agents can choose to attend to.
+
+Agents decide which signals matter using their lenses.
+
+No worldview content is ever leaked through signals.
+
+---
+
+## 4.3 Active Requests: Directed Queries for Information
+
+Subscriptions define what a mind *always* sees.
+**Active requests** define what a mind *seeks out*.
+
+An active request consists of:
+
+* a **request shape** (query) expressing what kind of information the agent wants,
+* optionally, parameters specifying desired granularity or formatting,
+* a transformation step defined entirely by the receiver’s lens.
+
+The requested agent responds by constructing:
+
+> a **projection** — a structured, lens-conditioned slice of what the receiver is allowed to see.
+
+Critically:
+
+* Projections are **receiver-owned semantics**.
+* A1 does **not** know how A2 interprets its state.
+* A2 does **not** see A1’s manifold or any raw text from it.
+
+This preserves the independence of worldviews and prevents accidental convergence through communication channels.
+
+---
+
+## 4.4 Projections: Structured Perception, Never Worldview Leakage
+
+A projection is created by:
+
+1. Taking the sender’s **environmentally visible state**,
+2. Optionally including **manifold-derived views** that the sender chooses to expose in structured form,
+3. Transforming it through the **receiver’s lens**,
+4. Delivering the resulting structured representation to the receiver.
+
+Projections are the only way minds perceive each other.
+
+*No manifold text is ever transmitted.*
+*No internal worldview escapes its owner.*
+
+This is essential for:
+
+* preserving epistemic richness,
+* avoiding message collapse,
+* enabling honest emergence of worldview structure,
+* and allowing counterfactual experiments where worldviews diverge dramatically.
+
+---
+
+## 4.5 Relative Perspective and Non-Hierarchical Structure
+
+Synaplex’s graph is fundamentally **non-hierarchical**:
+
+* There is no “central agent.”
+* Importance is relative to perspective.
+* An expert-level mind and a data-vendor mind differ only in role, not privilege.
+
+Every node is both:
+
+* a full mind with its own worldview, and
+* a *perceived* node seen only through receivers’ lenses.
+
+This symmetry is foundational: it ensures that moving “up” or “down” the conceptual stack never changes the underlying ontology—only the *vantage point*.
+
+---
+
+## 5. Architectural Structure & Code Layout
+
+The codebase mirrors the conceptual architecture so that epistemic boundaries are easy to enforce and hard to violate. Each top-level module corresponds to a distinct concern:
+
+* external structure and message-passing,
+* internal mind dynamics,
+* offline manifold analysis,
+* system-level evaluation and evolution,
+* and domain-specific worlds.
+
+This keeps “what the world is” separate from “how minds think” and “how researchers study the system.”
+
+---
 
 ### 5.1 Conceptual Modules
 
 ```mermaid
 flowchart LR
-    subgraph Core["synaplex.core (Nature substrate)"]
+
+    subgraph Core["synaplex.core (External Structure)"]
         direction TB
-        RUNTIME["GraphRuntime\n(InProcessGraphRuntime)"]
-        AGENTS["Agent base classes\n(Nature + AgentStep wiring)"]
-        MSG["Messages & IDs\n(GlobalSignal, Projection,\nSubconsciousPacket, WorldId, ...)"]
-        DNA["DNA, Lens, DeterministicState\n(nature primitives)"]
-        PHASES["Phase guard\n(NATURE / AGENT / META\nfor LLM/manifold access)"]
+        RUNTIME["GraphRuntime\n(tick scheduling, routing)"]
+        AGENT_IFACE["Agent interface / base hooks\n(unified loop entry points)"]
+        MSG["Messages & IDs\n(signals, projections, requests)"]
+        DNA["DNA, Lenses, EnvState\n(structural constraints)"]
     end
 
-    subgraph Cognition["synaplex.cognition (Minds & nurture IO)"]
+    subgraph Cognition["synaplex.cognition (Internal Mind Dynamics)"]
         direction TB
-        LLM["LLM client / tools\n(ResponsesClient, tool wrappers)"]
-        MANIFOLDS["ManifoldEnvelope + ManifoldStore"]
-        MIND["Mind + checkpoint ritual\n(manifold IO, prompts)"]
-        BRANCHES["Branching & reconciliation\n(conjecture/criticism)"]
-        TASKS["Grounding tasks\nfor checkpointing"]
+        LLM["LLM client / tool interfaces"]
+        MANIFOLD["ManifoldStore + ManifoldEnvelope\n(private worldview snapshots)"]
+        MIND["Mind abstraction\n(load/update worldview)"]
+        BRANCH["Branching & consolidation\n(exploration styles)"]
+        UPDATE["Update mechanisms\n(checkpoint / refinement)"]
     end
 
-    subgraph Indexers["synaplex.manifolds_indexers (Offline manifold science)"]
+    subgraph Indexers["synaplex.manifolds_indexers\n(Offline manifold science)"]
         direction TB
-        EXPORT["Snapshot export\n(runtime → snapshot sink)"]
-        INDEX_WORLD["Indexer world\n(ManifoldSnapshot → embeddings/views)"]
+        EXPORT["Snapshot export\n(runtime → offline store)"]
+        INDEXWORLD["Indexer worlds\n(embedding, clustering,\nworldview analysis)"]
     end
 
-    subgraph Meta["synaplex.meta (Evaluation & evolution)"]
+    subgraph Meta["synaplex.meta (System-level evaluation)"]
         direction TB
-        METRICS["Evaluation\n(over projections / logs)"]
-        EVOLVE["Evolution & experiments\n(over DNA, config, snapshots)"]
+        METRICS["Metrics & evaluation\n(over projections, logs,\nsnapshots)"]
+        EVOLVE["Evolution & search\n(over DNA, graph configs)"]
     end
 
     subgraph Worlds["synaplex.worlds.* (Domain worlds)"]
         direction TB
-        WCFG["World configs\n(DNA templates, lenses, tools)"]
-        WAG["Domain agents\n(e.g., FractalMeshAgent)"]
+        CONFIG["World configs\n(DNA templates, lenses,\ntools, roles)"]
+        WORLDAGENTS["Domain agents\n(e.g., AnalystAgent,\nPlannerAgent)"]
     end
 
     Core --> Cognition
@@ -321,209 +409,423 @@ flowchart LR
     Meta --> Worlds
 ```
 
-Key rules:
+---
 
-* `synaplex.core`:
+### 5.2 Module Responsibilities & Boundaries
 
-  * imports only stdlib + typing/dataclasses,
-  * knows nothing about manifolds, LLMs, or meta.
-* `synaplex.cognition`:
+#### `synaplex.core` — external structure and protocols
 
-  * imports `core`,
-  * exposes Mind + manifold IO + branching,
-  * enforces phase bounds for LLM calls and manifold access.
-* `synaplex.manifolds_indexers`:
+`core` defines everything about the **shared environment**:
 
-  * operates on **exported manifold snapshots**,
-  * writes manifold-derived views into structured state.
-* `synaplex.meta`:
+* the graph runtime (ticks, routing, subscriptions),
+* message types and IDs (signals, projections, requests),
+* DNA and lenses (what agents are wired to see),
+* structured environmental state that lives outside any single mind.
 
-  * reads projections/logs/state/DNA/snapshots,
-  * writes back only via DNA/config/graph changes,
-  * never called from agents directly.
-* `synaplex.worlds.*`:
+It deliberately:
 
-  * depends on `core` + `cognition`,
-  * never imports `meta` (to preserve selection blindness).
+* imports only stdlib + typing/dataclasses + small utilities,
+* does **not** know about LLMs, manifolds, or evaluation logic,
+* treats agents via an abstract interface (unified loop hooks), not concrete LLM implementations.
+
+This keeps the environment epistemically independent from the minds running inside it.
 
 ---
 
-## 6. Agent Anatomy: Nature vs Nurture
+#### `synaplex.cognition` — internal mind dynamics
 
-Each agent has three conceptual aspects, mapped onto nature and nurture:
+`cognition` owns the **private life of the mind**:
+
+* loading and saving manifold snapshots,
+* calling the LLM and tools,
+* implementing branching styles (explorer, skeptic, etc.),
+* running the internal update mechanisms that revise the worldview.
+
+It imports from `core` (to understand messages, DNA, lenses), but `core` never imports from `cognition`.
+
+Only `cognition` is allowed to:
+
+* construct or update manifolds,
+* hold references to the LLM client,
+* define how the unified loop (Perception → Reasoning → Internal Update) is concretely realized.
+
+This preserves manifold purity and keeps message passing separate from internal cognition.
+
+---
+
+#### `synaplex.manifolds_indexers` — offline manifold science
+
+`manifolds_indexers` is for **studying worldviews offline**:
+
+* it operates on exported `ManifoldSnapshot` objects,
+* builds embeddings or other geometric representations,
+* clusters or compares worldviews,
+* and writes manifold-derived *views* into structured state for potential use by worlds.
+
+Crucially:
+
+* it never edits live manifolds,
+* it never runs in the same process as the online agents’ reasoning loop,
+* it communicates via explicit export/import paths.
+
+Information flow is strictly one-way:
+
+> manifolds → snapshots → indexers → structured views → (optional) worlds
+
+There is no “edit manifold” API.
+
+---
+
+#### `synaplex.meta` — system-level evaluation & evolution
+
+`meta` is for **researchers and experiments**, not for the agents:
+
+* computing metrics over projections, logs, DNA histories, and manifold snapshots,
+* simulating different graph topologies,
+* evolving DNA or configurations across runs,
+* running controlled experiments over populations of agents.
+
+Agents and worlds do not import `meta`. Any influence `meta` has on the live system happens by:
+
+* changing DNA templates,
+* adjusting world configs,
+* or altering graph structure between runs.
+
+This preserves **selection blindness**: minds are not told how they are judged.
+
+---
+
+#### `synaplex.worlds.*` — domain-specific instantiations
+
+A “world” is a **domain-specific configuration** of the architecture:
+
+* it defines DNA templates for roles (e.g., MacroAgent, AnalystAgent),
+* specifies lenses for interpreting domain data,
+* wires up tool integrations (APIs, data vendors),
+* declares which agents exist and how they are connected.
+
+Worlds:
+
+* depend on `core` (for structure and messages),
+* depend on `cognition` (for LLM + manifold behavior),
+* may read from `manifolds_indexers` outputs (structured views),
+* do **not** import `meta`.
+
+Worlds do not introduce new architectural primitives; they simply fill in the abstract pattern with domain content.
+
+---
+
+### 5.3 Invariants Enforced by Layout
+
+The layout is designed so a small set of tests can act as **tripwires** against architectural drift:
+
+* `core` never imports `cognition`, `meta`, or `manifolds_indexers`.
+* `cognition` is the only place that constructs or updates manifolds.
+* `worlds` never import `meta`.
+* `meta` and `manifolds_indexers` operate on snapshots and logs, not live agent internals.
+*  `cognition` never writes to DeterministicState except through the agent interface hooks defined in `core`.
+
+These invariants keep Synaplex implementationally honest to its design:
+the environment remains external, worldviews stay private, and research logic does not collapse into the minds it studies.
+
+---
+
+## 6. Agent Anatomy: Nature & Nurture
+
+A Synaplex agent is a mind embedded in a structured environment.
+
+Conceptually, each agent has:
+
+* a **nature blueprint** (DNA and lenses) that defines how it is wired into the graph, and  
+* a **nurture trajectory** (its evolving worldview and reasoning patterns) that develops over time.
 
 ```mermaid
 flowchart TB
     subgraph Agent["Agent"]
         direction TB
-        DNA["DNA\n(nature:\nrole, lens, tools,\nsubscriptions, behavior params)"]
-        DETL["Subconscious / Nature Layer\n(deterministic aggregation,\nno LLM, no manifold)"]
-        EP["Episodic / Agent Step\n(LLM scaffolding over\nSubconsciousPacket + nature)"]
-        MF["Manifold / Nurture\n(private, evolving worldview,\nLayer 2 worlds only)"]
+        DNA["DNA\n(role, lenses, subscriptions,\nbehavior parameters)"]
+        IFACE["Graph Interface\n(subscriptions, signals,\nprojection handlers)"]
+        LOOP["Cognitive Loop\n(Perception · Reasoning · Internal Update)"]
+        MF["Worldview (Manifold)\n(private, persistent,\noptional in ablations)"]
     end
 
-    DNA --> DETL
-    DETL --> EP
-    MF --> EP
-    EP --> MF
+    DNA --> IFACE
+    DNA --> LOOP
+    IFACE --> LOOP
+    LOOP --> IFACE
+    MF <--> LOOP
 ```
 
-* **DNA** – nature blueprint: what the agent is built to see and do.
-* **Subconscious / Nature layer** – deterministic aggregation of inputs.
-* **Episodic / Agent step layer** – LLM-backed thinking about what just happened.
-* **Manifold / Nurture** – private persistent worldview, updated only via checkpoint.
+### 6.1 Nature: how the agent is wired into the world
 
-Nature and nurture are deliberately separable:
+An agent’s **nature** is everything that constrains how it can see and act:
 
-* You can clone DNA with different manifolds (same nature, different nurture).
-* You can swap manifolds across compatible DNAs (same nurture, different nature).
-* You can study population-level dynamics where **nature evolves** (genetic) and **nurture diffuses** (cultural).
+* **DNA** – its structural blueprint:
+
+  * role and high-level purpose,
+  * which agents or data sources it subscribes to,
+  * which tools it can use,
+  * behavior parameters and policies.
+* **Lenses** – how it interprets incoming signals and constructs projections from other agents.
+* **Graph interface** – how it emits signals, handles requests, and receives its percept each tick.
+
+Nature is stable on the timescale of a single run. It defines *what the agent could, in principle, pay attention to* and *what outputs it is allowed to produce*.
+
+---
+
+### 6.2 Nurture: how the agent’s worldview evolves
+
+An agent’s **nurture** is its internal cognitive life:
+
+* **Worldview (manifold)** – a private, persistent representation of how the agent currently understands its world. It is optimized for the agent’s own future reasoning, not for external readability.
+* **Reasoning patterns** – how it tends to explore, critique, and revise that worldview over time:
+
+  * which branches it spawns (explorer, skeptic, etc.),
+  * how it reconciles conflicting evidence,
+  * how it handles uncertainty, contradictions, and unfinished threads.
+
+The unified loop from Section 3 ties these together:
+
+1. **Perception** – the agent receives a structured percept, shaped by DNA and lenses.
+2. **Reasoning** – it interprets that percept using its LLM-backed capabilities, optionally drawing on its current manifold.
+3. **Internal Update** – it may revise its manifold, altering the future trajectory of its nurture.
+
+In ablation configurations, the cognitive loop can run **without** a persistent manifold, but the intended regime for studying emergent behavior is manifold-enabled.
+
+---
+
+### 6.3 Nature vs Nurture: separable but coupled
+
+Nature and nurture are deliberately separable for experimental purposes:
+
+* You can **clone DNA** with different initial manifolds:
+
+  * same wiring and role, different starting worldview.
+* You can **reuse a manifold** across compatible DNAs:
+
+  * same worldview, different wiring into the graph.
+* You can study populations where:
+
+  * **nature evolves** (changes in DNA, lenses, graph structure),
+  * **nurture diffuses** (worldviews influence each other indirectly through projections and signals).
+
+At runtime, though, they are tightly coupled:
+
+* Nature constrains what the agent can see and express.
+* Nurture shapes how it interprets those constraints and how its behavior actually unfolds over time.
+
+The architecture is designed so you can perturb either side independently in controlled experiments, without collapsing the distinction in the implementation.
 
 ---
 
 ## 7. Invariants, Indexers, and Non-Goals
 
-These guardrails keep Synaplex from degenerating into a generic “agent framework.”
+These guardrails prevent Synaplex from collapsing into a generic “multi-agent wrapper.”  
+They preserve the architectural commitments that make the system a platform for studying minds rather than a prompt-orchestration toolkit.
+
+---
 
 ### 7.1 Manifold purity & access
 
-* Manifolds are **opaque**: core runtime never parses or edits them.
-* Only the **checkpoint ritual** writes to a manifold, via a single checkpoint scope in `cognition.Mind`.
-* **Manifold reads/writes are phase-bounded**:
+* The manifold is **opaque** to the runtime: no parsing, no schema enforcement, no pattern-specific manipulation.
+* Only the **checkpoint ritual** writes to the manifold, and it occurs inside a single, well-bounded scope (`cognition.Mind`).
+* **Access is phase-bounded**:
+  * no manifold reads/writes during environmental preprocessing (Perception),
+  * only the owning agent, during its **Internal Update** step, may read or write the manifold,
+  * plus offline/indexer/meta contexts.
+* Structured information belongs in **DeterministicState (nature)**;  
+  the manifold is reserved for **nurture**—the agent’s internal, self-authored worldview.
 
-  * no manifold access in the Nature phase,
-  * only in the Agent step of the owning mind (in manifold worlds),
-  * plus Meta/indexer/offline contexts.
-* Structured information belongs in **DeterministicState (nature)**, not in manifolds (nurture).
+This invariant protects the system from treating manifolds as external databases or debugging logs.
+
+---
 
 ### 7.2 Indexer worlds & manifold science
 
-* Manifold analysis happens in **separate indexer worlds**, never inline with live agent prompts.
+Manifold analysis is a **separate world**, never inline with agent cognition.
+
 * Runtime exports **ManifoldSnapshots** (opaque text + metadata) through a one-way pipeline.
-* Indexer worlds ingest snapshots and write **manifold-derived views** (embeddings, clusters, factors) into their own nature state.
-* Core worlds see these views only via projections; there is no “edit manifold” API.
+* Indexer worlds ingest snapshots and compute **manifold-derived views** (embeddings, clusters, latent factors, etc.).
+* These derived views are written into the **indexer’s own nature state**, not back into core worlds.
+* Core worlds perceive indexer results only via standard projections;  
+  there is no “edit manifold” or “fix agent” API.
+
+This enforces a strict separation between **observation** and **intervention**, preventing feedback loops that collapse diversity of worldviews.
+
+---
 
 ### 7.3 Receiver-owned semantics
 
-* Senders broadcast **GlobalSignals** (cheap, approximate, schema-governed).
-* Receivers interpret via their own **Lenses** and DNA-defined logic.
-* Projections are **receiver-conditioned slices** of sender state + manifold-derived views; no raw manifold text on the wire.
+Communication in Synaplex is **receiver-centric**:
+
+* Agents broadcast **GlobalSignals**—cheap, approximate glimpses of structured state.
+* Receivers interpret signals through their own **Lenses**, not the sender’s intent.
+* Projections are **receiver-conditioned slices** of:
+  * sender deterministic state,
+  * sender’s manifold-derived views (never raw manifold text).
+
+This preserves autonomy: each mind sees the world according to its own epistemic machinery, not through shared schemas.
+
+---
 
 ### 7.4 Selection blindness & meta isolation
 
-* Agents do not see system-level objectives or selection metrics.
-* Evolution (spawn/clone/mutate/retire) acts on **DNA/config/graph**, never directly on manifolds.
-* Meta logic lives in `synaplex.meta` and:
+Agents remain unaware of meta-level judgment.
 
-  * reads projections, logs, DNA, deterministic snapshots, manifold snapshots,
-  * writes back by changing DNA, graph structure, or config,
-  * is never imported directly into `synaplex.worlds.*`.
+* They do not see system-level performance metrics, population statistics, or selection objectives.
+* Evolutionary processes (spawn / clone / mutate / retire) act on **DNA, graph structure, or config**, not on manifolds.
+* `synaplex.meta`:
+  * reads logs, projections, deterministic snapshots, DNA, and manifold snapshots,
+  * writes back **only** through changes to DNA/config/graph,
+  * is never imported into `synaplex.worlds.*` (to preserve selection blindness).
+
+This ensures minds develop according to their internal reasoning, not meta feedback loops.
+
+---
 
 ### 7.5 Conjecture & criticism are internal
 
-* Multi-branch reasoning and reconciliation happen **inside** a mind anchored to its own manifold.
-* Cross-agent “consensus” artifacts (dashboards, population summaries) are meta/translation objects and are **not** fed back as direct inputs to manifold updates.
+Reasoning branches and reconciliation mechanisms belong **inside** a single mind:
+
+* Branches (explorer, skeptic, etc.) are variations of a mind’s own internal process.
+* Reconciliation occurs during the **Internal Update** step anchored to its manifold.
+* Cross-agent artifacts—dashboards, summaries, population models—belong to the **meta** layer and do not feed directly back into manifold updates.
+
+This protects individual epistemic trajectories from collapsing into externally imposed consensus.
+
+---
 
 ### 7.6 Non-goals
 
 Synaplex is **not**:
 
-* a LangGraph/AutoGen clone,
-* a workflow engine with fancy prompts,
-* a vector-DB-wrapped LLM assistant,
+* a LangGraph/AutoGen competitor,
+* a workflow or prompt-orchestration engine,
+* a vector-DB-augmented assistant,
 * or a schema-first knowledge graph.
 
-Those may exist as **world-specific tools** on top, but they are not the core substrate.
+Such components may appear **within specific worlds** as tools or data sources,  
+but they are not the underlying substrate.
 
----
+The substrate is the cognitive mesh:  
+**LLM-native minds, persistent worldviews, and a structured graph that shapes how they see, think, and evolve.**
 
 ## 8. Repo Layout
 
-The concrete repo skeleton mirrors these concepts:
+The concrete repo skeleton mirrors the architecture so that conceptual boundaries show up directly in the file tree:
 
 ```text
 .
-├── README.md              # This file: orientation + diagrams
-├── ARCHITECTURE.md        # Canonical structural spine and invariants (nature/nurture)
-├── DESIGN_NOTES.md        # Intent, philosophy, North Star
+├── README.md               # Orientation, mental model, diagrams
+├── ARCHITECTURE.md         # Canonical structural spine and invariants (nature/nurture, loop shape)
+├── DESIGN_NOTES.md         # Intent, philosophy, North Star
 ├── synaplex/
 │   ├── __init__.py
-│   ├── core/
+│   ├── core/               # External structure: graph, messages, DNA, lenses, env state
 │   │   ├── __init__.py
-│   │   ├── ids.py
-│   │   ├── phases.py          # Nature / Agent / Meta phase guard
+│   │   ├── ids.py          # WorldId, AgentId, MessageId, etc.
 │   │   ├── errors.py
-│   │   ├── capabilities.py    # capability flags, type markers
-│   │   ├── dna.py             # DNA = nature blueprint
-│   │   ├── lens.py
-│   │   ├── state.py           # DeterministicState (nature)
-│   │   ├── messages.py        # GlobalSignal, Projection, SubconsciousPacket
-│   │   ├── agent_base.py      # Agent base classes (world modes via capabilities)
+│   │   ├── dna.py          # DNA = structural blueprint (roles, subscriptions, tools, params)
+│   │   ├── lenses.py       # Lens definitions and request/response shapes
+│   │   ├── env_state.py    # Shared environmental / deterministic state (nature)
+│   │   ├── messages.py     # Signals, projections, requests, percept structures
+│   │   ├── agent_interface.py
+│   │   │                   # Abstract hooks for the cognitive loop:
+│   │   │                   #   perceive() / reason() / act() / update()
 │   │   ├── runtime_interface.py
+│   │   │                   # Abstract graph runtime interface (ticks, routing)
 │   │   ├── runtime_inprocess.py
-│   │   └── evolution_config.py
-│   ├── cognition/
+│   │   │                   # In-process reference implementation of the runtime
+│   │   └── graph_config.py # Config for worlds: agent set, edges, subscriptions
+│   ├── cognition/          # Internal mind dynamics (LLM + manifold)
 │   │   ├── __init__.py
-│   │   ├── llm_client.py      # ResponsesClient with phase guard
-│   │   ├── manifolds.py       # ManifoldEnvelope + ManifoldStore
-│   │   ├── mind.py            # Mind + checkpoint ritual (only write path)
-│   │   ├── branches.py        # Optional branching/reconciliation engine
-│   │   ├── tasks.py           # GroundingTask definitions
-│   │   └── tools.py           # Tool wrappers (phase-aware)
-│   ├── meta/
+│   │   ├── llm_client.py   # LLM + tool client abstractions
+│   │   ├── manifolds.py    # ManifoldEnvelope + ManifoldStore (private worldview snapshots)
+│   │   ├── mind.py         # Mind abstraction: load/update worldview, unified loop wiring
+│   │   ├── branching.py    # Optional branching/reconciliation mechanisms
+│   │   ├── update.py       # Checkpoint / consolidation / internal update strategies
+│   │   └── tools.py        # Tool wrappers used during reasoning
+│   ├── manifolds_indexers/ # Offline manifold science
 │   │   ├── __init__.py
-│   │   ├── evaluation.py      # system metrics over projections/logs
-│   │   ├── evolution.py       # DNA/config mutations, population ops
-│   │   └── experiments.py     # nature vs nurture experiments
-│   ├── manifolds_indexers/
-│   │   ├── __init__.py
-│   │   ├── export.py          # runtime → snapshot sink (one-way)
+│   │   ├── export.py       # runtime → snapshot sink (one-way manifold export)
 │   │   └── indexer_world/
 │   │       ├── __init__.py
-│   │       ├── types.py       # ManifoldSnapshot, etc.
-│   │       ├── agents.py      # Indexer agents; embeddings, clustering, views
+│   │       ├── types.py    # ManifoldSnapshot, IndexerConfig, etc.
+│   │       ├── agents.py   # Indexer agents (embeddings, clustering, viewpoint construction)
 │   │       └── world_config.py
-│   └── worlds/
+│   ├── meta/               # System-level evaluation and evolution
+│   │   ├── __init__.py
+│   │   ├── evaluation.py   # Metrics over projections, logs, snapshots
+│   │   ├── evolution.py    # DNA/graph search, evolution, population experiments
+│   │   └── experiments.py  # Experiment harnesses (nature vs nurture, counterfactuals, etc.)
+│   └── worlds/             # Domain-specific instantiations
 │       ├── __init__.py
 │       └── fractalmesh/
 │           ├── __init__.py
-│           ├── config.py
-│           ├── dna_templates.py
-│           ├── lenses.py
-│           ├── agents.py      # e.g., FractalMeshAgent (manifold world)
-│           ├── tools.py
-│           └── bootstrap.py
+│           ├── config.py         # World configuration (agents, edges, loop settings)
+│           ├── dna_templates.py  # Role-specific DNA templates
+│           ├── lenses.py         # Domain lenses for interpreting signals/data
+│           ├── agents.py         # Domain agents using the unified loop
+│           ├── tools.py          # Domain tool wiring (APIs, data vendors)
+│           └── bootstrap.py      # Entry points to spin up this world
 └── tests/
     ├── __init__.py
-    ├── test_invariants_imports.py        # layering: core → cognition → worlds, never the reverse
-    ├── test_invariants_phases.py         # no LLM in Nature phase, etc.
-    ├── test_invariants_manifolds.py      # only Mind constructs ManifoldEnvelope
-    ├── test_invariants_worlds_meta.py    # worlds don’t import meta
-    └── test_invariants_manifold_phases.py# manifold I/O only in Agent step / meta
+    ├── test_invariants_imports.py
+    │       # layering: core → cognition → worlds; worlds do not import meta; no cycles
+    ├── test_invariants_manifolds_privacy.py
+    │       # only cognition constructs/updates manifolds; no manifold access from core/worlds
+    ├── test_invariants_indexer_flow.py
+    │       # manifold export is one-way; indexers see snapshots only
+    ├── test_invariants_worlds_meta.py
+    │       # meta logic not imported into synaplex.worlds.*
+    └── test_invariants_loop_modes.py
+            # loop truncation rules: graph-only, reasoning-augmented, manifold worlds
 ```
 
-The tests act as **tripwires** to catch drift: wrong imports, LLM use in the wrong phase, illegal manifold construction, meta leakage into worlds, etc.
+The tests act as **tripwires** against architectural drift:
+
+* wrong imports across layers,
+* illegal manifold access,
+* meta logic leaking into worlds,
+* and loop configurations that violate the Perception → Reasoning → Internal Update contract.
 
 ---
 
 ## 9. How to Evolve the Design
 
-When evolving Synaplex:
+Synaplex is meant to be an evolving research platform, but the evolution should happen **through the spec**, not by accretion in the code.
 
 1. **Change the spec first.**
 
-   * Update `ARCHITECTURE.md` when structural elements change (phases, world modes, message types, invariants).
-   * Update `DESIGN_NOTES.md` when clarifying intent, nature/nurture experiments, or long-horizon goals.
+   * Update `ARCHITECTURE.md` when structural elements change:
+
+     * loop shape, world modes, message types, nature/nurture boundaries, invariants.
+   * Update `DESIGN_NOTES.md` when clarifying:
+
+     * intent,
+     * epistemic assumptions,
+     * nature/nurture experiments,
+     * or long-horizon research goals.
 
 2. **Then change the code.**
 
-   * Add or modify modules only after the architecture has been updated.
-   * Add tests that enforce any new invariants (e.g., new “no-import” boundaries, new phase rules).
+   * Add or modify modules only after the architecture changes are written down.
+   * Extend tests to enforce any new invariants:
+
+     * new “no-import” boundaries,
+     * new manifold access rules,
+     * additional loop modes or experimental scaffolds.
 
 3. **Treat manifolds as experimental substrate.**
 
-   * All manifold-level analysis, clustering, and nature/nurture experiments should run in **meta/indexer worlds**, over **exported manifold snapshots**, not inline with live runtime prompts.
-   * The live system never tells a mind how to structure its manifold or that its notes are being graded.
+   * All manifold-level analysis, clustering, and nature/nurture experiments run in **indexer/meta contexts** over **exported manifold snapshots**, not inline with live reasoning calls.
+   * The live system never tells a mind:
 
-The goal is for this README + `ARCHITECTURE.md` + `DESIGN_NOTES.md` to form a single, coherent **source of truth** for Synaplex, with the codebase as a faithful and carefully guarded implementation rather than a competing ontology.
+     * how to structure its manifold,
+     * that its notes are being graded,
+     * or that its worldview is being clustered or scored.
 
+The goal is for this README, `ARCHITECTURE.md`, and `DESIGN_NOTES.md` to form a single, coherent **source of truth** for Synaplex.
+
+The codebase should remain a faithful, carefully guarded implementation of that ontology—
+not a parallel design, not a divergence, and not a quiet overwrite of the original intent.
