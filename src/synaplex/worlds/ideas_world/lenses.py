@@ -1,166 +1,110 @@
-# synaplex/worlds/ideas_world/lenses.py
-
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from synaplex.core.lenses import Lens
 
 
-class IdeasArchitectLens(Lens):
-    """Lens for architect agent: focuses on structure, clustering, and gaps."""
-    
+class IdeaIngestLens(Lens):
+    """
+    Lens for IdeaIngestMind.
+
+    In practice this is rarely used (IdeaIngest mostly reads from files),
+    but we keep it for symmetry: if other agents ever signal back to
+    idea_ingest, it can choose to attend only to idea-related signals.
+    """
+
     def should_attend(self, signal_payload: Dict[str, Any]) -> bool:
-        """Attend to idea-related signals."""
-        return signal_payload.get("type") == "idea" or "idea" in str(signal_payload).lower()
-    
+        return signal_payload.get("type") in {"idea", "execution_feedback"}
+
     def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform to emphasize structural and clustering information."""
+        return dict(raw_projection)
+
+
+class IdeaArchitectLens(Lens):
+    """
+    Φ for IDEA_ARCHITECT.
+
+    - Attends to idea signals.
+    - Emphasizes structural cues (tags, domain, inferred clusters).
+    """
+
+    def should_attend(self, signal_payload: Dict[str, Any]) -> bool:
+        return signal_payload.get("type") == "idea"
+
+    def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
         transformed = dict(raw_projection)
-        # Add emphasis on structural elements
-        if "tags" in transformed:
-            transformed["_structural_tags"] = transformed["tags"]
+        tags: List[str] = list(transformed.get("tags", []))
+        transformed["_structural_tags"] = tags
+        transformed["_idea_id"] = transformed.get("id") or transformed.get("title")
         return transformed
 
 
-class IdeasCriticLens(Lens):
-    """Lens for critic agent: focuses on tensions, contradictions, and blind spots."""
-    
+class IdeaCriticLens(Lens):
+    """
+    Φ for IDEA_CRITIC.
+
+    - Attends to idea signals.
+    - Emphasizes tension–relevant cues (duplicates, contradictions, low-signal).
+    """
+
     def should_attend(self, signal_payload: Dict[str, Any]) -> bool:
-        """Attend to idea-related signals."""
-        return signal_payload.get("type") == "idea" or "idea" in str(signal_payload).lower()
-    
+        return signal_payload.get("type") == "idea"
+
     def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform to emphasize contradictions and tensions."""
         transformed = dict(raw_projection)
-        # Add emphasis on potential tensions
-        if "tags" in transformed:
-            transformed["_tension_focus"] = True
+        transformed["_tension_focus"] = True
         return transformed
 
 
-class SynaplexLens(Lens):
-    """Lens for Synaplex agent: focuses on Synaplex-related and architecture content."""
-    
+class IdeaPMLens(Lens):
+    """
+    Φ for IDEA_PM.
+
+    - Attends to idea_ingest, architect, and critic signals.
+    - Normalizes them into 'portfolio candidate' view.
+    """
+
     def should_attend(self, signal_payload: Dict[str, Any]) -> bool:
-        """Attend to Synaplex-related or architecture-related signals."""
-        if signal_payload.get("type") != "idea":
-            return False
-        
-        tags = signal_payload.get("tags", [])
-        title = signal_payload.get("title", "").lower()
-        domain = signal_payload.get("domain", "").lower()
-        
-        # Attend to Synaplex-related content
-        synaplex_keywords = ["synaplex", "architecture", "multi-agent", "manifold", "nature-nurture"]
-        return (
-            any(kw in str(tags).lower() for kw in synaplex_keywords) or
-            any(kw in title for kw in synaplex_keywords) or
-            any(kw in domain for kw in synaplex_keywords)
-        )
-    
+        return signal_payload.get("type") in {"idea", "idea_structure", "idea_tension"}
+
     def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform to emphasize architectural and conceptual connections."""
         transformed = dict(raw_projection)
-        transformed["_synaplex_focus"] = True
-        # Preserve all information for deep synthesis
+        # Basic normalization of priority fields
+        transformed.setdefault("status", "seed")
+        transformed.setdefault("importance_hint", 0.5)
+        transformed.setdefault("risk_hint", 0.5)
         return transformed
 
 
-class TopicLens(Lens):
-    """Base lens for topic agents: filters by domain/tags relevant to their topic."""
-    
-    def __init__(self, name: str, topic_keywords: list[str], config: Dict[str, Any] = None):
-        """
-        Initialize topic lens.
-        
-        Args:
-            name: Lens name
-            topic_keywords: List of keywords that indicate relevance to this topic
-            config: Optional configuration dict
-        """
-        super().__init__(name=name, config=config or {})
-        self.topic_keywords = [kw.lower() for kw in topic_keywords]
-    
+class ExecutionLens(Lens):
+    """
+    Φ for EXECUTION.
+
+    - Attends primarily to 'ready_for_execution' signals from IdeaPM.
+    """
+
     def should_attend(self, signal_payload: Dict[str, Any]) -> bool:
-        """Attend to signals relevant to this topic."""
-        if signal_payload.get("type") != "idea":
-            return False
-        
-        tags = signal_payload.get("tags", [])
-        title = signal_payload.get("title", "").lower()
-        domain = signal_payload.get("domain", "").lower()
-        content = signal_payload.get("content_preview", "").lower()
-        
-        # Check if any topic keyword appears
-        search_text = f"{tags} {title} {domain} {content}"
-        return any(kw in search_text for kw in self.topic_keywords)
-    
+        return signal_payload.get("type") == "ready_for_execution"
+
     def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform to emphasize topic-relevant information."""
+        return dict(raw_projection)
+
+
+class GeometryStewardLens(Lens):
+    """
+    Φ for GEOMETRY_STEWARD.
+
+    - Attends to structural/tension/portfolio signals.
+    - Emphasizes anything that smells like a spec/config drift issue.
+    """
+
+    def should_attend(self, signal_payload: Dict[str, Any]) -> bool:
+        return signal_payload.get("type") in {
+            "idea_structure",
+            "idea_tension",
+            "idea_portfolio_state",
+        }
+
+    def transform_projection(self, raw_projection: Dict[str, Any]) -> Dict[str, Any]:
         transformed = dict(raw_projection)
-        transformed["_topic_focus"] = self.name
+        transformed["_geometry_inspection_target"] = True
         return transformed
-
-
-# Specialized topic lenses
-class LLMsLens(TopicLens):
-    """Lens for LLMs topic agent."""
-    def __init__(self, name: str = "llms_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["llm", "large language model", "transformer", "gpt", "prompting", "fine-tuning", "nlp", "foundation model"],
-        )
-
-
-class WorldModelsLens(TopicLens):
-    """Lens for World Models topic agent."""
-    def __init__(self, name: str = "world_models_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["world model", "simulation", "prediction", "model-based", "rl", "reinforcement learning"],
-        )
-
-
-class AgenticSystemsLens(TopicLens):
-    """Lens for Agentic Systems topic agent."""
-    def __init__(self, name: str = "agentic_systems_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["multi-agent", "agentic", "coordination", "communication", "agent framework", "swarm"],
-        )
-
-
-class CognitiveArchitecturesLens(TopicLens):
-    """Lens for Cognitive Architectures topic agent."""
-    def __init__(self, name: str = "cognitive_architectures_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["cognitive architecture", "reasoning", "knowledge representation", "symbolic", "hybrid"],
-        )
-
-
-class ManifoldsLens(TopicLens):
-    """Lens for Manifolds topic agent."""
-    def __init__(self, name: str = "manifolds_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["manifold", "internal representation", "worldview", "embedding", "latent space", "internal state"],
-        )
-
-
-class MessageGraphsLens(TopicLens):
-    """Lens for Message Graphs topic agent."""
-    def __init__(self, name: str = "message_graphs_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["graph", "message passing", "distributed", "topology", "network", "routing"],
-        )
-
-
-class NatureNurtureLens(TopicLens):
-    """Lens for Nature vs Nurture topic agent."""
-    def __init__(self, name: str = "nature_nurture_lens"):
-        super().__init__(
-            name=name,
-            topic_keywords=["nature", "nurture", "structure", "constraint", "learned", "innate", "evolution"],
-        )
-

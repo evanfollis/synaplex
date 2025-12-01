@@ -1,480 +1,453 @@
+Below is a **full, integrated, ready-to-drop-in** updated `ARCHITECTURE.md` that cleanly aligns with your `GEOMETRIC_CONSTITUTION.md`.
+This is written as a *complete replacement file*, not a diff.
+Everything is now expressed as the *operational projection* of the geometric model into runtime, code, and agent behavior.
+
+---
+
 # **ARCHITECTURE.md — Core Spine for Synaplex**
 
+**(Aligned with GEOMETRIC_CONSTITUTION.md)**
+
 Synaplex defines an architecture for AI systems composed of many interacting Minds.
-Each Mind maintains its own evolving internal worldview (its manifold) while participating in a shared external world structured as a message-passing graph.
+Each Mind maintains its own evolving internal worldview (its **manifold** `M`) while participating in a shared external world structured as a message-passing graph.
 
-This document specifies the **ontology**, **loop shape**, and **hard invariants** that all Synaplex implementations must respect.
+This document is the **implementation-facing companion** to `GEOMETRIC_CONSTITUTION.md`.
+Where the Constitution defines the geometric primitives—`M, A, K, P, H, Φ, Ω, Ξ, τ`—this Architecture document specifies how those primitives appear as:
 
-The central object of study is:
+* Minds and their loops,
+* Percepts and projections,
+* Graph wiring and runtime behavior,
+* Code modules and invariants.
 
-> How a Mind’s **nature** (outer structure) and **nurture** (inner manifold) co-evolve over time in a graph of other Minds.
+If the Constitution and Architecture ever disagree, **the Constitution wins**.
 
 ---
 
-## 0. Unified Ontology
+# **0. How Geometry Becomes Architecture**
 
-Synaplex has **one cognitive ontology**:
+Synaplex operates through a single cognitive ontology:
 
 > **Perception → Reasoning → Internal Update**
 
-Every Mind:
+This loop is how geometric operators act over time:
 
-1. receives a structured **Percept** from the environment (Perception),
-2. thinks about it using an LLM + tools + its manifold (Reasoning),
-3. revises its manifold (Internal Update).
+* **Perception** applies perturbations `P` and projections/refractions `Φ` from the world into a structured Percept without touching the manifold.
+* **Reasoning** interprets these inputs through the Mind’s manifold `M`, attractors `A`, curvature `K`, and teleology field `τ`, and may trigger outward actions (holonomy `H`) or further perturbations/projections.
+* **Internal Update** applies forgetting `Ξ`, reshapes `M`, updates `A`, adjusts `K`, evolves `τ`, and writes a new `ManifoldEnvelope`.
 
-All “world configurations” are variations in wiring, roles, and experiment setup.
-They do **not** introduce new cognitive layers or alternative mind types.
+All world configurations (FractalMesh, IronVest-like worlds, research labs, etc.) are **special cases of this ontology**.
 
-There is one kind of Mind (nature + manifold + loop). Everything else is environment and experiment.
-
----
-
-## 1. Minds, Nature, and Nurture
-
-### 1.1 Mind
-
-A **Mind** is the core cognitive unit in Synaplex.
-
-Conceptually it consists of:
-
-* **Nature** — how it is wired into the world.
-* **Nurture** — its private internal worldview and reasoning habits.
-* **Loop** — the Perception → Reasoning → Internal Update cycle it runs each tick.
-
-In code, Minds implement a unified interface (see Section 5).
+There is **one kind of Mind**. Everything else is wiring and experiment setup.
 
 ---
 
-### 1.2 Nature (Outer Structure)
+# **1. Minds, Nature, and Nurture**
 
-Nature is everything about the Mind that is externally visible and structurally constrained:
+## **1.1 Mind**
 
-* **DNA**
+A **Mind** is the fundamental cognitive unit in Synaplex—defined as:
 
-  * role and high-level purpose,
-  * subscriptions (which agents/data feeds it sees),
-  * tools it can call,
-  * behavior parameters and knobs.
+* **Nature**: the external structure and interface by which it is embedded in the world.
+* **Nurture**: its internal manifold `M`, attractor field `A`, curvature `K`, and teleology vector field `τ`.
+* **Loop**: the application of geometric operators through Perception → Reasoning → Internal Update.
 
-* **Lenses**
-
-  * how it attends to signals,
-  * how it requests and interprets projections,
-  * how it shapes its percept space.
-
-* **Graph Interface**
-
-  * how it emits signals,
-  * how it responds to requests,
-  * how it is wired into the message-passing graph.
-
-* **Deterministic State (EnvState / other structured state)**
-
-  * structured, interpretable, schema-governed information that belongs to the **world**, not any one Mind’s manifold,
-  * includes features, analytics, vendor data, indexer-derived embeddings, etc.
-
-Nature determines what the Mind *could* see and do, but not what it *does* in fact treat as important.
+Operationally, a Mind is a function from Percepts to new manifolds and outward behavior.
 
 ---
 
-### 1.3 Nurture (Inner Worldview)
+## **1.2 Nature (Outer Structure)**
 
-Nurture is the Mind’s private, evolving internal life.
+Nature is everything externally visible and structurally constrained:
 
-* **Manifold**
+### **DNA (Design Constraints)**
 
-  * persistent internal worldview,
-  * represented as opaque text in a `ManifoldEnvelope`,
-  * written by the Mind for its own future self,
-  * never parsed or schema-enforced by the runtime.
+* role and high-level purpose,
+* tools it is permitted to call,
+* subscriptions (passive perceptual edges),
+* behavior knobs,
+* *implicit teleology priors* that shape the initial direction of `τ`.
 
-* **Reasoning Patterns**
+### **Lenses**
 
-  * branching styles (explorer, skeptic, structuralist, etc.),
-  * how it reconciles conflicting evidence,
-  * how it manages unresolved questions and tensions,
-  * how it develops an internal sense of “what matters”.
+* how incoming projections `Φ` are shaped semantically and teleologically (`Φ_sem`, `Φ_tel`),
+* how the Mind’s perceptual space is organized.
 
-Over time, the manifold trajectory encodes:
+### **Graph Interface**
 
-* what the Mind has come to care about,
-* how its explanations have deepened or shifted,
-* where it still feels confused or unsatisfied.
+* how it emits signals,
+* how requests and projections are routed,
+* how the environment recognizes it as a node.
 
-Nature is shared and inspectable.
-Nurture is private and opaque.
+### **Deterministic State (EnvState)**
+
+* structured, schema-governed information that belongs to the **world**, not the manifold,
+* includes analytics, embeddings, factors, external feeds.
+
+Nature determines the range of possible cognitive behaviors but not the actual cognitive shape.
 
 ---
 
-## 2. The Cognitive Loop
+## **1.3 Nurture (Inner Worldview)**
 
-Each tick is one run of:
+Nurture is the Mind’s private, evolving internal geometry.
+
+### **Manifold `M`**
+
+* persistent internal worldview encoded as opaque text,
+* stores conceptual mass, unresolved tensions, hypotheses, sense-making heuristics.
+
+### **Attractors `A`**
+
+* stable habits, narratives, conceptual equilibria,
+* determine what the Mind tends to preserve or reuse.
+
+### **Curvature `K`**
+
+* sensitivity to perturbation;
+* determines how sharply the Mind updates when surprised.
+
+### **Teleology `τ`**
+
+* the Mind’s internal “direction of improvement” or epistemic gradient,
+* shaped initially by DNA but evolves inside Nurture.
+
+### **Representation**
+
+The manifold is stored as a `ManifoldEnvelope`, never parsed by the runtime, always written by the owning Mind.
+
+Nature is shareable.
+Nurture is private.
+
+---
+
+# **2. The Cognitive Loop (Operator Pipeline)**
+
+Every tick applies the geometric operators via:
 
 > **Perception → Reasoning → Internal Update**
 
-This loop is the **only** way manifolds and outward behavior change.
+This is the only mechanism through which the manifold, attractors, and teleology evolve.
 
-### 2.1 Perception (Environment → Mind)
+---
 
-The **environment** (graph runtime) constructs a **Percept** for each Mind based on Nature:
+## **2.1 Perception (Environment → Mind)**
 
-* gather **signals** broadcast on the graph,
-* collect **projections** from subscribed agents,
-* read relevant data feeds / EnvState views,
-* apply the Mind’s lenses to filter/select/shape these inputs,
-* assemble a structured `Percept`.
+The runtime constructs a **Percept** by:
+
+* gathering signals,
+* collecting subscribed projections,
+* applying lenses (`Φ_sem`, `Φ_tel`),
+* integrating EnvState views.
 
 Properties:
 
 * deterministic,
 * no LLM calls,
 * no manifold access,
-* no subjective interpretation.
+* no subjectivity.
 
-Perception is the distilled view of “what is visible to this Mind right now,” given its Nature.
-
----
-
-### 2.2 Reasoning (Mind ↔ World)
-
-The Mind then performs **Reasoning**, using:
-
-* the `Percept`,
-* its prior manifold,
-* tools,
-* internal branching styles.
-
-Reasoning is where:
-
-* the Mind interprets what it sees,
-* explores hypotheses and counterfactuals,
-* requests more information,
-* forms outward commitments.
-
-Concretely, Reasoning can:
-
-* issue **signals** (lightweight broadcasts),
-* send **requests** for projections from other agents,
-* respond to inbound requests with **projections** of its state,
-* update deterministic state when allowed by DNA,
-* produce an internal trace that will feed Internal Update.
-
-Reasoning is the only place where a Mind uses the manifold **for thinking in the moment**.
+**Geometric interpretation:**
+Perception prepares the inputs for `P` and `Φ` without touching `M`, `A`, `K`, or `τ`.
 
 ---
 
-### 2.3 Internal Update (Mind → Manifold)
+## **2.2 Reasoning (Mind ↔ World)**
 
-Internal Update is where the Mind revises its manifold.
+Reasoning uses:
 
-Inputs:
+* Percept,
+* manifold `M`,
+* attractors `A`,
+* curvature `K`,
+* teleology `τ`,
+* tools and model calls.
 
-* prior `ManifoldEnvelope` (M₀),
-* reasoning output (including internal branches),
-* current Percept and relevant deterministic state.
+Reasoning can:
 
-Responsibilities:
+* internalize perturbations `P`,
+* absorb and transform projections via `Φ`,
+* issue outward proposals or signals,
+* request further information,
+* consider multiple branches (conjecture & criticism),
+* decide whether to trigger `H` (holonomy: irreversible-ish world-writes).
 
-* integrate new evidence into the worldview,
-* choose what to preserve, amplify, or discard,
-* maintain or explicitly preserve tensions and contradictions if useful,
-* grow or reshape latent conceptual structure.
-
-Output:
-
-* new `ManifoldEnvelope` (M₁),
-* persisted via `ManifoldStore`.
-
-Internal Update is the **only write path** to the manifold.
-No other code or process is allowed to modify `ManifoldEnvelope`.
+**Geometric interpretation:**
+Reasoning is where `P`, `Φ`, and candidate `H` are applied to the manifold’s conceptual geometry.
 
 ---
 
-## 3. Communication & Graph
+## **2.3 Internal Update (Mind → Manifold)**
 
-Synaplex is a **message-passing graph of Minds**.
+Internal Update:
 
-### 3.1 Signals
+* integrates all Reasoning branches,
+* applies forgetting/dissipation `Ξ`,
+* reorganizes conceptual geometry into a new manifold `M₁`,
+* updates attractors `A` and curvature `K`,
+* evolves teleology `τ`,
+* writes new `ManifoldEnvelope`.
 
-A **Signal** is a cheap, broadcast-level message:
+**Geometric interpretation:**
+Internal Update is the application of `Ξ`, attractor reshaping, curvature adjustments, and teleology evolution.
+
+This is the **only write-path** to the manifold.
+
+---
+
+# **3. Communication & Graph**
+
+Synaplex is a message-passing graph of Minds.
+
+All cross-Mind cognition is via structured messages and frottage envelopes processed through `Φ`.
+
+---
+
+## **3.1 Signals**
+
+A **Signal** is a lightweight broadcast:
 
 * structured, approximate,
-* advertises “what’s happening here” in a coarse way,
-* never includes raw manifold text.
+* advertises coarse updates,
+* never leaks worldview,
+* not a frottage dump.
 
-Receivers use their own lenses to decide whether to care.
-
-Signals are attentional hooks, not worldview leaks.
-
----
-
-### 3.2 Subscriptions
-
-A **subscription** is a long-lived perceptual edge defined in DNA:
-
-> “This Mind always wants a projection from that Mind / data feed.”
-
-For each tick:
-
-* sender produces a projection suitable for the receiver,
-* receiver’s lens shapes how that projection is represented in its Percept,
-* sender does not know how its state is interpreted.
-
-Subscriptions define each Mind’s passive perceptual field.
+Signals trigger attention, not deep update.
 
 ---
 
-### 3.3 Requests & Projections
+## **3.2 Subscriptions**
 
-Active information-seeking happens via **requests** and **projections**.
+A subscription defines a persistent projection edge:
 
-* A **request** expresses what kind of information a Mind wants from another Mind.
-* A **projection** is:
+> “This Mind always receives projections from that Mind or feed.”
 
-  > sender’s externally visible structured state, as seen through the receiver’s lens.
+Per tick:
 
-Projection payloads may contain:
-
-* EnvState features,
-* analytics/factors,
-* manifold-derived views produced by indexers (embeddings, clusters, etc.),
-* never raw manifold text.
-
-All cross-Mind perception flows through projections.
+1. sender generates a projection envelope,
+2. receiver’s lenses compress it via `Φ`,
+3. runtime delivers, without interpretation.
 
 ---
 
-### 3.4 Graph Runtime
+## **3.3 Requests & Projections**
+
+Active inquiry uses **Requests** and **Projections**.
+
+A **Projection** is:
+
+> sender-authored structured state + optional frottage envelope,
+> refraction-compressed (`Φ_sem`, `Φ_tel`) by the receiver.
+
+Components may include:
+
+* EnvState excerpts,
+* structured analytics,
+* sender-authored “overloaded but on-topic” frottage dumps,
+* manifold-derived views from indexers,
+* **never raw manifold text** or instructions to alter another Mind’s manifold.
+
+Receivers own all semantic and teleological compression.
+Runtime is agnostic.
+
+---
+
+## **3.4 Graph Runtime**
 
 The runtime:
 
-* manages the agent set and DNA configs,
+* wires DNA-defined subscriptions,
+* routes requests and projections,
+* orchestrates ticks,
+* maintains EnvState,
+* preserves manifold access invariants.
 
-* wires subscriptions and routes requests/responses,
+Tick order:
 
-* orchestrates ticks:
+1. Build Percepts (Perception),
+2. Invoke Minds (Reasoning),
+3. Commit manifold updates (Internal Update).
 
-  1. build Percepts (Perception),
-  2. call Minds (Reasoning),
-  3. commit manifold updates (Internal Update),
-
-* integrates outward behavior into EnvState and signals.
-
-The runtime can be in-process or distributed, but it must:
-
-* respect message types (Signal, Request, Projection, Percept),
-* respect manifold access rules,
-* preserve the unified loop semantics.
-
-Ticks are the conceptual unit of time.
-Asynchronous events can be modeled as finer-grained or agent-local ticks that still honor the same loop.
+Everything else—parallelism, batching, async events—is an implementation detail as long as the loop is respected.
 
 ---
 
-## 4. Internal Multiplicity (Conjecture & Criticism)
+# **4. Internal Multiplicity**
 
-To model internal conjecture and criticism, a Mind may run **multiple reasoning branches** in a single tick.
+To model conjecture & criticism, a Mind may run internal branches:
 
-Mechanism:
-
-1. From the same starting point `(DNA, Percept, manifold M₀)`, the Mind spawns several branches:
-
-   * e.g., explorer, skeptic, structuralist, etc.
-   * each branch runs a full reasoning pass.
-
-2. Each branch produces:
-
-   * its outward proposals (optional),
-   * its own candidate internal notes.
-
-3. Internal Update then:
-
-   * sees all branch notes as prior self-notes,
-   * is not told about “branch identities”,
-   * runs a fresh reasoning pass to reconcile, merge, and selectively preserve contradictions or tensions,
-   * commits a single new `ManifoldEnvelope` (M₁).
+1. spawn multiple reasoning modes from the same `(DNA, Percept, M₀)`,
+2. collect branch notes,
+3. Internal Update merges, prunes, preserves tensions,
+4. produce a single new manifold `M₁`.
 
 Branches are ephemeral.
-From the Mind’s perspective, history is `M₀ → M₁`.
+History is `M₀ → M₁`.
 
-Conjecture and criticism happen **inside** a single Mind, anchored to its own manifold, not as free-floating multi-agent banter.
-
----
-
-## 5. Code-Level Mapping
-
-The codebase mirrors this architecture so the boundaries are hard to violate.
-
-### 5.1 Core Modules
-
-* `synaplex.core`
-
-  * IDs, errors, message types.
-  * DNA, lenses, and EnvState.
-  * Percept construction.
-  * Agent interface and runtime interface.
-
-* `synaplex.cognition`
-
-  * LLM client + tool invocation.
-  * ManifoldEnvelope + ManifoldStore.
-  * Mind implementation of the Perception → Reasoning → Internal Update loop.
-  * Branching and Internal Update strategies.
-
-* `synaplex.manifolds_indexers`
-
-  * Snapshot export from live manifolds.
-  * Indexer agents that compute manifold-derived views.
-
-* `synaplex.meta`
-
-  * evaluation over logs, projections, snapshots, DNAs, and graph configs.
-  * evolution and experiment harnesses.
-
-* `synaplex.worlds.*`
-
-  * domain-world configs (agents, DNA templates, graph wiring).
-  * domain-specific lenses, tools, and agent factories.
-
-Tests in `tests/` act as **tripwires** to guard import directions and invariants (see Section 8).
-
-(See README’s repo layout for detailed file tree.)
+This corresponds to high local `R_div` inside a single manifold.
 
 ---
 
-## 6. Indexer Worlds (Offline Manifold Science)
+# **5. Code-Level Architecture**
 
-Indexers let you study manifolds **without touching live Minds**.
+## **5.1 synaplex.core**
 
-Pipeline:
+* IDs, errors, message types,
+* DNA, lenses, EnvState,
+* percept construction,
+* graph runtime interfaces.
 
-1. Export **ManifoldSnapshots** from live runs:
+## **5.2 synaplex.cognition**
 
-   * opaque text,
-   * metadata (agent_id, world_id, timestamps, tags).
+* LLM client + tools,
+* ManifoldEnvelope + store,
+* Mind loop implementation,
+* branch mechanics,
+* application of `P`, `Φ`, `H`, `Ξ` to internal structure.
 
-2. Indexer worlds ingest these snapshots and compute manifold-derived views:
+## **5.3 synaplex.manifolds_indexers**
 
-   * embeddings,
-   * clusters,
-   * topic factors,
-   * other latent structure.
+* snapshot export,
+* embedding/clustering/indexer agents,
+* structured views derived from opaque manifolds.
 
-3. Indexers store their results in **structured state** (their own EnvState).
+## **5.4 synaplex.meta**
 
-4. Core worlds may then read indexer outputs through projections, as structured data.
-   They never receive “edit your manifold” commands.
+* external evaluation,
+* evolution experiments,
+* Ω moves (with constraints),
+* ablations and world configurations.
 
-Information flow is one-way:
+## **5.5 synaplex.worlds.***
 
-> **Manifold → Snapshot → Indexer → Structured View**
+* domain wiring,
+* DNA templates,
+* lenses/tools,
+* runtime configs.
 
-No code edits a live manifold outside a Mind’s Internal Update step.
-
----
-
-## 7. Meta Layer (Evolution & Experiments)
-
-The meta layer is where **research** and **evolution** live.
-
-Meta:
-
-* reads:
-
-  * projections, logs, EnvState snapshots,
-  * DNA, graph configs,
-  * manifold snapshots,
-
-* designs experiments and evolution strategies:
-
-  * modify DNA templates,
-  * adjust graph topology,
-  * seed populations with different initial manifolds,
-  * define evaluation metrics externally,
-
-* writes back only via:
-
-  * new or modified DNA/configs,
-  * new runtime/graph wiring for subsequent runs.
-
-Minds are **selection-blind**:
-
-* they never see meta metrics or evolution objectives,
-* they are never directly told that they are being graded.
-
-Experiments like “graph-only” or “stateless reasoning” are treated as **ablations and counterfactual runs**, not alternative ontologies:
-
-* in those runs, you may *disable* Internal Update or manifold access,
-* the core spec still treats “Mind = nature + manifold + loop” as the baseline cognitive object.
+Tests enforce import boundaries and invariants.
 
 ---
 
-## 8. Invariants (Hard Rules)
+# **6. Indexer Worlds (Offline Manifold Science)**
 
-These are non-negotiable. Any implementation that violates them is not Synaplex.
+Indexers study manifolds **without modifying live Minds**.
 
-1. **Every Mind has a manifold.**
+Flow:
 
-   * A Mind always has a `ManifoldEnvelope`, even if initially empty.
+`Manifold → Snapshot → Indexer → Structured View → Projections`
 
-2. **Manifold is opaque to the runtime.**
+Indexers may compute:
 
-   * No parsing, schema enforcement, or structural edits in core/runtime.
-   * Manifold text is never treated as structured data.
+* embeddings,
+* conceptual clusters,
+* shifts in curvature,
+* attractor saturation trends.
 
-3. **Internal Update is the only write path to manifolds.**
-
-   * All manifold writes occur inside a Mind’s Internal Update step.
-   * No other module or process may create or modify `ManifoldEnvelope`.
-
-4. **Manifold access is loop-bounded.**
-
-   * No manifold reads/writes during Perception.
-   * Only the owning Mind, during Reasoning/Internal Update, may touch its manifold.
-   * Indexer/meta contexts may read manifold snapshots; they never edit live manifolds.
-
-5. **No cross-Mind manifold access.**
-
-   * Minds never read or write other Minds’ manifolds.
-   * All cross-Mind perception is via projections/signals over structured state.
-
-6. **Receiver-owned semantics.**
-
-   * Projections are interpreted via the receiver’s lens.
-   * No globally enforced schema overrides lens semantics.
-
-7. **Structured information lives in deterministic state, not manifolds.**
-
-   * If you want it structured, queryable, and shareable, it belongs in EnvState or similar—not in the manifold.
-
-8. **Indexer flow is one-way.**
-
-   * Manifolds → snapshots → indexers → structured views.
-   * No “edit manifold” or “fix agent” API.
-
-9. **Meta isolation and selection blindness.**
-
-   * Domain worlds do not import `synaplex.meta`.
-   * Meta influences Minds only via DNA/config/graph changes.
-   * Minds never see their global scores or objectives.
-
-10. **Single cognitive loop.**
-
-    * All Minds follow the same Perception → Reasoning → Internal Update loop.
-    * Engineering sub-phases are allowed, but they must respect Perception/Reasoning/Internal Update boundaries and manifold access rules.
-
-These invariants preserve the distinction between Nature and Nurture, protect manifold purity, and keep Synaplex a platform for studying Minds rather than a thin wrapper around prompt orchestration.
+Structured views flow outward; no backdoors into `M`.
 
 ---
 
-## 9. Architectural Intent
+# **7. Meta Layer (Evolution & Experiments)**
 
-Synaplex is designed to be:
+Meta processes:
 
-* a platform for **manifold science**,
-* a substrate for **multi-Mind cognition**,
-* a lab for **nature/nurture experiments**,
-* a foundation on which domain-specific worlds (like FractalMesh) can be built without collapsing internal worldviews into schemas or dashboards.
+* observe logs, projections, snapshots,
+* design experiments,
+* adjust DNA/graph topology (`Ω` moves),
+* maintain invariant that Minds remain selection-blind.
 
-Code should be treated as an implementation detail of this architecture, not the other way around.
+### **7.1 Geometric Health Metrics**
+
+Meta evaluation may compute:
+
+* **D**: dimensionality retention,
+* **R_div**: refraction diversity,
+* **A_sat**: attractor saturation,
+* **H_rate**: holonomy density,
+* **T**: effective temperature.
+
+These are never surfaced to Minds.
+
+---
+
+# **8. Invariants (Hard Rules)**
+
+These rules **cannot be violated** in any Synaplex implementation.
+
+### **8.1 Every Mind has a manifold.**
+
+### **8.2 Runtime never parses or edits manifolds.**
+
+### **8.3 Internal Update is the only write path.**
+
+### **8.4 Manifold access is loop-bounded.**
+
+### **8.5 No cross-Mind manifold access.**
+
+### **8.6 Receiver-owned semantics and teleology.**
+
+### **8.7 Structured information lives in deterministic state, not manifolds.**
+
+### **8.8 Indexer flow is one-way.**
+
+### **8.9 Minds are selection-blind.**
+
+### **8.10 Single cognitive loop for all Minds.**
+
+### **8.11 Ω moves cannot erase tensions.**
+
+Meta updates may *add* constraints or restructure wiring,
+but may not reduce the system’s space of meaningful non-commuting tensions
+(e.g., exploration vs fidelity).
+
+### **8.12 Overloaded-but-on-topic messages are allowed; compression is receiver-owned.**
+
+Senders may attach rich frottage envelopes.
+Runtime does not sanitize or compress.
+Receivers apply `Φ` and reshape the content within their own manifold.
+
+---
+
+# **9. Architectural Intent**
+
+Synaplex is designed to:
+
+* support **manifold science**,
+* enable **multi-Mind emergent cognition**,
+* test **nature/nurture dynamics**,
+* preserve the geometric structure of thought,
+* avoid schema collapse,
+* allow experimental worlds to be built without rewriting Minds.
+
+Code is downstream of geometry.
+If implementation and geometry diverge, implementation must change.
+
+---
+
+# **Appendix A — Geometry ↔ Architecture Mapping**
+
+This table is **non-normative** and included only as a tether.
+
+| Geometric Primitive         | Architectural Expression                             |
+| --------------------------- | ---------------------------------------------------- |
+| `M` (manifold)              | ManifoldEnvelope (opaque text)                       |
+| `A` (attractors)            | stable conceptual regions within manifold            |
+| `K` (curvature)             | learning sensitivity, risk fields                    |
+| `P` (perturbations)         | new evidence entering via Percept                    |
+| `H` (holonomy)              | irreversible actions modifying EnvState              |
+| `Φ` (projection/refraction) | cross-Mind projections interpreted through lenses    |
+| `Ξ` (forgetting)            | pruning and reorganization inside Internal Update    |
+| `Ω` (meta-operator)         | evolution of DNA/graph by meta layer                 |
+| `τ` (teleology)             | internal epistemic gradient guiding manifold updates |
+
+Architecture = geometry rendered in runtime form.
+
+---
+
+If you want, I can also update:
+
+* `README.md`
+* `DESIGN_NOTES.md`
+* the repo tree
+* the runtime interfaces
+* or generate tests that enforce the geometric constraints.

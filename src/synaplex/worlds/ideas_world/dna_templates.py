@@ -1,201 +1,145 @@
-# synaplex/worlds/ideas_world/dna_templates.py
-
 from synaplex.core.dna import DNA
 from synaplex.core.ids import AgentId
 
 
-def make_archivist_agent(agent_id: str = "archivist") -> DNA:
+def make_idea_ingest_agent(agent_id: str = "idea_ingest") -> DNA:
     """
-    Archivist agent: Reads markdown idea files and converts them to Experiences.
-    
-    Subscribes to: none (reads from external markdown files)
-    Role: Extract and structure idea atoms from markdown
+    IDEA_INGEST: P-heavy ingestion agent.
+
+    - Reads messy idea sources (markdown, later chat logs, execution feedback, etc.)
+    - Emits high-entropy idea signals (P) into the graph.
+    - No subscriptions: it treats the outside world as its upstream.
     """
     return DNA(
         agent_id=AgentId(agent_id),
-        role="archivist",
+        role="idea_ingest",
         subscriptions=[],
         tools=[],
-        behavior_params={"attention_span": 0.8},
-        tags=["ideas", "extraction"],
+        behavior_params={
+            "frottage_mode": True,     # lean toward on-topic noise
+            "max_preview_chars": 400,
+        },
+        tags=["ideas", "ingest", "perturbations", "P"],
     )
 
 
-def make_architect_agent(agent_id: str = "architect") -> DNA:
+def make_idea_architect_agent(agent_id: str = "idea_architect") -> DNA:
     """
-    Architect agent: Maintains a manifold about the shape of the idea space.
-    
-    Subscribes to: archivist (receives idea signals)
-    Role: Build and maintain conceptual map of ideas, clusters, gaps
+    IDEA_ARCHITECT: structure + attractors (M/A).
+
+    - Subscribes to idea_ingest (P).
+    - Builds / maintains manifold about global idea space.
+    - Tracks clusters, gaps, and emergent attractors.
     """
     return DNA(
         agent_id=AgentId(agent_id),
-        role="architect",
-        subscriptions=[AgentId("archivist")],
+        role="idea_architect",
+        subscriptions=[AgentId("idea_ingest")],
         tools=[],
-        behavior_params={"synthesis_tendency": 0.9},
-        tags=["ideas", "synthesis", "structure"],
+        behavior_params={
+            "synthesis_tendency": 0.9,
+            "gap_hunting": 0.8,
+        },
+        tags=["ideas", "structure", "attractors", "M", "A"],
     )
 
 
-def make_critic_agent(agent_id: str = "critic") -> DNA:
+def make_idea_critic_agent(agent_id: str = "idea_critic") -> DNA:
     """
-    Critic agent: Hunts for tensions, duplicates, and low-value ideas.
-    
-    Subscribes to: archivist (receives idea signals)
-    Role: Identify contradictions, redundancies, blind spots
+    IDEA_CRITIC: tensions + contradictions (M/A).
+
+    - Subscribes to idea_ingest (P).
+    - Maintains manifold focused on tensions, duplicates, blind spots.
+    - Feeds IdeaPM with risk / downside / redundancy signals.
     """
     return DNA(
         agent_id=AgentId(agent_id),
-        role="critic",
-        subscriptions=[AgentId("archivist")],
+        role="idea_critic",
+        subscriptions=[AgentId("idea_ingest")],
         tools=[],
-        behavior_params={"skepticism": 0.8, "pattern_detection": 0.9},
-        tags=["ideas", "critique", "tensions"],
+        behavior_params={
+            "skepticism": 0.85,
+            "pattern_detection": 0.9,
+        },
+        tags=["ideas", "critique", "tensions", "M", "A"],
     )
 
 
-def make_synaplex_agent(agent_id: str = "synaplex") -> DNA:
+def make_idea_pm_agent(agent_id: str = "idea_pm") -> DNA:
     """
-    Synaplex agent: Represents the Synaplex idea/concept itself.
-    
-    Subscribes to: archivist (receives Synaplex idea), all topic agents
-    Role: Deep understanding of Synaplex as both a system and an idea
+    IDEA_PM: portfolio + curvature (A/K).
+
+    - Subscribes to: idea_ingest, idea_architect, idea_critic.
+    - Owns the idea portfolio (A): which ideas are live, hot, dormant.
+    - Encodes curvature (K): how sensitive priorities are to new evidence.
+    - Emits 'ready_for_execution' signals and 'deprioritized' signals.
     """
     return DNA(
         agent_id=AgentId(agent_id),
-        role="synaplex_idea",
+        role="idea_pm",
         subscriptions=[
-            AgentId("archivist"),
-            AgentId("llms"),
-            AgentId("world_models"),
-            AgentId("agentic_systems"),
-            AgentId("cognitive_architectures"),
-            AgentId("manifolds"),
-            AgentId("message_graphs"),
-            AgentId("nature_nurture"),
+            AgentId("idea_ingest"),
+            AgentId("idea_architect"),
+            AgentId("idea_critic"),
         ],
         tools=[],
-        behavior_params={"synthesis_tendency": 0.95, "depth": 0.9},
-        tags=["synaplex", "architecture", "meta"],
+        behavior_params={
+            "risk_tolerance": 0.6,    # how easily to promote to execution
+            "focus_limit": 7,         # max concurrently 'hot' ideas
+        },
+        tags=["ideas", "portfolio", "curvature", "A", "K"],
     )
 
 
-def make_llms_agent(agent_id: str = "llms") -> DNA:
+def make_execution_agent(agent_id: str = "execution") -> DNA:
     """
-    LLMs topic agent: Domain expert on Large Language Models.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in LLMs, transformers, prompting, fine-tuning
+    EXECUTION: holonomy (H).
+
+    - Subscribes to: idea_pm (which ideas to act on).
+    - In future: also subscribes to external action results.
+    - Owns H: logs action plans / 'irreversible-ish' moves into EnvState.
+    - Does not itself mutate manifolds of others; just acts and reports.
     """
     return DNA(
         agent_id=AgentId(agent_id),
-        role="llms_expert",
-        subscriptions=[AgentId("archivist")],
-        tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["llms", "transformers", "nlp", "foundation-models"],
+        role="execution",
+        subscriptions=[AgentId("idea_pm")],
+        tools=[
+            # later: cursor / api-based tools go here
+        ],
+        behavior_params={
+            "max_parallel_actions": 3,
+        },
+        tags=["execution", "holonomy", "H"],
     )
 
 
-def make_world_models_agent(agent_id: str = "world_models") -> DNA:
+def make_geometry_steward_agent(agent_id: str = "geometry_steward") -> DNA:
     """
-    World Models topic agent: Domain expert on foundational world models.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in world models, simulation, prediction, model-based RL
+    GEOMETRY_STEWARD: Φ/Ω-focused meta-mind for this world.
+
+    - Subscribes to: idea_architect, idea_critic, idea_pm.
+    - Maintains manifold about:
+
+        * how well IDEA_WORLD is respecting GEOMETRIC_CONSTITUTION
+        * where Φ (lenses) are misaligned
+        * candidate Ω moves (config/spec changes) to improve health.
+
+    - Does NOT directly change DNA / configs at runtime:
+      it emits structured proposals for a human/meta process.
     """
     return DNA(
         agent_id=AgentId(agent_id),
-        role="world_models_expert",
-        subscriptions=[AgentId("archivist")],
+        role="geometry_steward",
+        subscriptions=[
+            AgentId("idea_architect"),
+            AgentId("idea_critic"),
+            AgentId("idea_pm"),
+        ],
         tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["world-models", "simulation", "prediction", "rl"],
+        behavior_params={
+            "constitution_guardian": True,
+            "suggest_omega_moves": True,
+        },
+        tags=["geometry", "steward", "Phi", "Omega"],
     )
-
-
-def make_agentic_systems_agent(agent_id: str = "agentic_systems") -> DNA:
-    """
-    Agentic Systems topic agent: Domain expert on multi-agent systems.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in multi-agent systems, coordination, communication
-    """
-    return DNA(
-        agent_id=AgentId(agent_id),
-        role="agentic_systems_expert",
-        subscriptions=[AgentId("archivist")],
-        tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["multi-agent", "coordination", "communication", "agent-frameworks"],
-    )
-
-
-def make_cognitive_architectures_agent(agent_id: str = "cognitive_architectures") -> DNA:
-    """
-    Cognitive Architectures topic agent: Domain expert on cognitive architectures.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in cognitive architectures, reasoning systems, knowledge representation
-    """
-    return DNA(
-        agent_id=AgentId(agent_id),
-        role="cognitive_architectures_expert",
-        subscriptions=[AgentId("archivist")],
-        tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["cognitive-architectures", "reasoning", "knowledge-representation"],
-    )
-
-
-def make_manifolds_agent(agent_id: str = "manifolds") -> DNA:
-    """
-    Manifolds topic agent: Domain expert on internal representations.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in manifolds, internal representations, worldview evolution
-    """
-    return DNA(
-        agent_id=AgentId(agent_id),
-        role="manifolds_expert",
-        subscriptions=[AgentId("archivist")],
-        tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["manifolds", "internal-representations", "worldviews", "embeddings"],
-    )
-
-
-def make_message_graphs_agent(agent_id: str = "message_graphs") -> DNA:
-    """
-    Message Graphs topic agent: Domain expert on message-passing graphs.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in graph structures, message passing, distributed systems
-    """
-    return DNA(
-        agent_id=AgentId(agent_id),
-        role="message_graphs_expert",
-        subscriptions=[AgentId("archivist")],
-        tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["graphs", "message-passing", "distributed-systems", "topology"],
-    )
-
-
-def make_nature_nurture_agent(agent_id: str = "nature_nurture") -> DNA:
-    """
-    Nature vs Nurture topic agent: Domain expert on nature/nurture distinction in AI.
-    
-    Subscribes to: archivist (receives all ideas)
-    Role: Expertise in structural constraints vs learned behavior, nature/nurture distinction
-    """
-    return DNA(
-        agent_id=AgentId(agent_id),
-        role="nature_nurture_expert",
-        subscriptions=[AgentId("archivist")],
-        tools=[],
-        behavior_params={"expertise": 0.9, "breadth": 0.7},
-        tags=["nature-nurture", "structure", "learning", "constraints"],
-    )
-

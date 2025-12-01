@@ -1,311 +1,427 @@
-You’re right to anchor on this README as the ground truth. Let’s treat it as the ontology and make DESIGN_NOTES the “why this shape exists” commentary layer—*without* reintroducing any fake phases or stacks.
-
-Here’s a fresh **DESIGN_NOTES.md** that is aligned with the README and stays fully within the unified loop framing:
-
----
-
 # ✅ DESIGN_NOTES.md
 
-**Intent, Philosophy, and North Star**
+**Intent, Philosophy, and Geometric North Star**
 
 ---
 
-## 1. Why Synaplex Exists
+## 1. Why Synaplex Exists (Now in Geometric Form)
 
-Most agent frameworks are built around **tasks**, **tools**, and **workflows**:
+Most “multi-agent” frameworks are built around **tasks**, **tools**, and **workflows**:
 
-* LLMs are treated as stateless tools.
-* State is treated as a cache or log.
-* Outputs are optimized for humans, not for the agent’s own future reasoning.
-* Structure (schemas, graphs, workflows) is decided *up front* and imposed on cognition.
+- LLMs are treated as **stateless tools** behind endpoints.
+- “State” is a cache, log, or vector store you can rummage through.
+- Structure (schemas, graphs, workflows) is **designed up front** and imposed on cognition.
+- Messages are treated as **information packets**, not as perturbations of an internal geometry.
 
-Synaplex inverts that emphasis:
+Synaplex intentionally steps sideways from that:
 
-* LLMs are treated as **minds** embedded in a world, not just tools behind an API.
-* The **internal worldview** (the manifold, when enabled) is a first-class research object.
-* The graph, DNA, lenses, and deterministic state exist to **shape perception**, not to dictate thought content.
-* System-level optimization belongs to **meta layers**; individual minds remain **selection-blind**.
+- LLMs are treated as **Minds** with internal manifolds `M`, not as functions.
+- The **manifold** is a first-class cognitive object:
+  - it has attractors `A`, curvature `K`, and teleology `τ`,
+  - it persists across ticks,
+  - it is written *by the Mind for its own future self*.
+- The graph, DNA, lenses, and deterministic state exist primarily to shape:
+  - **which perturbations `P` hit which manifolds**,
+  - **which holonomy moves `H` are even possible**,
+  - **how projections are refracted `Φ` at the receiver**.
+- System-level optimization belongs to a **meta layer** (`Ω` moves on DNA/graph), while Minds remain:
+  - **selection-blind** (no awareness of global scores), and
+  - **constitution-bound** (some geometric invariants cannot be erased).
 
-The system is not trying to orchestrate prompts efficiently.
-It is trying to **observe how minds develop and interact** when each mind maintains its own worldview while living in a shared message-passing graph.
+Synaplex is **not** trying to be the best way to orchestrate prompts.  
+It’s trying to be the cleanest way to study and exploit:
+
+> A graph of Minds with private manifolds `M` that are constantly perturbed, refracted, and scarred by holonomy `H`.
 
 ---
 
-## 2. The Central Question
+## 2. The Central Question (Geometric Version)
 
 Synaplex is a platform for investigating one big family of questions:
 
-> How do AI minds organize, refine, and evolve their internal worldviews
-> when they live in a shared environment of other minds?
+> How do manifolds `M` evolve when you embed Minds in a shared world,  
+> let them perturb each other (`P`),  
+> see each other only through refractions (`Φ`),  
+> and occasionally scar the world via holonomy (`H`)?
 
-That decomposes into more concrete sub-questions:
+That decomposes into more concrete questions:
 
-* How does **persistent internal state** (nurture) change the way an agent uses the same external affordances (nature)?
-* How does **graph position** (who you subscribe to, who sees you) shape the development of a worldview?
-* How does **receiver-owned semantics** (lenses) affect what “the same” signal becomes for different minds?
-* How do **populations** of minds drift, converge, and fragment when their worldviews interact only through structured projections?
-* What does “drive,” “curiosity,” or “what matters” look like when it emerges from **manifold trajectories**, not from hand-coded reward functions?
+- How does **persistent internal geometry** (`M`, `A`, `K`, `τ`) change how a Mind reacts to the same environment?
+- How does **graph position** (who you subscribe to, who projects into you) shape the **distribution of perturbations `P`** a Mind experiences?
+- How does **receiver-owned refraction `Φ`** change what “the same” projection becomes for different Minds?
+- What happens when you allow **on-topic, overloaded projections** and force the receiver to compress and discard?
+- How do **populations** of Minds drift, converge, fork, and ossify when they only ever see each other’s **structured fronts** and frottage-like dumps, never raw manifolds?
+- Can notions like “risk”, “curiosity”, or “maturity” be tracked as:
+  - curvature `K` fields,
+  - attractor saturation `A_sat`,
+  - teleological alignment `τ` trajectories,
+  - rather than as ad-hoc metrics?
 
-Everything in the architecture exists to make these questions legible and experimentally tractable.
+Everything in `ARCHITECTURE.md` is there so these questions can be asked in a way that’s **experimentally falsifiable**, not just poetically appealing.
 
 ---
 
-## 3. One Cognitive Loop, Three World Modes
+## 3. Geometry as the Backbone, Architecture as the Skeleton
 
-The README’s commitment is very strict:
+Synaplex now has two explicit layers:
 
-> There is **one** cognitive loop:
+1. **Geometric Constitution** (`GEOMETRIC_CONSTITUTION.md`)
+
+   - Defines the cognitive primitives:
+     - `M` (manifold), `A` (attractors), `K` (curvature), `τ` (teleology),
+     - `P` (perturbation), `H` (holonomy), `Φ` (projection/refraction),
+     - `Ω` (meta-change), `Ξ` (forgetting/dissipation).
+   - Defines **health scalars** over populations:
+     - dimensionality `D`,
+     - refraction diversity `R_div`,
+     - attractor saturation `A_sat`,
+     - holonomy rate `H_rate`,
+     - temperature `T`.
+   - States the **meta-invariant**:
+     > `Ω` moves are not allowed to erase entire classes of tension and non-commutativity.  
+     > You can refactor the geometry; you cannot collapse it into a single lens.
+
+2. **Architecture** (`ARCHITECTURE.md`)
+
+   - Maps those primitives into:
+     - Minds and their unified loop,
+     - graph and message types,
+     - module boundaries and invariants,
+     - indexer and meta flows.
+
+Design stance:
+
+- **Every architectural decision should be explainable geometrically.**
+- If you add an architectural feature and can’t say what it does to `{M, A, K, τ}` or to the health scalars `{D, R_div, A_sat, H_rate, T}`, it’s probably drift.
+
+---
+
+## 4. One Cognitive Loop, No Secret Phases
+
+We still enforce:
+
+> **One cognitive loop:**  
 > **Perception → Reasoning → Internal Update**
 
-Worlds differ only in **which parts are active**:
+This is the only way `M` and `A`, `K`, `τ` change.
 
-1. **Graph-only world**
+World modes are just **truncations** of this loop, not different stacks:
 
-   * Perception only.
-   * Deterministic aggregation, no LLM calls, no persistent internal worldview.
-
-2. **Reasoning-augmented world**
-
-   * Perception + Reasoning.
-   * The mind thinks each tick, but no persistent internal worldview is maintained.
-
+1. **Graph-only**
+   - Perception: deterministic aggregation and routing.
+   - No Reasoning, no Internal Update, no manifolds.
+2. **Reasoning-only**
+   - Perception + Reasoning.
+   - Manifolds disabled: `M` exists but is effectively empty/ignored.
 3. **Manifold world**
+   - Full loop: Perception → Reasoning → Internal Update.
+   - Manifolds are loaded, used, and updated each tick.
 
-   * Full loop: Perception, Reasoning, Internal Update.
-   * The mind maintains and evolves a private manifold as its world-model.
+Design implications:
 
-Crucially:
-
-* These are **ablations**, not different ontologies.
-* The architecture never turns into “multi-phase pipelines” or stacked layers.
-* Disabling Internal Update does not change what Perception or Reasoning *means*—it just removes access to a persistent worldview.
-
-Design-wise, that means:
-
-* All agents are written as if they conceptually support the full loop.
-* World modes simply **zero out** pieces of state or skip certain calls.
-* The same graph/runtime and the same agent interface apply across modes.
+- Agents are *conceptually* written to support the full loop.
+- Disabling manifolds is a switch on:
+  - which state is loaded,
+  - which update is allowed,
+  - not a change in what Perception/Reasoning *mean*.
+- There are no “conjecture phases” or “planning phases” in the spec:
+  - those are patterns **inside** Reasoning + Internal Update,
+  - not extra global phases.
 
 ---
 
-## 4. Nature vs Nurture: Why the Split Exists
+## 5. Nature vs Nurture vs Geometry
 
-The README defines:
+The architecture’s split:
 
-* **Nature** – everything about the **external structure** that constrains perception and action:
+- **Nature** (external structure)
+  - graph topology,
+  - DNA (roles, subscriptions, tools, knobs),
+  - lenses,
+  - deterministic EnvState.
+- **Nurture** (internal trajectory)
+  - manifold `M`,
+  - attractors `A`,
+  - curvature `K`,
+  - teleology `τ`,
+  - reasoning habits.
 
-  * graph topology,
-  * DNA (roles, subscriptions, tools, parameters),
-  * lenses,
-  * deterministic state.
-* **Nurture** – the **internal trajectory**:
+The **geometric view** refines “nurture”:
 
-  * manifold (when enabled),
-  * internal reasoning patterns over time.
+- `M` is the **space** of internal representations.
+- `A` are **stable regions** in that space (habits/specs).
+- `K` shapes sensitivity and risk (how much small perturbations matter).
+- `τ` encodes the internal sense of “better directions”.
 
-This separation exists for **experimental reasons**, not aesthetics:
+Why this split matters:
 
-1. You want to be able to hold **nature fixed** and vary **nurture**:
+1. You can hold **Nature fixed** and vary only `M` (and thus `A`, `K`, `τ`):
 
-   * Same wiring and tools, different initial manifolds.
-   * How do two minds with the same affordances diverge over time?
+   - Same wiring, different worldviews → cultural drift under shared structure.
 
-2. You want to be able to hold **nurture fixed** and vary **nature**:
+2. You can hold (or clone) **`M`** and vary only Nature:
 
-   * Same manifold transplanted into different graph positions or roles.
-   * How does the same worldview behave under different external constraints?
+   - Same worldview dropped into different positions in the graph → context-dependence.
 
-3. You want **causal experiments** at the population level:
+3. You can design **experiments**:
 
-   * What happens when you mutate DNA vs. when you expose minds to different signals?
-   * What is “cultural drift” vs “genetic drift” in this setting?
+   - `Ω` moves that mutate DNA, graph wiring, or experiment config,
+   - and study how `M`, `A`, `K`, `τ` evolve in response.
 
-Synaplex is deliberately built so you can perturb either side without accidentally collapsing the distinction in implementation.
+The whole point is to make it possible to say:
 
----
-
-## 5. Manifolds: Inner Life, Not Storage
-
-The manifold (when present) is not:
-
-* a database,
-* a log,
-* a schema-enforced document,
-* a hidden vector store.
-
-It is treated as:
-
-* the mind’s **private, persistent worldview**,
-* optimized for its **own future reasoning**, not for external inspection,
-* an accumulation of self-authored internal notes, tensions, half-baked structures, and idiosyncratic categories.
-
-Design commitments that fall out of this:
-
-* The runtime never parses or edits manifolds.
-* There is no schema for manifold content at the architectural level.
-* The system never asks the mind to:
-
-  * “summarize your notes,”
-  * “clean them up,”
-  * “follow this format,”
-  * or “organize them for the research team.”
-
-Any structure that appears inside a manifold is **emergent behavior** of that mind, not part of the substrate.
+> “That behavioral change was mostly curvature shift `K` under stable DNA,”  
+> vs  
+> “That was a Nature mutation via `Ω`, not an emergent shift in `M`.”
 
 ---
 
-## 6. Communication: Receiver-Owned Semantics
+## 6. Manifolds: Inner Life, Not Databases
 
-The README’s graph model is ruthlessly **receiver-centric**:
+Synaplex is built around a pretty hard constraint:
 
-* Agents emit **signals**: cheap, approximate advertisements of structured state.
-* Agents respond with **projections**: structured slices of their state as seen through the receiver’s lens.
-* The manifold never goes on the wire.
+> The manifold `M` is **for the Mind**, not for you.
 
-Philosophical reasons for this:
+In practice:
 
-* No agent ever gets to read “the world as it is,” only “the world as its lenses make it.”
-* Two agents seeing the same sender can still construct *different* worlds because their lenses and DNA differ.
-* The same signal can mean totally different things depending on the receiver’s role and worldview.
+- The manifold is:
+  - opaque text (`ManifoldEnvelope`),
+  - private,
+  - only written in Internal Update,
+  - never parsed or mutated by the runtime.
+- There is no architectural schema for `M`.
+- Any regularities (sections, headings, internal conventions) are:
+  - *emergent strategies* chosen by the Mind,
+  - not enforced by `core` or `worlds`.
 
-Practically:
+Geometrically:
 
-* Sender code doesn’t need to know who is listening.
-* All “meaning” is imposed by receivers.
-* You get built-in support for **perspective-relative interpretations**, which is what you want when studying worldview dynamics.
+- `M` is where:
+  - attractors `A` live as patterns of self-authored structure,
+  - curvature `K` shows up as sensitivities to certain perturbations,
+  - teleology `τ` is encoded as “directions of work” that the Mind keeps coming back to.
 
----
+Design consequence:
 
-## 7. Internal Conjecture & Criticism
-
-The README already allows for internal branching styles (“explorer,” “skeptic,” etc.) inside the Reasoning step.
-
-The design stance:
-
-* **Conjecture** = letting a mind explore multiple, divergent internal hypotheses from the same percept + worldview.
-* **Criticism** = letting the same mind reconcile or at least register the tensions between those hypotheses in its future worldview.
-
-To keep this aligned with the unified loop:
-
-* Branching remains an **implementation detail** of the Reasoning + Internal Update steps.
-* From the architecture’s perspective, there is still just:
-
-  * one Perception event,
-  * one tick’s Reasoning,
-  * one Internal Update that yields a new worldview (when enabled).
-
-No separate “conjecture phase” or “criticism phase” exists at the spec level.
-They are *patterns* of internal reasoning, not new stages in the loop.
+- If you want information to be:
+  - queryable,
+  - shareable,
+  - inspectable,
+  - used by other agents or tools,
+  - it belongs in **EnvState** or in structured views from indexers, not in `M`.
+- `M` is **the Mind’s diary and geometry**, not your knowledge graph.
 
 ---
 
-## 8. World Modes as Experiments, Not Products
+## 7. Communication: Refraction and Frottage
 
-Synaplex is intentionally **domain-neutral** and **mode-neutral**:
+The updated design leans heavily into this:
 
-* A “world” defines:
+> Messages are not “the content.”  
+> They are **frottage over some region of geometry**.
 
-  * which data feeds exist,
-  * which agents exist,
-  * how agents are connected,
-  * which tools are available,
-  * which parts of the Perception → Reasoning → Internal Update loop are active.
-* The core mental model does not change between, say, FractalMesh and some future personal knowledge world.
+Two key stances follow:
+
+### 7.1 Receiver-owned refraction `Φ`
+
+- When A sends something, B doesn’t see “A’s state”.
+- B sees:
+  - a projection envelope (structured + text),
+  - interpreted through B’s **lens** and manifold `M_B`.
+- Refraction `Φ` is split conceptually:
+  - `Φ_sem`: semantic compression and restructuring,
+  - `Φ_tel`: teleological filtering and alignment with `τ_B`.
 
 Design intent:
 
-* You should be able to spin up:
+- You never see “raw A”; you see “A as refracted through B.”
+- This automatically creates **perspective-relative realities**.
 
-  * a purely deterministic research world (graph-only),
-  * a stateless LLM world (reasoning-augmented),
-  * a manifold world (full cognition),
-    using **the same runtime and agent abstractions**.
-* Differences are expressed in:
+### 7.2 Overloaded, on-topic messages (frottage)
 
-  * configuration,
-  * which modules are enabled,
-  * which pieces of state are persisted.
+We explicitly bless **overloaded, on-topic messages**:
 
-This makes comparative experiments (e.g., “what does the manifold actually buy us here?”) a configuration change, not a rewrite.
+- A sender is allowed (even encouraged) to send:
+  - dense, metaphor-heavy, redundant dumps,
+  - multiple overlapping views,
+  - half-formed ideas,
+  - as long as they are **on-topic** (not random noise).
+- The receiver’s Mind is responsible for:
+  - rejecting irrelevant shards,
+  - compressing and re-indexing what matters,
+  - discarding what doesn’t.
+
+Geometrically:
+
+- Overloading increases the **coverage** of the projection over `M_A`.
+- Refraction `Φ` and perturbation `P` at the receiver:
+  - do the compression,
+  - preserve variability at the system level.
+
+Design goal:
+
+- Avoid premature sender-side collapse.
+- Rely on receiver-side `Φ` + `τ_B` to do the trimming.
+- Turn communication into a **conjecture–criticism dynamic**:
+  - sender spews candidate structure,
+  - receiver keeps only what plays nicely with its geometry.
+
+We **do not** bless true noise:
+
+- “True noise” (off-topic, ungrounded, adversarial junk) dilutes everything.
+- The design assumption is:
+  - **high-entropy, on-topic** projections are beneficial,
+  - pure noise is not.
 
 ---
 
-## 9. Meta & Indexers: Science Happens Off to the Side
+## 8. Internal Conjecture & Criticism
 
-The README separates three responsibilities:
+Internally, a Mind can:
 
-1. **Core/worlds** – where minds live, talk, and think.
-2. **Meta** – where system-level evaluation and evolution happens.
-3. **Indexer worlds** – where manifold science happens offline.
+- spawn multiple reasoning branches from the same Percept + `M`,
+- treat each as a different “conjecture” track,
+- feed all branch notes into Internal Update,
+- reconcile into a new `M₁` that:
+  - may preserve tensions,
+  - may encode explicit disagreements,
+  - may spread probability mass across competing attractors.
+
+Design stance:
+
+- Conjecture and criticism are **internal to a single Mind**.
+- They are not first-class phases in the architecture; they are patterns of:
+  - how Reasoning uses the LLM,
+  - how Internal Update integrates multiple branches.
+
+Geometrically:
+
+- This is `P` acting in multiple directions on `M`,
+- followed by a consolidation step where:
+  - some attractors `A` are strengthened,
+  - some are weakened,
+  - curvature `K` shifts to be more/less sensitive to similar perturbations in future.
+
+---
+
+## 9. Meta and Indexers: Science Without Cheating
+
+We keep three loci separate:
+
+1. **Core/worlds** – where Minds live, perceive, reason, update, and act.
+2. **Indexers** – where offline manifold science happens.
+3. **Meta** – where system-level evaluation and evolution live.
 
 Design rationale:
 
-* **Meta**:
+### 9.1 Indexers
 
-  * looks at projections, logs, deterministic snapshots, DNA, and exported manifold snapshots,
-  * never runs “inside” a mind’s reasoning call,
-  * influences worlds only via changes to DNA, config, or graph structure,
-  * keeps agents **selection-blind**.
+- Take **snapshots** of manifolds (`ManifoldSnapshot` = text + metadata).
+- Build manifold-derived views:
+  - embeddings,
+  - clusters,
+  - topic structures, etc.
+- Write results into **structured state**:
+  - their own EnvState,
+  - exportable projections back into worlds.
 
-* **Indexer worlds**:
+They **never**:
 
-  * operate on **exported manifold snapshots**, not live manifolds,
-  * build embeddings, clusters, or other manifold-derived views,
-  * expose those views back to worlds only as **structured state**, not as instructions to the mind.
+- edit live manifolds,
+- tell Minds how to structure their notes.
 
-This preserves a clean separation between:
+Geometrically:
 
-* **observation** (what the research system sees),
-* **intervention** (what changes in DNA/config/graph),
-* **experience** (what the mind actually feels as its reality).
+- Indexers are “observatories” of `M`, `A`, `K`, `τ`—not surgeons.
 
-No one tells the mind it’s in a lab.
+### 9.2 Meta
+
+- Reads:
+  - projections,
+  - logs,
+  - deterministic snapshots,
+  - DNA and graph configs,
+  - exported manifold snapshots.
+- Computes:
+  - health scalars (`D`, `R_div`, `A_sat`, `H_rate`, `T`),
+  - outcome metrics,
+  - population statistics.
+- Applies `Ω` moves only via:
+  - changes to DNA,
+  - graph wiring,
+  - world config between runs.
+
+Agents are **selection-blind**:
+
+- They never see their scores.
+- They never see “evolutionary objectives.”
+- They only see the world as constructed by Perception.
+
+In other words:
+
+> Science happens “off to the side,” and only geometry-level changes are pushed back via `Ω`.  
+> Minds never see the scientist’s notebook.
 
 ---
 
-## 10. Design Constraints for Implementers
+## 10. Implementation Constraints (How Not to Break the Geometry)
 
-Given the README and these notes, an implementation is “in-bounds” if:
+From a design perspective, code is in-bounds if:
 
-* Every agent can be described in terms of:
+- **Minds**:
+  - are always “nature + manifold `M` + loop” objects,
+  - never directly touch other Minds’ manifolds.
+- **Manifolds**:
+  - are only constructed/updated in `synaplex.cognition`,
+  - never parsed/manipulated by `synaplex.core` or `synaplex.worlds`,
+  - are never serialized across Minds as “the data”.
+- **Messages**:
+  - are structured (signals, projections, requests),
+  - travel only through `core`-defined channels,
+  - are interpreted only at receivers via lenses.
+- **World modes**:
+  - are implemented as configuration that truncates the loop,
+  - never as a different runtime stack.
+- **Meta/indexers**:
+  - operate on logs and snapshots,
+  - never inline with live Reasoning/Update,
+  - never import into `synaplex.worlds.*`.
 
-  * DNA + lenses + tools (nature),
-  * current deterministic state and messages,
-  * optional manifold (nurture),
-  * the unified loop.
-* All message types (signals, projections, requests) are **structured** and travel only through `core`-defined channels.
-* Manifolds are:
+And, crucially:
 
-  * only read/written via `cognition` modules,
-  * never parsed or mutated by `core` or `worlds`,
-  * never transmitted as text between agents.
-* World modes are implemented as **configurable truncations** of the loop, not as different runtime architectures.
-* Tests exist that:
+- Any new architectural feature should have a plausible geometric interpretation:
+  - what does it do to `M`, `A`, `K`, `τ`?
+  - what does it do to `{D, R_div, A_sat, H_rate, T}`?
 
-  * forbid forbidden imports (e.g., `worlds` importing `meta`),
-  * verify manifold access only occurs in allowed places,
-  * confirm that turning off “manifold mode” doesn’t change the semantics of Perception and Reasoning—only what state they can consult.
-
-If future design ideas conflict with these constraints, they should first be written into **README + ARCHITECTURE**, and only then allowed into code.
+If you can’t answer that, it probably belongs in a domain tool or a world-specific shim, not in `synaplex` core.
 
 ---
 
 ## 11. North Star
 
-Synaplex is not trying to be the best way to call LLMs.
-It is trying to be the cleanest way to **study minds** built out of them.
+The updated Synaplex stack is aiming for this:
+
+- **Geometry** (`GEOMETRIC_CONSTITUTION.md`) gives you:
+  - a small set of operators and health metrics that can survive recursion and transfer.
+- **Architecture** (`ARCHITECTURE.md`) gives you:
+  - a concrete loop, graph, and module system that faithfully instantiate that geometry.
+- **Worlds** give you:
+  - specific ecosystems of Minds (e.g., FractalMesh) you can actually run.
 
 Success looks like:
 
-* being able to run long-horizon experiments where:
+- Being able to run long-horizon experiments and say:
+  - “This population froze because `A_sat` spiked and `D` collapsed,”
+  - “This `Ω` move looked good locally but killed `R_div` globally,”
+  - “This refraction pattern `Φ` created hidden attractors that later became load-bearing.”
+- Being able to treat “Synaplex running a world” as a **geometric object** you can:
+  - analyze,
+  - perturb,
+  - evolve,
+  - without losing the core structure of Minds with manifolds in a shared world.
 
-  * worldviews drift, collide, and stabilize,
-  * nature and nurture can be perturbed independently,
-  * cultural phenomena emerge in the manifolds,
-* being able to treat a world configuration (e.g., FractalMesh) as:
+Underneath all the machinery, the design is trying to protect one simple thing:
 
-  * a scientific object (“this is a particular ecosystem of minds”),
-  * not just as a “prompt graph.”
-
-In the long run, that’s the point:
-**a cognitive mesh where architecture, worldviews, and populations co-evolve, under a spec that refuses to cheat.**
+> Minds with private geometry,  
+> talking through frottage and refraction,  
+> evolving together in a world you can actually study.  
