@@ -33,12 +33,7 @@ Concretely, it is designed to let you study and build systems where:
   * change DNA, lenses, and graph wiring (**nature**),
   * or change initial manifolds and update patterns (**nurture**),
   * and observe how behavior and culture drift over time.
-* You can **ablate** parts of the cognitive loop:
-
-  * graph-only,
-  * graph + reasoning but no manifold,
-  * or full manifold-enabled cognition—
-  * without changing what a “Mind” fundamentally is.
+* You can **study ablations** of the cognitive loop (graph-only, reasoning-without-manifold, etc.) in **meta-level experiments and harnesses** *around* Synaplex, while the core runtime and worlds always instantiate the full loop.
 
 The core question Synaplex is built to explore:
 
@@ -94,7 +89,7 @@ Every Mind runs the same loop:
 
 > **Perception → Reasoning → Internal Update**
 
-Synaplex never introduces alternative cognitive stacks. Worlds can **truncate** this loop for experiments, but they do not change its shape.
+Synaplex never introduces alternative cognitive stacks. The meta layer and external experiment harnesses can *approximate* truncations (e.g., “graph-only” simulations), but the underlying Mind model and runtime loop stay the same.
 
 ### 3.1 Perception (Environment → Mind)
 
@@ -144,22 +139,6 @@ Finally, the Mind revises its manifold:
 This is the **only write-path** to the manifold.
 
 Geometrically: the manifold’s geometry is updated and re-encoded as opaque text.
-
-### 3.4 World Modes
-
-Worlds differ only in what parts of the loop they enable:
-
-1. **Graph-only**
-
-   * Perception only; no Reasoning, no Internal Update.
-2. **Reasoning-only**
-
-   * Perception + Reasoning; no manifold persistence.
-3. **Manifold world**
-
-   * Full loop: Perception, Reasoning, Internal Update.
-
-These are experiment modes, not different ontologies.
 
 ---
 
@@ -252,9 +231,9 @@ You don’t have to use this notation day-to-day, but it matters because:
 
 ## 6. Invariants (What Synaplex Refuses to Compromise On)
 
-These are spelled out in detail in `ARCHITECTURE.md`. At a high-level:
+These are spelled out in detail in `ARCHITECTURE.md`. At a high level:
 
-1. **Every Mind has a manifold** (even if empty in ablations).
+1. **Every Mind has a manifold.**
 2. **The runtime never parses or edits manifolds.**
 3. **Internal Update is the only write-path** to manifolds.
 4. **Manifold access is loop-bounded** (no access in Perception).
@@ -286,50 +265,50 @@ The repo layout mirrors the architecture. Conceptual boundaries show up as direc
 
 ```text
 .
-├── README.md                # Orientation & mental model (this file)
-├── GEOMETRIC_CONSTITUTION.md# Geometric primitives, operators, and health metrics
-├── ARCHITECTURE.md          # Operational mapping from geometry to loops, messages, modules
-├── DESIGN_NOTES.md          # Intent, philosophy, North Star, and research framing
+├── README.md                 # Orientation & mental model (this file)
+├── GEOMETRIC_CONSTITUTION.md # Geometric primitives, operators, and health metrics
+├── ARCHITECTURE.md           # Operational mapping from geometry to loops, messages, modules
+├── DESIGN_NOTES.md           # Intent, philosophy, North Star, and research framing
 ├── synaplex/
 │   ├── __init__.py
-│   ├── core/                # External structure: graph, messages, DNA, lenses, env state
+│   ├── core/                 # External structure: graph, messages, DNA, lenses, env state
 │   │   ├── __init__.py
-│   │   ├── ids.py           # WorldId, AgentId, MessageId, etc.
+│   │   ├── ids.py            # WorldId, AgentId, MessageId, etc.
 │   │   ├── errors.py
-│   │   ├── dna.py           # DNA = structural blueprint (roles, subscriptions, tools, params)
-│   │   ├── lenses.py        # Lens definitions and request/response shapes
-│   │   ├── env_state.py     # Shared deterministic state (nature)
-│   │   ├── messages.py      # Signals, projections, requests, percept structures
+│   │   ├── dna.py            # DNA = structural blueprint (roles, subscriptions, tools, params)
+│   │   ├── lenses.py         # Lens definitions and request/response shapes
+│   │   ├── env_state.py      # Shared deterministic state (nature)
+│   │   ├── messages.py       # Signals, projections, requests, percept structures
 │   │   ├── agent_interface.py
 │   │   ├── runtime_interface.py
 │   │   ├── runtime_inprocess.py
-│   │   └── graph_config.py  # Config for worlds: agent set, edges, subscriptions
-│   ├── cognition/           # Internal mind dynamics (LLM + manifold)
+│   │   └── graph_config.py   # Config for worlds: agent set, edges, subscriptions
+│   ├── cognition/            # Internal mind dynamics (LLM + manifold)
 │   │   ├── __init__.py
-│   │   ├── llm_client.py    # LLM + tool client abstractions
-│   │   ├── manifolds.py     # ManifoldEnvelope + ManifoldStore (private worldview snapshots)
-│   │   ├── mind.py          # Mind abstraction: unified loop wiring
-│   │   ├── branching.py     # Branching and reconciliation strategies
-│   │   ├── update.py        # Internal update (Ξ, A, K, τ evolution) strategies
-│   │   └── tools.py         # Tool wrappers used during Reasoning
-│   ├── manifolds_indexers/  # Offline manifold science
+│   │   ├── llm_client.py     # LLM + tool client abstractions
+│   │   ├── manifolds.py      # ManifoldEnvelope + ManifoldStore (private worldview snapshots)
+│   │   ├── mind.py           # Mind abstraction: unified loop wiring
+│   │   ├── branching.py      # Branching and reconciliation strategies
+│   │   ├── update.py         # Internal update (Ξ, A, K, τ evolution) strategies
+│   │   └── tools.py          # Tool wrappers used during Reasoning
+│   ├── manifolds_indexers/   # Offline manifold science
 │   │   ├── __init__.py
-│   │   ├── export.py        # runtime → snapshot export
+│   │   ├── export.py         # runtime → snapshot export
 │   │   └── indexer_world/
 │   │       ├── __init__.py
-│   │       ├── types.py     # ManifoldSnapshot, IndexerConfig, etc.
-│   │       ├── agents.py    # Indexer agents (embeddings, clustering, manifold analysis)
+│   │       ├── types.py      # ManifoldSnapshot, IndexerConfig, etc.
+│   │       ├── agents.py     # Indexer agents (embeddings, clustering, manifold analysis)
 │   │       └── world_config.py
-│   ├── meta/                # System-level evaluation & evolution
+│   ├── meta/                 # System-level evaluation & evolution
 │   │   ├── __init__.py
-│   │   ├── evaluation.py    # Metrics (D, R_div, A_sat, H_rate, T, etc.)
-│   │   ├── evolution.py     # DNA/graph search, population experiments (Ω moves)
-│   │   └── experiments.py   # Nature/nurture and counterfactual experiments
-│   └── worlds/              # Domain-specific instantiations
+│   │   ├── evaluation.py     # Metrics (D, R_div, A_sat, H_rate, T, etc.)
+│   │   ├── evolution.py      # DNA/graph search, population experiments (Ω moves)
+│   │   └── experiments.py    # Nature/nurture and counterfactual experiments
+│   └── worlds/               # Domain-specific instantiations
 │       ├── __init__.py
 │       └── fractalmesh/
 │           ├── __init__.py
-│           ├── config.py         # World configuration (agents, edges, loop settings)
+│           ├── config.py         # World configuration (agents, edges, runtime parameters)
 │           ├── dna_templates.py  # Role-specific DNA templates
 │           ├── lenses.py         # Domain lenses
 │           ├── agents.py         # Domain agents using the unified loop
@@ -341,7 +320,7 @@ The repo layout mirrors the architecture. Conceptual boundaries show up as direc
     ├── test_invariants_manifolds_privacy.py
     ├── test_invariants_indexer_flow.py
     ├── test_invariants_worlds_meta.py
-    └── test_invariants_loop_modes.py
+    └── test_invariants_loop_contract.py
 ```
 
 The tests act as **tripwires** against architectural drift:
@@ -350,7 +329,7 @@ The tests act as **tripwires** against architectural drift:
 * `worlds` importing `meta` (forbidden),
 * non-loop-bounded manifold access,
 * indexers writing to live manifolds,
-* or loop modes that don’t respect Perception → Reasoning → Internal Update.
+* or changes that break the Perception → Reasoning → Internal Update contract.
 
 ---
 
@@ -365,10 +344,10 @@ The tests act as **tripwires** against architectural drift:
 
 2. Create a world under `synaplex/worlds/your_world/`:
 
-   * `dna_templates.py` for roles (researcher, PM, risk, execution, etc.),
+   * `dna_templates.py` for roles (researcher, planner, critic, executor, etc.),
    * `lenses.py` for how they see each other and EnvState,
    * `agents.py` for Mind subclasses or factories,
-   * `config.py` for graph wiring and loop mode.
+   * `config.py` for graph wiring and runtime parameters.
 
 3. Use the unified loop; don’t invent a new one.
 
@@ -384,11 +363,13 @@ The tests act as **tripwires** against architectural drift:
 
   * do not feed scores back into their Reasoning or Internal Update.
 
+* Implement “graph-only” or “reasoning-only” behaviors as **external experiment harnesses** that sit around the runtime, not as alternate modes in `synaplex.core`.
+
 ### 8.3 If you want to change the architecture
 
 * Change `GEOMETRIC_CONSTITUTION.md` and `ARCHITECTURE.md` **first**.
 * Then adjust code and tests to match.
-* Don’t sneak architectural changes directly into the code; you will break the geometry.
+* Don’t sneak architectural changes directly into the code; that’s how geometry dies.
 
 ---
 
@@ -403,6 +384,7 @@ If you keep the geometry and invariants intact, you can:
 
 * plug in different models,
 * run long-horizon simulations,
-* build domain-specific “worlds” (e.g., research labs, trading systems, planning systems),
+* build domain-specific “worlds” (e.g., Idea World, research labs, planning systems),
 * and still know that you’re studying the same underlying object:
-  **a graph of Minds with persistent manifolds, evolving together.**
+
+> **a graph of Minds with persistent manifolds, evolving together.**
