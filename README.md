@@ -18,6 +18,38 @@ If you want to know *what Synaplex is and how to use it*, start here.
 
 ---
 
+## Quick Start
+
+Get up and running with Synaplex in just a few lines:
+
+```python
+from synaplex.quick_start import quick_start
+
+# Create a runtime with one agent
+runtime = quick_start()
+
+# Run a tick to see the cognitive loop in action
+runtime.tick(0)
+```
+
+That's it! The `quick_start()` helper sets up everything you need:
+- A runtime with one agent
+- A default lens and DNA
+- An in-memory manifold store
+- A dummy LLM client (for testing)
+
+**Requirements:**
+- Python 3.10+
+- Install dependencies: `pip install -e .` (from the repo root)
+
+**Next steps:**
+- See `examples/quick_start_example.py` for a complete minimal example
+- See `examples/multi_agent_example.py` for multiple agents with subscriptions
+- See `examples/comprehensive_example.py` for advanced features (tools, custom lenses, signals)
+- Read on for the full mental model and architecture
+
+---
+
 ## 1. What Synaplex Is For
 
 Synaplex exists to be a **substrate for manifold-native, multi-mind cognition**, not just another “multi-agent framework”.

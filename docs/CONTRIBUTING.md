@@ -15,6 +15,7 @@ Before modifying any code, contributors must:
 
    * `README.md` — mental model & unified loop
    * `ARCHITECTURE.md` — canonical structure & invariants
+   * `GEOMETRIC_CONSTITUTION.md` — seams, lenses, and separation principles
    * `DESIGN_NOTES.md` — intent, philosophy, research frame
 
 2. **Do not introduce new concepts that conflict with these documents** unless you first update the documents themselves (see Section 3).
@@ -30,6 +31,9 @@ Before modifying any code, contributors must:
 
 5. **Never allow raw manifold text to leak into core/worlds.**
    It is private to each mind.
+
+6. Before making architectural changes, **contributors must read GEOMETRIC_CONSTITUTION.md.** 
+   It defines the geometric rules—the seams, lenses, and separation principles—that all modules must obey.
 
 ---
 
