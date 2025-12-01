@@ -60,7 +60,8 @@ class Mind(AgentInterface):
         self._store = manifold_store or ManifoldStore()
         # UpdateMechanism gets LLM client for checkpoint rituals
         self._update_mechanism = update_mechanism or UpdateMechanism(llm_client=llm_client)
-        self._branching = branching_strategy or BranchingStrategy()
+        # BranchingStrategy gets LLM client if provided
+        self._branching = branching_strategy or BranchingStrategy(llm_client=llm_client)
 
         # WorldMode resolution:
         #   - explicit world_mode wins
@@ -321,12 +322,34 @@ class Mind(AgentInterface):
 
         The manifold content is included in the context and may be used by the Mind
         for internal thinking, but never leaves this class.
+
+        If branching is enabled, generates multiple reasoning branches and consolidates them.
         """
-        # Optional: use BranchingStrategy for internal multiplicity.
         base_prompt = self._build_prompt(context, include_manifold=True)
 
-        # For the skeleton, we keep branching a no-op and just call the LLM once.
-        notes = self._call_llm_for_notes(base_prompt)
+        # Check if branching is enabled (has LLM client)
+        if self._branching._llm is not None:
+            # Generate multiple reasoning branches
+            branches = self._branching.run_branches(
+                base_prompt=base_prompt,
+                context=context,
+                styles=None,  # Use default styles
+            )
+
+            if branches:
+                # Consolidate branches into unified notes
+                prior_manifold = context.get("manifold", "")
+                notes = self._branching.consolidate(
+                    branches=branches,
+                    prior_manifold=prior_manifold if prior_manifold else None,
+                    context=context,
+                )
+            else:
+                # Branching failed or disabled, fall back to single pass
+                notes = self._call_llm_for_notes(base_prompt)
+        else:
+            # No branching: single reasoning pass
+            notes = self._call_llm_for_notes(base_prompt)
 
         return ReasoningResult(
             notes=notes,
