@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from synaplex.core.agent_interface import AgentInterface
-from synaplex.core.ids import AgentId
-from synaplex.core.messages import Percept
+from synaplex.core.ids import AgentId, MessageId
+from synaplex.core.messages import Percept, Projection, Request
 from synaplex.core.world_modes import WorldMode
 
 from .llm_client import LLMClient
@@ -58,7 +58,8 @@ class Mind(AgentInterface):
 
         self._llm = llm_client
         self._store = manifold_store or ManifoldStore()
-        self._update_mechanism = update_mechanism or UpdateMechanism()
+        # UpdateMechanism gets LLM client for checkpoint rituals
+        self._update_mechanism = update_mechanism or UpdateMechanism(llm_client=llm_client)
         self._branching = branching_strategy or BranchingStrategy()
 
         # WorldMode resolution:
@@ -134,10 +135,11 @@ class Mind(AgentInterface):
             result = self._run_reasoning_with_manifold(context_with_manifold)
 
             # Internal Update: checkpoint ritual → new ManifoldEnvelope
+            # Pass agent_id as AgentId, not string
             envelope = self._update_mechanism.update_worldview(
                 prior=prior_envelope,
                 reasoning_output={
-                    "agent_id": self.agent_id,
+                    "agent_id": self.agent_id,  # Already an AgentId
                     "notes": result.notes,
                     "context": result.context,
                 },
@@ -158,19 +160,61 @@ class Mind(AgentInterface):
         """
         Produce outward behavior from reasoning_output.
 
-        For now, this simply forwards the 'outward' sub-dict, which is expected to have
-        the shape:
-
+        Returns a dict with:
             {
-                "signals": [...],
-                "requests": [...],
-                "env_updates": [...],
+                "signals": [Signal objects or dicts],
+                "requests": [Request objects or dicts],
+                "env_updates": {key: value, ...},
             }
 
         Worlds can extend this pattern, but the outward behavior is always derived
         from Reasoning, not from Perception or Internal Update directly.
         """
         return reasoning_output.get("outward", self._empty_outward_behavior())
+
+    def create_projection(self, request: Request) -> Projection:
+        """
+        Create a projection in response to a request.
+
+        This exposes structured state views of the agent. The projection:
+        - Contains only structured data (never raw manifold text)
+        - May include EnvState data the agent has access to
+        - Is transformed by the receiver's lens (handled by runtime)
+
+        The projection payload is built from:
+        - Agent's visible state (via get_visible_state())
+        - Any structured data the agent chooses to expose
+        """
+        # Get visible structured state
+        visible_state = self.get_visible_state()
+
+        # Build projection payload
+        # Note: We never include raw manifold content here
+        payload = {
+            "agent_id": self.agent_id.value,
+            "state": visible_state,
+            # Worlds can extend this with domain-specific structured views
+        }
+
+        return Projection(
+            id=MessageId(f"proj-{self.agent_id.value}-{request.id.value}"),
+            sender=self.agent_id,
+            receiver=request.sender,
+            payload=payload,
+        )
+
+    def get_visible_state(self) -> Dict[str, Any]:
+        """
+        Return the agent's externally visible structured state.
+
+        This is used to build projections. The default implementation
+        returns minimal state. Worlds can extend Mind to provide richer views.
+        """
+        return {
+            "agent_id": self.agent_id.value,
+            # Add more structured state as needed
+            # Never include manifold content here
+        }
 
     # -------------------------------------------------------------------------
     # Internal helpers
