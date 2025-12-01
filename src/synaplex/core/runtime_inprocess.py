@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Mapping, List, Optional
+from typing import Any, Dict, Mapping, List, Optional
 
 from .ids import WorldId, AgentId, MessageId
 from .agent_interface import AgentInterface
@@ -13,6 +13,15 @@ from .env_state import EnvState
 from .lenses import Lens
 from .messages import Percept, Projection, Signal, Request
 from .runtime_interface import RuntimeInterface
+from .data_feeds import DataFeedRegistry
+
+# Optional logging import (meta layer)
+try:
+    from synaplex.meta.logging import RunLogger
+    _LOGGING_AVAILABLE = True
+except ImportError:
+    _LOGGING_AVAILABLE = False
+    RunLogger = None  # type: ignore
 
 
 @dataclass
@@ -49,14 +58,20 @@ class InProcessRuntime(RuntimeInterface):
         world_id: WorldId,
         env_state: EnvState | None = None,
         graph_config: GraphConfig | None = None,
+        data_feeds: DataFeedRegistry | None = None,
+        logger: Optional[Any] = None,  # RunLogger, but avoid import if not available
     ) -> None:
         super().__init__(world_id, env_state)
         self._agents: Dict[AgentId, AgentInterface] = {}
         self._dna: Dict[AgentId, DNA] = {}
         self._lenses: Dict[AgentId, Lens] = {}
         self.graph_config = graph_config or GraphConfig()
+        self.data_feeds = data_feeds or DataFeedRegistry()
+        self.logger = logger  # Optional RunLogger
         # Track signals emitted during the current tick
         self._current_tick_signals: Dict[AgentId, List[Signal]] = {}
+        # Track pending requests for next tick's perception phase
+        self._pending_requests: Dict[AgentId, List[Request]] = {}
 
     def register_agent(
         self,
@@ -106,21 +121,26 @@ class InProcessRuntime(RuntimeInterface):
         self, receiver_id: AgentId, tick_id: int
     ) -> List[Projection]:
         """
-        Gather projections from subscribed agents.
+        Gather projections from subscribed agents and pending requests.
 
         For each subscription:
         1. Get receiver's lens (if available) to build request shape
         2. Call publisher's create_projection() method
         3. Apply receiver's lens transformation
         4. Return transformed projection
+
+        Also handles active requests from previous tick.
         """
         projections = []
-        subscriptions = self._subscriptions_for(receiver_id)
         receiver_lens = self._lenses.get(receiver_id)
 
+        # Handle subscriptions (always-on perception)
+        subscriptions = self._subscriptions_for(receiver_id)
         for publisher_id in subscriptions:
             if publisher_id not in self._agents:
-                continue  # Publisher not registered
+                # Log warning but continue - publisher may not be registered yet
+                # In production, this would use proper logging
+                continue
 
             publisher = self._agents[publisher_id]
 
@@ -141,15 +161,41 @@ class InProcessRuntime(RuntimeInterface):
             )
 
             # Get projection from publisher
-            projection = publisher.create_projection(request)
+            try:
+                projection = publisher.create_projection(request)
+                # Apply receiver's lens transformation (receiver-owned semantics)
+                if receiver_lens:
+                    projection.payload = receiver_lens.transform_projection(
+                        projection.payload
+                    )
+                projections.append(projection)
+            except Exception as e:
+                # Log error but continue with other projections
+                # In a production system, this would use proper logging
+                # For now, we silently continue to avoid breaking the tick
+                # The error is that projection creation failed for this specific subscription
+                pass
 
-            # Apply receiver's lens transformation (receiver-owned semantics)
-            if receiver_lens:
-                projection.payload = receiver_lens.transform_projection(
-                    projection.payload
-                )
+        # Handle active requests from previous tick
+        pending = self._pending_requests.pop(receiver_id, [])
+        for request in pending:
+            if request.receiver not in self._agents:
+                # Requested agent not registered - skip this request
+                continue
 
-            projections.append(projection)
+            publisher = self._agents[request.receiver]
+            try:
+                projection = publisher.create_projection(request)
+                # Apply receiver's lens transformation
+                if receiver_lens:
+                    projection.payload = receiver_lens.transform_projection(
+                        projection.payload
+                    )
+                projections.append(projection)
+            except Exception as e:
+                # Projection creation failed for this request
+                # Continue with other requests to avoid breaking the tick
+                pass
 
         return projections
 
@@ -193,19 +239,28 @@ class InProcessRuntime(RuntimeInterface):
         # Gather and filter signals
         signals = self._gather_signals(agent_id)
 
+        # Gather data feeds
+        feed_data = self.data_feeds.get_all(tick_id)
+
         # Include EnvState in percept extras
         # This allows agents to see shared environmental state
         env_state_view = {
             "data": self.env_state.data,
         }
 
+        # Include tool information from DNA if available
+        extras = {"env_state": env_state_view}
+        dna = self._dna.get(agent_id)
+        if dna and dna.tools:
+            extras["available_tools"] = dna.tools
+
         return Percept(
             agent_id=agent_id,
             tick=tick_id,
             projections=projections,
             signals=signals,
-            data_feeds={},  # Worlds can extend this
-            extras={"env_state": env_state_view},
+            data_feeds=feed_data,
+            extras=extras,
         )
 
     def tick(self, tick_id: int) -> None:
@@ -215,6 +270,8 @@ class InProcessRuntime(RuntimeInterface):
         """
         # Clear signals from previous tick
         self._current_tick_signals.clear()
+        # Clear pending requests (they'll be processed in this tick's perception)
+        self._pending_requests.clear()
 
         # 1. Perception: Build percepts and deliver to agents
         percepts: Dict[AgentId, Percept] = {
@@ -222,16 +279,45 @@ class InProcessRuntime(RuntimeInterface):
             for agent_id in self._agents
         }
         for agent_id, agent in self._agents.items():
-            agent.perceive(percepts[agent_id])
+            percept = percepts[agent_id]
+            agent.perceive(percept)
+            
+            # Log percept if logger available
+            if self.logger:
+                self.logger.log_percept(
+                    agent_id,
+                    tick_id,
+                    percept.to_context(),
+                )
 
         # 2. Reasoning: Agents think about their percepts
         reasoning_outputs: Dict[AgentId, dict] = {}
         for agent_id, agent in self._agents.items():
-            reasoning_outputs[agent_id] = agent.reason()
+            reasoning_output = agent.reason()
+            reasoning_outputs[agent_id] = reasoning_output
+            
+            # Log reasoning if logger available
+            if self.logger:
+                self.logger.log_reasoning(agent_id, tick_id, reasoning_output)
+                
+                # Log manifold snapshot if version info is available
+                context = reasoning_output.get("context", {})
+                if "manifold_version" in context:
+                    self.logger.log_manifold_snapshot(
+                        agent_id,
+                        tick_id,
+                        context.get("manifold_version", 0),
+                        context.get("manifold_content_length", 0),
+                        context.get("manifold_metadata", {}),
+                    )
 
         # 3. Actions: Process outward behavior
         for agent_id, agent in self._agents.items():
             behavior = agent.act(reasoning_outputs[agent_id])
+            
+            # Log action if logger available
+            if self.logger:
+                self.logger.log_action(agent_id, tick_id, behavior)
 
             # Extract and handle signals
             signals = behavior.get("signals", [])
@@ -257,6 +343,30 @@ class InProcessRuntime(RuntimeInterface):
             if env_updates:
                 for key, value in env_updates.items():
                     self.env_state.set(key, value)
+        
+        # Log EnvState snapshot if logger available
+        if self.logger:
+            self.logger.log_env_state_snapshot(tick_id, self.env_state.data.copy())
 
-            # Note: Requests are handled in the next tick's perception phase
-            # when building projections for subscribers
+            # Collect requests for next tick's perception phase
+            requests = behavior.get("requests", [])
+            if requests:
+                request_objects = []
+                for req in requests:
+                    if isinstance(req, Request):
+                        request_objects.append(req)
+                    elif isinstance(req, dict):
+                        # Convert dict to Request
+                        request_objects.append(
+                            Request(
+                                id=req.get("id", self._generate_message_id()),
+                                sender=agent_id,
+                                receiver=req.get("receiver", AgentId(req.get("receiver", ""))),
+                                shape=req.get("shape", {}),
+                            )
+                        )
+                # Store requests by receiver for next tick
+                for req in request_objects:
+                    if req.receiver not in self._pending_requests:
+                        self._pending_requests[req.receiver] = []
+                    self._pending_requests[req.receiver].append(req)

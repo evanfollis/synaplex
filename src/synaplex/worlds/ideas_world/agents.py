@@ -210,3 +210,103 @@ def make_critic_mind(
         **kwargs
     )
 
+
+def make_synaplex_mind(
+    agent_id: str = "synaplex",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for Synaplex idea mind."""
+    llm = OpenAILLMClient()
+    store = FileManifoldStore(root=store_root or "manifolds/ideas_world") if store_root else None
+    
+    return Mind(
+        agent_id=AgentId(agent_id),
+        llm_client=llm,
+        manifold_store=store,
+        world_mode=WorldMode.MANIFOLD,
+        **kwargs
+    )
+
+
+def make_topic_mind(
+    agent_id: str,
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for topic expert minds."""
+    llm = OpenAILLMClient()
+    store = FileManifoldStore(root=store_root or "manifolds/ideas_world") if store_root else None
+    
+    return Mind(
+        agent_id=AgentId(agent_id),
+        llm_client=llm,
+        manifold_store=store,
+        world_mode=WorldMode.MANIFOLD,
+        **kwargs
+    )
+
+
+# Convenience factories for each topic agent
+def make_llms_mind(
+    agent_id: str = "llms",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for LLMs topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+
+
+def make_world_models_mind(
+    agent_id: str = "world_models",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for World Models topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+
+
+def make_agentic_systems_mind(
+    agent_id: str = "agentic_systems",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for Agentic Systems topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+
+
+def make_cognitive_architectures_mind(
+    agent_id: str = "cognitive_architectures",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for Cognitive Architectures topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+
+
+def make_manifolds_mind(
+    agent_id: str = "manifolds",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for Manifolds topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+
+
+def make_message_graphs_mind(
+    agent_id: str = "message_graphs",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for Message Graphs topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+
+
+def make_nature_nurture_mind(
+    agent_id: str = "nature_nurture",
+    store_root: Optional[str] = None,
+    **kwargs
+) -> Mind:
+    """Factory for Nature vs Nurture topic mind."""
+    return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+

@@ -12,6 +12,7 @@ from .llm_client import LLMClient
 from .manifolds import ManifoldEnvelope, ManifoldStore, InMemoryManifoldStore
 from .branching import BranchingStrategy, BranchOutput
 from .update import UpdateMechanism
+from .tools import ToolRegistry
 
 
 @dataclass
@@ -48,6 +49,7 @@ class Mind(AgentInterface):
         manifold_store: Optional[ManifoldStore] = None,
         update_mechanism: Optional[UpdateMechanism] = None,
         branching_strategy: Optional[BranchingStrategy] = None,
+        tool_registry: Optional[ToolRegistry] = None,
         # Legacy parameter kept for compatibility with existing tests:
         #   enable_persistent_worldview=False  → REASONING_ONLY
         #   enable_persistent_worldview=True   → MANIFOLD
@@ -63,6 +65,8 @@ class Mind(AgentInterface):
         self._update_mechanism = update_mechanism or UpdateMechanism(llm_client=llm_client)
         # BranchingStrategy gets LLM client if provided
         self._branching = branching_strategy or BranchingStrategy(llm_client=llm_client)
+        # Tool registry for tool calling during reasoning
+        self._tool_registry = tool_registry
 
         # WorldMode resolution:
         #   - explicit world_mode wins
@@ -147,6 +151,11 @@ class Mind(AgentInterface):
                 },
             )
             self._store.save(envelope)
+            
+            # Include manifold version info in result for logging
+            result.context["manifold_version"] = envelope.version
+            result.context["manifold_content_length"] = len(envelope.content)
+            result.context["manifold_metadata"] = envelope.metadata
 
             return self._result_to_dict(result)
 
@@ -244,8 +253,18 @@ class Mind(AgentInterface):
     def _load_manifold(self) -> ManifoldEnvelope:
         """
         Load the latest manifold envelope, guaranteed to exist after __init__.
+
+        Raises:
+            RuntimeError: If manifold store fails to load and recovery fails
         """
-        env = self._store.load_latest(self.agent_id)
+        try:
+            env = self._store.load_latest(self.agent_id)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to load manifold for agent '{self.agent_id.value}': {type(e).__name__}: {str(e)}. "
+                f"This may indicate a problem with the manifold store."
+            ) from e
+
         if env is None:
             # This should not happen if _ensure_initial_manifold is respected,
             # but we keep a defensive fallback.
@@ -255,7 +274,13 @@ class Mind(AgentInterface):
                 content="",
                 metadata={"recovered": True},
             )
-            self._store.save(env)
+            try:
+                self._store.save(env)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to create recovery manifold for agent '{self.agent_id.value}': "
+                    f"{type(e).__name__}: {str(e)}"
+                ) from e
         return env
 
     @staticmethod
@@ -308,7 +333,9 @@ class Mind(AgentInterface):
 
         The Mind thinks each tick but does not consult or update the manifold.
         """
-        prompt = self._build_prompt(context, include_manifold=False)
+        # Extract tool names from context if available (from DNA via runtime)
+        tool_names = context.get("available_tools", None)
+        prompt = self._build_prompt(context, include_manifold=False, tool_names=tool_names)
         notes = self._call_llm_for_notes(prompt)
 
         return ReasoningResult(
@@ -326,7 +353,9 @@ class Mind(AgentInterface):
 
         If branching is enabled, generates multiple reasoning branches and consolidates them.
         """
-        base_prompt = self._build_prompt(context, include_manifold=True)
+        # Extract tool names from context if available (from DNA via runtime)
+        tool_names = context.get("available_tools", None)
+        base_prompt = self._build_prompt(context, include_manifold=True, tool_names=tool_names)
 
         # Check if branching is enabled (has LLM client)
         if self._branching._llm is not None:
@@ -362,7 +391,7 @@ class Mind(AgentInterface):
     # Prompting and LLM interaction
     # -------------------------------------------------------------------------
 
-    def _build_prompt(self, context: Dict[str, Any], *, include_manifold: bool) -> str:
+    def _build_prompt(self, context: Dict[str, Any], *, include_manifold: bool, tool_names: Optional[List[str]] = None) -> str:
         """
         Build a minimal, architecture-respecting prompt.
 
@@ -370,6 +399,7 @@ class Mind(AgentInterface):
         - does not impose any schema on the manifold,
         - does not ask for summaries or cleaned-up representations,
         - treats the output strictly as internal notes for the Mind's own future use.
+        - includes tool information if tools are available
         """
         # We deliberately stringify the context instead of unpacking it into a schema,
         # so that structure remains emergent behavior at the Mind level.
@@ -378,14 +408,31 @@ class Mind(AgentInterface):
             # Ensure manifold does not accidentally leak into non-manifold modes.
             visible_context.pop("manifold", None)
 
-        return (
-            "You are an internal Mind for an agent in a multi-mind system.\n"
+        prompt_parts = [
+            "You are an internal Mind for an agent in a multi-mind system.",
             "Your job is to think about the given context and produce internal notes "
-            "for your own future self. Do NOT format these as JSON or any rigid schema.\n\n"
-            "Context (for you only):\n"
-            f"{visible_context}\n\n"
-            "Write internal notes that will help your future self reason better next time."
-        )
+            "for your own future self. Do NOT format these as JSON or any rigid schema.",
+        ]
+
+        # Add tool information if available
+        if self._tool_registry and tool_names:
+            available_tools = self._tool_registry.get_all(tool_names)
+            if available_tools:
+                prompt_parts.append("\nAvailable tools:")
+                for tool_name, tool in available_tools.items():
+                    prompt_parts.append(f"  - {tool.name}: {tool.description}")
+                prompt_parts.append(
+                    "\nYou can use these tools during reasoning. Tool results will be "
+                    "provided as structured data, not text."
+                )
+
+        prompt_parts.extend([
+            "\nContext (for you only):",
+            f"{visible_context}",
+            "\nWrite internal notes that will help your future self reason better next time."
+        ])
+
+        return "\n".join(prompt_parts)
 
     def _call_llm_for_notes(self, prompt: str) -> str:
         """
@@ -394,12 +441,21 @@ class Mind(AgentInterface):
         This method is robust to different LLMClient.complete return types:
         - the skeleton LLMClient is expected to return an object with a 'text' attribute;
         - tests may override and return simple objects; we fall back to str(resp).
+
+        Raises:
+            RuntimeError: If LLM call fails unexpectedly (not NotImplementedError)
         """
         try:
             resp = self._llm.complete(prompt)
         except NotImplementedError:
             # In pure-graph or no-LLM environments, it's acceptable to have empty notes.
             return ""
+        except Exception as e:
+            # Unexpected error from LLM - provide informative error
+            raise RuntimeError(
+                f"LLM call failed for agent '{self.agent_id.value}': {type(e).__name__}: {str(e)}. "
+                f"This may indicate a configuration issue with the LLM client."
+            ) from e
 
         # Accept either the structured LLMResponse or any object with a 'text' attribute.
         text = getattr(resp, "text", None)

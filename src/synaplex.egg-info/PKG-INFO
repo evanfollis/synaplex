@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: synaplex
+Version: 0.0.1
+Summary: AI-native research mesh built on self-passing manifolds
+Author: Evan Follis
+Requires-Python: >=3.10
+Requires-Dist: openai>=2.8.1
+Requires-Dist: pytest>=9.0.1
+Requires-Dist: python-dotenv>=1.2.1

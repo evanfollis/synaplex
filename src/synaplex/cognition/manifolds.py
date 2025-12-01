@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -23,7 +24,7 @@ class ManifoldEnvelope:
     metadata: Dict[str, Any]
 
 
-class ManifoldStore:
+class ManifoldStore(ABC):
     """
     Abstract base interface for manifold storage.
 
@@ -32,13 +33,15 @@ class ManifoldStore:
     - save(envelope) -> None
     """
 
+    @abstractmethod
     def load_latest(self, agent_id: AgentId) -> Optional[ManifoldEnvelope]:
         """Load the latest version of a manifold for an agent."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def save(self, envelope: ManifoldEnvelope) -> None:
         """Save a manifold envelope."""
-        raise NotImplementedError
+        pass
 
 
 class InMemoryManifoldStore(ManifoldStore):

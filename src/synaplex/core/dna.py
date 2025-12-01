@@ -23,7 +23,32 @@ class DNA:
     config: Dict[str, object] = field(default_factory=dict)
 
     def get_param(self, name: str, default: Optional[float] = None) -> Optional[float]:
-        value = self.behavior_params.get(name, default)
+        """
+        Get a behavior parameter by name.
+        
+        Args:
+            name: Parameter name
+            default: Default value if parameter doesn't exist
+            
+        Returns:
+            Parameter value (must be numeric) or default
+            
+        Raises:
+            TypeError: If parameter exists but is not numeric
+            KeyError: If parameter doesn't exist and no default provided
+        """
+        if name not in self.behavior_params:
+            if default is not None:
+                return default
+            raise KeyError(
+                f"Behavior parameter '{name}' not found in DNA for agent '{self.agent_id.value}'. "
+                f"Available parameters: {list(self.behavior_params.keys())}"
+            )
+        
+        value = self.behavior_params[name]
         if isinstance(value, (int, float)) or value is None:
             return value
-        raise TypeError(f"Behavior param '{name}' must be numeric, got {type(value)}.")
+        raise TypeError(
+            f"Behavior param '{name}' for agent '{self.agent_id.value}' must be numeric, "
+            f"got {type(value).__name__} with value: {value}"
+        )

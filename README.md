@@ -791,7 +791,30 @@ The tests act as **tripwires** against architectural drift:
 
 ---
 
-## 9. How to Evolve the Design
+## 9. Documentation
+
+### Getting Started
+
+- **[Getting Started Guide](docs/GETTING_STARTED.md)**: Installation, quick start, and common patterns
+- **[World Creation Tutorial](docs/WORLD_CREATION.md)**: Step-by-step guide to creating new worlds
+- **[Architecture Specification](docs/ARCHITECTURE.md)**: Detailed architecture and invariants
+- **[Design Notes](docs/DESIGN_NOTES.md)**: Design philosophy and rationale
+- **[Glossary](docs/GLOSSARY.md)**: Terminology reference
+
+### Examples
+
+- `examples/multi_agent_example.py`: Basic multi-agent interaction
+- `examples/comprehensive_example.py`: Comprehensive example with all features
+- `examples/openai_usage.py`: OpenAI client usage
+
+### Implementation Details
+
+- `IMPLEMENTATION_SUMMARY.md`: Runtime message routing implementation
+- `BRANCHING_IMPLEMENTATION.md`: Branching strategy implementation
+- `MANIFOLD_PERSISTENCE_IMPLEMENTATION.md`: Manifold persistence implementation
+- `UPDATE_MECHANISM_IMPLEMENTATION.md`: Update mechanism implementation
+
+## 10. How to Evolve the Design
 
 Synaplex is meant to be an evolving research platform, but the evolution should happen **through the spec**, not by accretion in the code.
 
@@ -812,7 +835,7 @@ Synaplex is meant to be an evolving research platform, but the evolution should 
    * Add or modify modules only after the architecture changes are written down.
    * Extend tests to enforce any new invariants:
 
-     * new “no-import” boundaries,
+     * new "no-import" boundaries,
      * new manifold access rules,
      * additional loop modes or experimental scaffolds.
 

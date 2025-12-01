@@ -16,6 +16,7 @@ from .env_state import EnvState
 from .messages import Signal, Projection, Request, Percept
 from .agent_interface import AgentInterface
 from .runtime_interface import RuntimeInterface
+from .data_feeds import DataFeed, DataFeedRegistry, StaticDataFeed, TimeSeriesDataFeed, CallableDataFeed
 
 __all__ = [
     "WorldId",
@@ -30,4 +31,9 @@ __all__ = [
     "Percept",
     "AgentInterface",
     "RuntimeInterface",
+    "DataFeed",
+    "DataFeedRegistry",
+    "StaticDataFeed",
+    "TimeSeriesDataFeed",
+    "CallableDataFeed",
 ]
