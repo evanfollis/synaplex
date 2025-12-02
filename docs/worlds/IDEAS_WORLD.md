@@ -1,437 +1,212 @@
-# IDEA_WORLD — A Synaplex World for Evolving Ideas
+# IDEA\_WORLD — A Synaplex World for Evolving Ideas
 
 > **Idea World** is a Synaplex world whose sole purpose is to scale and refine a single human’s ideas over time.
 > It is both:
 >
-> * a *real world* you can run, and
-> * a *template* for building other Synaplex worlds.
+>   * A **Material Simulation** you can run.
+>   * A **Reference Implementation** for building other Synaplex worlds.
 
-Idea World treats your cognitive life as a population of Minds that:
+Idea World treats your cognitive life as a **Landscape of Substrates** that:
 
-* metabolize your **brain dumps** into evolving manifolds,
-* generate and refine **attractors** (themes, specs, patterns),
-* explore and reframe ideas under different **curvatures**,
-* and, when permitted, trigger **holonomy** via execution tools (e.g., Cursor, scripts) to produce concrete artifacts.
+  * **Metabolize** your brain dumps into evolving sediment.
+  * **Churn** latent ideas against each other to create friction and heat.
+  * **Resurface** insights as deep Basins (habits) or new Layers.
+  * Trigger **Impacts** (tools/execution) to leave permanent scars on the real world.
 
 It is explicitly a **strange loop**:
-Idea World is implemented in Synaplex *and* serves as the canonical example for how to build any Synaplex world.
+Idea World is built on Synaplex to evolve the ideas *about* Synaplex.
 
----
+-----
 
-## 1. Geometric View
+## 1\. Material View (The Physics)
 
-Idea World is defined directly in terms of the geometric primitives:
+Idea World is defined directly in terms of the material primitives:
 
-* **M (Manifold)** – each Mind’s evolving internal worldview about your ideas.
-* **A (Attractors)** – stable-ish patterns:
+  * **S (Substrate)** – Each Mind’s evolving internal sediment. A dense, opaque history of thoughts.
+  * **A (Basins)** – Deep grooves in the sediment:
+      * Recurring themes.
+      * Proto-theories that refuse to die.
+      * "Sticky" metaphors.
+  * **K (Viscosity)** – The resistance of the sediment:
+      * High $K$ (Granite): The "Critic" who demands hard proof.
+      * Low $K$ (Mud): The "Explorer" who adopts every new idea.
+  * **P (Impact)** – External forces striking the sediment:
+      * Your raw notes (Frottage blobs).
+      * Execution results (Compiler errors, test logs).
+  * **H (Holonomy)** – Scars on the World:
+      * Code committed to git.
+      * Files written to disk.
+      * Real-world APIs invoked.
+  * **$\Phi$ (Interference)** – How Minds see each other:
+      * The **Texture** $T$ projected by a Sender.
+      * The **Lens** $L$ applied by a Receiver.
+      * The resulting pattern of Resonance and Noise.
+  * **$\Xi$ (Erosion)** – The natural decay of unvisited paths.
 
-  * recurring themes,
-  * proto-theories,
-  * reusable design moves,
-  * concrete specs that keep resurfacing.
-* **K (Curvature)** – where your conceptual space is:
+-----
 
-  * highly sensitive and generative (high K),
-  * vs. crystallized and robust (low K).
-* **P (Perturbations)** – all the ways the world kicks the manifolds:
-
-  * your raw notes (phone dumps, frottage blobs),
-  * external resources,
-  * contradictions, failures, and surprises,
-  * feedback from executed experiments.
-* **H (Holonomy)** – irreversible-ish moves:
-
-  * code written or modified,
-  * repos reshaped,
-  * docs committed,
-  * scripts run, experiments launched.
-* **Φ (Projection / Refraction)** – how Minds see each other’s state:
-
-  * “Architect Mind’s view of Explorer Mind,”
-  * “Executor Mind’s distillation of Architect’s plan,”
-  * always transformed through the receiver’s lens.
-* **Ω (Meta-operators)** – edits to:
-
-  * DNA templates,
-  * which Minds exist,
-  * how they are wired,
-  * which execution channels are enabled.
-* **Ξ (Forgetting / Dissipation)** – intentional decay:
-
-  * pruning stale ideas,
-  * compressing dead branches,
-  * freeing capacity in the manifolds.
-
-Everything in Idea World is a statement about how these primitives are instantiated and interact.
-
----
-
-## 2. What Idea World Is For
+## 2\. What Idea World Is For
 
 Idea World has one job:
 
-> Turn your messy, ongoing stream of thought into
-> a living geometry of ideas **plus** empirical feedback loops.
+> Turn your messy stream of thought into a **Self-Organizing Geology**.
 
-Concretely, it aims to:
+Concretely:
 
-* capture your ideas in **M** (across multiple Minds, not just one),
-* let different Minds form and test **A** under different **K** regimes,
-* use **Φ** to cross-pollinate perspectives (PM ↔ Research ↔ Critic),
-* and use **H** to move from “epistemic poetry” to “concrete artifacts.”
+  * Capture your ideas in **S** (across multiple specialized Minds).
+  * Let Minds generate friction via **Interference** (The Critic churns against the Explorer).
+  * Use **Holonomy** to turn "Epistemic Sediment" into "Artifacts" (Code, Docs).
 
-Success criteria (informal):
+Success Criteria:
 
-* Ideas become *sharper* when they circulate.
-* More ideas reach an executable form without your direct micromanagement.
-* The system can be used as a **template** for other domains (e.g., research orgs, product design, etc.).
+  * Ideas become **denser** (more connected) over time.
+  * The system generates **surprising** connections (high Refraction Diversity).
+  * The system produces artifacts without you holding the pen.
 
-This world is intentionally **non-financial** and **personal**:
-no client, no PnL, no external KPI. The only metric is epistemic reach + meaningful execution.
+-----
 
----
+## 3\. Mind Types (DNA Classes)
 
-## 3. Mind Types (DNA Classes)
+Idea World defines a cast of roles. Each is a distinct DNA template with different **Lenses** and **Viscosity**.
 
-Idea World defines a small cast of role patterns. Each is a distinct **DNA template**; nurture (M) evolves over time.
+### 3.1 The Synthesizer (PM)
 
-### 3.1 IdeaPMMind
+> *Role:* The Gardener. *Viscosity:* Medium.
 
-> Treats your long-horizon goals and projects as a portfolio of ideas.
+  * **Lens:** Tuned for "Coherence" and "Actionability."
+  * **Substrate ($S$):** Tracks maturity, dependencies, and "heat" of ideas.
+  * **Basins ($A$):** "This is a project," "This is a core primitive."
+  * **Impact ($P$):** Absorbs your brain dumps and projections from Explorers.
+  * **Action:** Triggers "Promote to Spec" or "Request Critique."
 
-* **M** – tracks:
+### 3.2 The Explorer (Research)
 
-  * active “idea threads,”
-  * their maturity,
-  * dependencies,
-  * and perceived importance.
-* **A** – attractors are:
+> *Role:* The Scout. *Viscosity:* Low (Mud).
 
-  * “this idea has legs,”
-  * “this is a core primitive,”
-  * “this belongs in X project.”
-* **K** – curvature modulates:
+  * **Lens:** Wide-angle, tuned for "Novelty" and "Analogy."
+  * **Substrate ($S$):** A chaotic mix of half-baked theories, references, and "what ifs."
+  * **Basins ($A$):** Recurring metaphors, candidate taxonomies.
+  * **Impact ($P$):** Absorbs fragments, random reading, and cross-projections.
+  * **Action:** Generates high-entropy **Textures** (Frottage) to inspire others.
 
-  * how quickly it reweights projects when new perturbations arrive.
-* **P** – main inputs:
+### 3.3 The Critic (Risk)
 
-  * your brain dumps,
-  * projections from ResearchMinds,
-  * CriticMind’s red flags,
-  * execution results (H feedback).
-* **H** – triggers:
+> *Role:* The Geologist. *Viscosity:* High (Granite).
 
-  * “promote idea to spec,”
-  * “spawn execution task,”
-  * “merge idea into project X documentation.”
+  * **Lens:** Narrow, tuned for "Contradiction," "Failure Modes," and "Overreach."
+  * **Substrate ($S$):** A catalog of fallacies, past failures, and rigour constraints.
+  * **Basins ($A$):** "This is unfalsifiable," "This is just aesthetics."
+  * **Action:** Projects **Resistance Textures** that force other minds to harden their arguments.
 
-This is your “Idea Portfolio Manager.”
+### 3.4 The Executor (Shim)
 
----
+> *Role:* The Hand. *Viscosity:* Variable.
 
-### 3.2 ResearchMind
+  * **Lens:** Tuned for "Instructions" and "Specs."
+  * **Substrate ($S$):** Execution logs, error patterns, environment constraints.
+  * **Holonomy ($H$):**
+      * Writes code (Cursor).
+      * Runs scripts.
+      * Commits docs.
+  * **Invariant:** It never invents goals. It manifests the sediment of others.
 
-> Explores the local neighborhood of an idea, hunts for structure, analogies, and missing operators.
+### 3.5 The Steward (Meta)
 
-* **M** – holds:
+> *Role:* The Tectonic Shift.
 
-  * variations on a theme,
-  * references,
-  * attempted formalisms,
-  * partial taxonomies.
-* **A** – attractors are:
+  * **Lens:** Tuned for "System Health" (Diversity, Stagnation).
+  * **Action:** Triggers $\Omega$ moves (e.g., "Spawn a new Explorer," "Kill this edge").
+  * **Goal:** Prevent the system from calcifying into a single worldview.
 
-  * recurring decompositions,
-  * candidate operator sets,
-  * stable metaphors that keep working.
-* **K** – tuned relatively high:
+-----
 
-  * quick to deform its M when a new perturbation suggests a better framing.
-* **P** – main inputs:
+## 4\. The Loop in Idea World
 
-  * fragments around a theme,
-  * cross-projections from IdeaPMMind and CriticMind,
-  * your external reading.
-* **H** – triggers:
+All Minds obey the Unified Loop.
 
-  * “produce a more formal, geometric description,”
-  * “draft a GEOMETRIC_CONSTITUTION revision proposal,”
-  * “sketch a minimal operator basis for this sub-domain.”
+### 4.1 Interference (Input)
 
-Multiple ResearchMinds may exist (e.g., “geometry,” “agent orchestration,” “execution frameworks”).
+  * Minds project **Textures** (messy dumps).
+  * Receivers apply **Lenses**.
+  * Result: A Percept where "signal" is highlighted but "noise" is visible.
 
----
+### 4.2 Reasoning (Churn)
 
-### 3.3 CriticMind
+  * The Mind grinds the Percept against its current Sediment.
+  * The Explorer might branch into "Optimist" and "Abstract" personas to widen the search space.
+  * The Critic might branch into "Pedantic" and "Structural" personas to find weak points.
 
-> Specializes in collapse detection and bullshit filtration.
+### 4.3 Resurfacing (Update)
 
-* **M** – models:
+  * New thoughts settle.
+  * Viscosity adjusts (Surprise softens; Confirmation hardens).
+  * A new **Substrate Envelope** is written.
 
-  * common failure modes,
-  * previous illusions (“too good to be true” episodes),
-  * patterns of overreach.
-* **A** – attractors:
+-----
 
-  * “this is unfalsifiable,”
-  * “this is aesthetic but empty,”
-  * “this overfits an anecdote.”
-* **K** – high around:
+## 5\. Holonomy & Execution
 
-  * claims of inevitability,
-  * global priors (“geometry is the *only* language”).
-* **P** – inputs:
+Holonomy connects the Dream to the Real.
 
-  * specs from ResearchMind,
-  * enthusiasm spikes from IdeaPMMind,
-  * past failures.
-* **H** – triggers:
+  * **Input:** A dense, high-agreement Basin in the Synthesizer's substrate.
+  * **Action:** The Executor fires a tool (e.g., `write_file`).
+  * **Feedback:** The result (Success/Error) hits the system as a massive **Impact ($P$)**.
 
-  * “flag idea as high-risk epistemically,”
-  * “demand a minimal experiment,”
-  * “downgrade idea until we get evidence.”
+> $H$ closes the loop: Idea $\to$ Artifact $\to$ New Reality $\to$ New Idea.
 
-CriticMind doesn’t kill ideas; it **bends** their trajectory toward tests.
+-----
 
----
+## 6\. $\Omega$ and $\Xi$ (Tectonics & Erosion)
 
-### 3.4 ExecutionMind (Executor Shim)
+### $\Omega$ (Tectonics)
 
-> Bridges from ideas to Cursor/scripts/notebooks. It is the main **H**-emitter.
+  * Meta-level changes to the graph.
+  * *Example:* "The Critic is ignoring the Explorer. I will force a Subscription edge between them."
 
-* **M** – tracks:
+### $\Xi$ (Erosion)
 
-  * what has been attempted,
-  * success/failure patterns,
-  * execution environments, constraints.
-* **A** – attractors:
+  * Natural decay.
+  * If a Basin (Idea) isn't visited (referenced) for N ticks, it fills up with silt and disappears.
 
-  * reusable execution patterns,
-  * “safe” scaffolds for experiments,
-  * templates for repos, scripts, tests.
-* **K** – higher for:
+-----
 
-  * cheap, reversible experiments,
-  * lower for:
-  * destructive or high-cost operations.
-* **P** – inputs:
+## 7\. Documentation as Holonomy
 
-  * “execution-ready” attractors from IdeaPMMind,
-  * test plans from ResearchMind,
-  * guardrails from CriticMind.
-* **H** – triggers:
+Since Idea World is a template:
 
-  * cursor/other execution calls,
-  * code edits,
-  * test runs,
-  * artifact creation (e.g., new docs, notebooks).
+  * Changes to `IDEA_WORLD.md` or `GEOMETRIC_CONSTITUTION.md` are **Holonomy Events**.
+  * The system can write its own manual.
 
-**Important:** ExecutionMind is *not* allowed to invent its own high-level goals. It serves IdeaPMMind + ResearchMind + CriticMind.
+-----
 
----
-
-### 3.5 GeometryStewardMind (Optional but Powerful)
-
-> Guards the **GEOMETRIC_CONSTITUTION** and Ω moves.
-
-* **M** – holds:
-
-  * the evolving understanding of your geometry,
-  * past Ω moves and their consequences.
-* **A** – attractors:
-
-  * “this change preserves commutators/tensions,”
-  * “this change reduces expressivity or diversity.”
-* **K** – very high near:
-
-  * changes that reduce the number of meaningful tensions,
-  * collapsing multiple operators into one vague blob.
-* **P** – inputs:
-
-  * proposed spec changes,
-  * observed drift in worlds,
-  * cross-world comparisons (later).
-* **H** – triggers:
-
-  * accepted constitutional changes,
-  * spawning new Minds (Ω that add DNA templates),
-  * deprecating roles or lenses.
-
-This is where the **Synaplex strange loop** is anchored: the world that builds worlds.
-
----
-
-## 4. Perception, Reasoning, Internal Update in Idea World
-
-All Minds obey the unified loop; Idea World only configures how `P` and `H` behave.
-
-### 4.1 Perception
-
-Percept construction uses:
-
-* your new dumps (P),
-* other Minds’ projections (Φ),
-* logs of H moves (execution history),
-* deterministic state (e.g., doc indexes, repo summaries).
-
-Each Mind’s *lens* selects and shapes:
-
-* which ideas are “foreground,”
-* how confidence is represented,
-* how risk/novelty is exposed.
-
-No manifold access happens here.
-
----
-
-### 4.2 Reasoning
-
-Each Mind:
-
-* uses `Percept + M` (if enabled) to:
-
-  * explore hypotheses,
-  * spawn internal branches (explorer/skeptic),
-  * propose `P` to other Minds (requests),
-  * propose `H` candidates to ExecutionMind.
-* may generate:
-
-  * new attractors in its internal picture,
-  * new tensions (“this contradicts X”).
-
-Reasoning is where “epistemic poetry” lives—but with GeometrySteward + CriticMind ensuring it doesn’t detach from testability forever.
-
----
-
-### 4.3 Internal Update
-
-Each Mind writes to its manifold:
-
-* updates weights on existing A,
-* changes local curvature K,
-* records new tensions to revisit,
-* archives or prunes via Ξ.
-
-This is the only write path to M.
-
-The implementation should treat this as a **sacred ritual**: short, explicit, well-tested.
-
----
-
-## 5. Holonomy & Execution
-
-Holonomy in Idea World is wired to concrete substrate(s):
-
-* Cursor-like agents (code edits, file creation),
-* local scripts,
-* notebook execution,
-* API calls for experiments.
-
-Rules of thumb:
-
-* **H moves must be observable.**
-
-  * logged, diff-able, replayable.
-* **H moves are downstream of A.**
-
-  * we act on attractors, not random sparks.
-* **H moves feed back as P.**
-
-  * Execution results become perturbations to all relevant Minds.
-
-In other words:
-
-> H closes the loop from idea → world → new idea.
-
----
-
-## 6. Ω and Ξ in Idea World
-
-### Ω — Meta changes
-
-In this world, Ω moves include:
-
-* adding/removing DNA templates,
-* changing which Minds exist,
-* changing allowed H channels,
-* tuning Ξ rates (aggressiveness of forgetting),
-* adjusting branching strategies.
-
-Ω should be:
-
-* proposed by Minds (esp. Research + GeometrySteward),
-* approved by you or by GeometrySteward rules,
-* logged as first-class events.
-
-### Ξ — Forgetting
-
-Ξ is implemented as:
-
-* manifold pruning policies,
-* “fadeout” of low-energy attractors,
-* periodic compression passes.
-
-Idea World needs Ξ to avoid turning into an unstructured idea graveyard.
-
----
-
-## 7. Logging & Documentation as First-Class Holonomy
-
-Because this world is also the **template for Synaplex worlds**, we treat documentation as holonomy:
-
-* Changes to:
-
-  * `GEOMETRIC_CONSTITUTION.md`
-  * `ARCHITECTURE.md`
-  * `README.md`
-  * `docs/worlds/IDEA_WORLD.md`
-  * `docs/worlds/WORLD_TEMPLATE.md`
-* are themselves **H moves initiated and justified by Minds**.
-
-This gives us:
-
-* a live audit trail of the strange loop,
-* a way to see which ideas made it all the way from:
-
-  * spark → attractor → spec → code → doc.
-
----
-
-## 8. File Layout (Idea World)
-
-Recommended structure:
+## 8\. File Layout
 
 ```text
 docs/
   worlds/
-    IDEA_WORLD.md        # This file: spec + rationale
-    WORLD_TEMPLATE.md    # General template for Synaplex worlds
+    IDEA_WORLD.md         # This spec
+    WORLD_TEMPLATE.md     # Generalizable version
 
 synaplex/
   worlds/
     idea_world/
       __init__.py
-      config.py          # Wiring: which Minds, edges, loop configuration
-      dna_templates.py   # IdeaPMMind, ResearchMind, CriticMind, ExecutionMind, GeometryStewardMind
-      lenses.py          # Percept/projection shapes for each Mind type
-      agents.py          # Concrete Mind classes using core/cognition primitives
-      tools.py           # Execution shims (Cursor, scripts, notebooks)
-      bootstrap.py       # Entry points to spin up Idea World
+      config.py           # Wiring (Tectonics)
+      dna_templates.py    # Role definitions
+      lenses.py           # Optical definitions
+      agents.py           # Mind implementations
+      tools.py            # Sources of Holonomy
+      bootstrap.py        # Big Bang
 ```
 
-Idea World should be the first “golden” world that all future worlds can look at.
+-----
 
----
+## 9\. How Idea World Becomes a Template
 
-## 9. How Idea World Becomes a Template
+Idea World is the **Reference Implementation**.
+To build a new world (e.g., "Finance World"):
 
-The companion `WORLD_TEMPLATE.md` (below) generalizes this pattern:
-
-* same geometric primitives,
-* same Mind taxonomy pattern,
-* but filled in for arbitrary domains (finance, org design, research labs, etc).
-
-Idea World = “reference implementation”
-World Template = “copy this, replace the nouns, keep the geometry.”
-
----
+1.  Copy `idea_world`.
+2.  Keep the Physics ($S, T, \Phi, K$).
+3.  Change the Nouns (Roles, Lenses, Tools).
+4.  Run.

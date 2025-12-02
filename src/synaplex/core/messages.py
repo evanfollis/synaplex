@@ -10,14 +10,15 @@ from .ids import AgentId, MessageId
 class Signal:
     """
     Lightweight broadcast.
-
-    A small, structured advertisement of aspects of an agent's state.
-    No manifold/worldview content is allowed here.
+    
+    - payload: structured metadata
+    - frottage: optional semantic soup
     """
 
     id: MessageId
     sender: AgentId
     payload: Dict[str, Any] = field(default_factory=dict)
+    frottage: Optional[str] = None
 
 
 @dataclass
@@ -37,17 +38,17 @@ class Request:
 @dataclass
 class Projection:
     """
-    Structured, lens-conditioned slice of what a receiver is allowed to see.
-
-    This must only contain:
-    - structured state,
-    - explicitly exposed manifold-derived views (never raw text).
+    What a receiver sees from a sender.
+    
+    - payload: structured metadata (for routing/filtering)
+    - frottage: semantic soup (for the receiver to make sense of)
     """
 
     id: MessageId
     sender: AgentId
     receiver: AgentId
     payload: Dict[str, Any] = field(default_factory=dict)
+    frottage: Optional[str] = None
 
 
 @dataclass
@@ -73,12 +74,29 @@ class Percept:
         Convert into a generic context dict for reasoning.
 
         Worlds can extend/override, but this provides a default.
+        
+        Note: frottage from projections and signals is passed through as-is.
+        The receiving Mind will compress it during its reasoning/update step.
         """
         return {
             "tick": self.tick,
             "agent_id": self.agent_id.value,
-            "projections": [p.payload for p in self.projections],
+            "projections": [
+                {
+                    "payload": p.payload,
+                    "frottage": p.frottage,  # Pass through unmodified
+                    "sender": p.sender.value,
+                }
+                for p in self.projections
+            ],
             "data_feeds": self.data_feeds,
-            "signals": [s.payload for s in self.signals],
+            "signals": [
+                {
+                    "payload": s.payload,
+                    "frottage": s.frottage,  # Pass through unmodified
+                    "sender": s.sender.value,
+                }
+                for s in self.signals
+            ],
             "extras": self.extras,
         }

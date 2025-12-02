@@ -1,115 +1,99 @@
-# WORLD_TEMPLATE — Skeleton for a Synaplex World
+# WORLD\_TEMPLATE — Skeleton for a Synaplex World
 
 > This document is a template for defining a Synaplex world.
-> Replace domain-specific nouns, keep the geometric structure.
+> Replace domain-specific nouns, but keep the **Material Physics ($S, T, \Phi, K$)**.
 
----
+-----
 
-## 1. Domain & Purpose
+## 1\. Domain & Purpose
 
-* **World name:** `YOUR_WORLD_NAME`
-* **Domain:** e.g., research org, product development, personal knowledge, etc.
-* **Primary objective:** e.g., “evolve research programs,” “stabilize product bets,” “amplify a person’s thinking.”
+  * **World Name:** `YOUR_WORLD_NAME`
+  * **Domain:** e.g., "Personal Knowledge," "High-Frequency Trading," "Fiction Writing."
+  * **Primary Objective:** e.g., "Crystallize vague intuitions into specs," "Generate diverging plotlines."
 
----
+-----
 
-## 2. Geometric Instantiation
+## 2\. Material Physics (The Constants)
 
-For this world:
+Define how the generic Synaplex physics manifest in this specific world:
 
-* **M (Manifolds)** = what are Minds’ internal worldviews *about*?
-* **A (Attractors)** = what kinds of stable patterns matter here?
-* **K (Curvature)** = where is the system brittle vs flexible?
-* **P (Perturbations)** = what counts as a “kick” (events, data, inputs)?
-* **H (Holonomy)** = what are irreversible-ish actions in this domain?
-* **Φ (Projection)** = how do Minds see each other? lens semantics.
-* **Ω (Meta)** = how can the rules of the world change?
-* **Ξ (Forgetting)** = how do we decay/prune internal structures?
+  * **$S$ (Substrate):** What makes up the sediment? (e.g., Code snippets, prose, financial tensors).
+  * **$A$ (Basins):** What kinds of thoughts "stick" and form habits? (e.g., "Bullish Thesis," "Plot Hole").
+  * **$K$ (Viscosity):** What makes a Mind "hard" vs "soft" here? (e.g., "Risk Aversion," "Skepticism").
+  * **$P$ (Impact):** What external forces strike the substrate? (e.g., Market ticks, User prompts).
+  * **$H$ (Holonomy):** What irreversible "scars" can we leave on reality? (e.g., Trades executed, Files committed).
+  * **$T$ (Texture):** What does the output look like? (e.g., "Messy frottage of price action").
+  * **$\Phi$ (Interference):** How do Lenses work? (e.g., "A Bearish lens looks at a Bullish texture").
+  * **$\Xi$ (Erosion):** How quickly does old sediment decay?
 
-Fill these in with domain-specific answers.
+-----
 
----
+## 3\. Mind Types (DNA Templates)
 
-## 3. Mind Types (DNA Templates)
+List the primary geological roles. For each:
 
-List the primary Mind roles:
+  * **Name:** e.g., `Synthesizer`, `Critic`, `Scout`.
+  * **Substrate ($S$):** What history does it accumulate?
+  * **Viscosity ($K$):** Is it Granite (stubborn) or Clay (impressionable)?
+  * **Lenses ($L$):** What specific filters does it use to observe others?
+  * **Impact ($P$):** What raw feeds does it consume?
+  * **Holonomy ($H$):** What tools is it allowed to fire?
+  * **Texture ($T$):** What does its frottage dump look like?
 
-For each Mind type:
+-----
 
-* **Name** – e.g., `ProgramPMMind`, `ResearchMind`, `RiskMind`, `ExecutionMind`, `StewardMind`.
-* **M** – what its manifold tracks.
-* **A** – its main attractors.
-* **K** – regions of high vs low curvature.
-* **P** – what perturbations it primarily ingests.
-* **H** – what actions it is allowed to trigger.
-* **Φ patterns** – who it listens to and how it refracts them.
+## 4\. Loop Dynamics
 
----
+Describe the specific flavor of the Unified Loop:
 
-## 4. Loop Configuration
+  * **Interference (Input):**
+      * What **Textures** are flying around?
+      * How strictly do **Lenses** filter noise?
+  * **Reasoning (Churn):**
+      * Does the Mind use personas to generate internal friction?
+      * How does it reconcile contradictions?
+  * **Resurfacing (Update):**
+      * What triggers a "Hardening" of Viscosity?
+      * What triggers a "Softening" (surprise)?
 
-Describe how the unified loop is realized:
+*Note: There are no "modes." Every agent runs the full loop.*
 
-* **Perception:**
+-----
 
-  * What structured inputs exist (signals, data feeds, logs)?
-  * How do lenses shape them?
-* **Reasoning:**
+## 5\. Holonomy & Execution
 
-  * How do Minds branch (if at all)?
-  * Are there canonical reasoning styles?
-* **Internal Update:**
+Define the interface with reality:
 
-  * How is M revised each tick?
-  * Are there special Ξ/pruning rules?
+  * **Triggers:** What basin depth ($A_{sat}$) is required to fire a tool?
+  * **Actions:** Deployments, PRs, API calls.
+  * **Feedback:** How does the result strike back as a new Impact ($P$)?
 
-Specify which world modes are supported:
+-----
 
-* graph-only,
-* reasoning-augmented,
-* manifold-enabled.
+## 6\. Tectonics ($\Omega$) and Erosion ($\Xi$)
 
----
+  * **Tectonics ($\Omega$):**
+      * Who can move the graph edges?
+      * Who can spawn new Minds?
+  * **Erosion ($\Xi$):**
+      * Does sediment rot if not referenced?
+      * Do shallow basins fill with silt?
 
-## 5. Holonomy & Execution
+-----
 
-Define:
-
-* what counts as H in this world (deployments, policies, trades, docs, etc),
-* how H is triggered,
-* how results feed back as P.
-
----
-
-## 6. Ω and Ξ Policies
-
-* **Ω:** who/what can:
-
-  * add/remove Mind types,
-  * change DNA templates,
-  * alter graph structure,
-  * change execution permissions?
-
-* **Ξ:** forgetting rules:
-
-  * when and how manifolds are pruned,
-  * how attractors decay or compress.
-
----
-
-## 7. File Layout
+## 7\. File Layout
 
 Document where this world lives in the repo:
 
 ```text
 synaplex/worlds/YOUR_WORLD_NAME/
-  config.py
-  dna_templates.py
-  lenses.py
-  agents.py
-  tools.py
-  bootstrap.py
+  config.py           # Wiring & Physics constants
+  dna_templates.py    # Role definitions
+  lenses.py           # Optical filters
+  agents.py           # Mind factories
+  tools.py            # Sources of Impact/Holonomy
+  bootstrap.py        # Big Bang script
 docs/worlds/YOUR_WORLD_NAME.md
 ```
 
----
+-----

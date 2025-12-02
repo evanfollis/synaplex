@@ -146,45 +146,27 @@ class Mind(AgentInterface):
         return reasoning_output.get("outward", self._empty_outward_behavior())
 
     def create_projection(self, request: Request) -> Projection:
-        """
-        Create a projection in response to a request.
-
-        This exposes structured state views of the agent. The projection:
-        - Contains only structured data (never raw manifold text)
-        - May include EnvState data the agent has access to
-        - Is transformed by the receiver's lens (handled by runtime)
-        - Generates "overloaded but on-topic" frottage envelopes (F)
-
-        The projection payload is built from:
-        - Agent's visible state (via get_visible_state())
-        - Frottage envelope: rich, redundant, overlapping frames
-        - Any structured data the agent chooses to expose
-
-        Geometrically, this implements the frottage operator F:
-        F(M, R) → E_F(R), where E_F(R) is a high-entropy sampling of
-        a region R of the manifold M, including points, tangent directions,
-        analogies, tensions, and negative space.
-        """
+        """Create a projection with structured payload and frottage (semantic soup)."""
         # Get visible structured state
         visible_state = self.get_visible_state()
 
-        # Generate frottage envelope: overloaded but on-topic
-        frottage_envelope = self._generate_frottage_envelope(request, visible_state)
-
-        # Build projection payload
-        # Note: We never include raw manifold content here
+        # Build structured payload (small, schema-aware)
         payload = {
+            "kind": "projection",
             "agent_id": self.agent_id.value,
             "state": visible_state,
-            "frottage": frottage_envelope,
-            # Worlds can extend this with domain-specific structured views
+            # Worlds can extend with domain-specific structured fields
         }
+        
+        # Generate frottage text: rich, on-topic perturbation
+        frottage = self._generate_frottage(request, visible_state)
 
         return Projection(
             id=MessageId(f"proj-{self.agent_id.value}-{request.id.value}"),
             sender=self.agent_id,
             receiver=request.sender,
             payload=payload,
+            frottage=frottage,  # Dense text, separate from structured payload
         )
 
     def get_visible_state(self) -> Dict[str, Any]:
@@ -200,83 +182,49 @@ class Mind(AgentInterface):
             # Never include manifold content here
         }
 
-    def _generate_frottage_envelope(
+    def _generate_frottage(
         self, request: Request, visible_state: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> Optional[str]:
         """
-        Generate a frottage envelope (F) for a projection.
-
-        Frottage is a geometric operator that produces a high-entropy sampling
-        of a region R of the manifold M. The envelope E_F(R) includes:
-        - Points in R (concepts, ideas)
-        - Nearby tangent directions (related concepts)
-        - Successful and failed analogies (local "almost symmetries")
-        - Tension directions (non-commuting flows)
-        - Negative space ("not-this" shards)
-
-        This is "overloaded but on-topic": rich, redundant, contradictory,
-        but concentrated in a region overlapping the receiver's domain.
-
-        Args:
-            request: The request from the receiver (shapes what region to sample)
-            visible_state: The agent's visible structured state
-
-        Returns:
-            Frottage envelope dict with multiple overlapping frames
+        Generate frottage for a projection.
+        
+        Frottage is semantic soup: dense, unstructured, rich with latent ideas,
+        contradictions, unexplored threads, tangential connections. The receiver
+        makes sense of it with no special prompting—just context.
         """
-        # Default implementation: create a rich, redundant envelope from visible state
-        # Worlds can override to generate more sophisticated frottage
+        # Load manifold for context
+        try:
+            manifold = self._load_manifold()
+            manifold_content = manifold.content if manifold else ""
+        except Exception:
+            manifold_content = ""
+        
+        # Simple prompt: just dump everything relevant
+        prompt = f"""Write everything you know, think, suspect, or wonder about this topic.
+Include half-formed ideas, contradictions, tangents, interdisciplinary connections.
+Don't structure it. Don't summarize. Just dump.
 
-        # Build multiple overlapping frames
-        frames = []
+Context:
+{visible_state}
 
-        # Frame 1: Direct state view
-        frames.append({
-            "type": "direct_state",
-            "content": visible_state,
-            "perspective": "current structured view",
-        })
+{manifold_content if manifold_content else ""}
 
-        # Frame 2: Contextual hints (what this state implies)
-        frames.append({
-            "type": "contextual_hints",
-            "content": {
-                "implications": "This state suggests...",
-                "related_concepts": [],
-                "tensions": [],
-            },
-            "perspective": "implicit context",
-        })
-
-        # Frame 3: Negative space (what this is NOT)
-        frames.append({
-            "type": "negative_space",
-            "content": {
-                "not_this": "This does not include...",
-                "boundaries": [],
-            },
-            "perspective": "exclusion boundaries",
-        })
-
-        # Frame 4: Tension directions (non-commuting flows)
-        frames.append({
-            "type": "tensions",
-            "content": {
-                "tension_directions": [],
-                "unresolved": [],
-            },
-            "perspective": "non-commuting flows",
-        })
-
-        return {
-            "frames": frames,
-            "redundancy_level": "high",  # Explicitly overloaded
-            "on_topic": True,  # Concentrated in relevant region
-            "metadata": {
-                "request_shape": request.shape,
-                "generated_by": self.agent_id.value,
-            },
-        }
+{request.shape if request.shape else ""}"""
+        
+        try:
+            response = self._llm.complete(prompt)
+            text = getattr(response, "text", None)
+            if text is None:
+                text = str(response)
+            return text if text.strip() else None
+        except NotImplementedError:
+            return self._generate_fallback_frottage(visible_state)
+        except Exception:
+            return self._generate_fallback_frottage(visible_state)
+    
+    def _generate_fallback_frottage(self, visible_state: Dict[str, Any]) -> str:
+        """Fallback when LLM unavailable: just dump the state."""
+        return str(visible_state)
 
     # -------------------------------------------------------------------------
     # Internal helpers
@@ -438,26 +386,23 @@ class Mind(AgentInterface):
 
     def _build_prompt(self, context: Dict[str, Any], *, include_manifold: bool = True, tool_names: Optional[List[str]] = None) -> str:
         """
-        Build a minimal, architecture-respecting prompt.
-
-        This prompt intentionally:
-        - does not impose any schema on the manifold,
-        - does not ask for summaries or cleaned-up representations,
-        - treats the output strictly as internal notes for the Mind's own future use.
-        - includes tool information if tools are available
+        Build prompt for reasoning. Frottage is just context—no special handling needed.
         """
-        # We deliberately stringify the context instead of unpacking it into a schema,
-        # so that structure remains emergent behavior at the Mind level.
         visible_context = dict(context)
         if not include_manifold and "manifold" in visible_context:
-            # Ensure manifold does not accidentally leak into non-manifold modes.
             visible_context.pop("manifold", None)
+        
+        # Extract any frottage and include as simple context
+        frottage_sections = self._extract_frottage_for_prompt(visible_context)
 
         prompt_parts = [
-            "You are an internal Mind for an agent in a multi-mind system.",
-            "Your job is to think about the given context and produce internal notes "
-            "for your own future self. Do NOT format these as JSON or any rigid schema.",
+            "You are an internal Mind. Think about the context and produce notes for your future self.",
         ]
+        
+        # Frottage is just "notes from before" - no special instructions needed
+        if frottage_sections:
+            prompt_parts.append("\nNotes from previous conversations:")
+            prompt_parts.extend(frottage_sections)
 
         # Add tool information if available
         if self._tool_registry and tool_names:
@@ -466,18 +411,45 @@ class Mind(AgentInterface):
                 prompt_parts.append("\nAvailable tools:")
                 for tool_name, tool in available_tools.items():
                     prompt_parts.append(f"  - {tool.name}: {tool.description}")
-                prompt_parts.append(
-                    "\nYou can use these tools during reasoning. Tool results will be "
-                    "provided as structured data, not text."
-                )
 
         prompt_parts.extend([
-            "\nContext (for you only):",
-            f"{visible_context}",
-            "\nWrite internal notes that will help your future self reason better next time."
+            "\nContext:",
+            f"{self._context_without_frottage(visible_context)}",
         ])
 
         return "\n".join(prompt_parts)
+    
+    def _extract_frottage_for_prompt(self, context: Dict[str, Any]) -> List[str]:
+        """Extract frottage from context."""
+        sections = []
+        
+        for proj in context.get("projections", []):
+            if isinstance(proj, dict) and proj.get("frottage"):
+                sections.append(proj["frottage"])
+        
+        for sig in context.get("signals", []):
+            if isinstance(sig, dict) and sig.get("frottage"):
+                sections.append(sig["frottage"])
+        
+        return sections
+    
+    def _context_without_frottage(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Return context with frottage removed (shown separately)."""
+        result = dict(context)
+        
+        if "projections" in result:
+            result["projections"] = [
+                {k: v for k, v in (p.items() if isinstance(p, dict) else {}) if k != "frottage"}
+                for p in result.get("projections", [])
+            ]
+        
+        if "signals" in result:
+            result["signals"] = [
+                {k: v for k, v in (s.items() if isinstance(s, dict) else {}) if k != "frottage"}
+                for s in result.get("signals", [])
+            ]
+        
+        return result
 
     def _call_llm_for_notes(self, prompt: str) -> str:
         """

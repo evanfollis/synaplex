@@ -1,22 +1,22 @@
 # Synaplex
 
-> Synaplex is an architecture for AI systems made of many interacting minds. Each mind maintains its own internal worldview (a **manifold**) while coordinating through a structured graph of messages.
+> Synaplex is an architecture for AI systems made of many interacting minds. Each mind maintains its own internal sediment (a **Substrate**) while coordinating through a structured graph of **Textures**.
 
 Synaplex has two inseparable faces:
 
-* A **geometric constitution** (`GEOMETRIC_CONSTITUTION.md`) that treats each mind’s internal state as a manifold `M` with attractors `A`, curvature `K`, teleology `τ`, and operators like perturbation `P`, holonomy `H`, projection/refraction `Φ`, meta-change `Ω`, and forgetting `Ξ`.
-* An **architecture** (`ARCHITECTURE.md`) that turns that geometry into concrete loops, messages, runtimes, and modules.
+  * A **Geometric Constitution** (`GEOMETRIC_CONSTITUTION.md`) that treats each mind’s internal state as a **Substrate** `S` with **Basins** `A`, **Viscosity** `K`, **Gradient** `τ`, and material operators like **Interference** `Φ`, **Impact** `P`, and **Resurfacing**.
+  * An **Architecture** (`ARCHITECTURE.md`) that turns that physics into concrete loops, messages, runtimes, and modules.
 
 This `README.md` is the **orientation layer**:
 
-* It gives you the **mental model** for Synaplex.
-* It explains how the **geometric view** and the **implementation** fit together.
-* It shows you how the **repo is structured** so you can extend it without breaking the underlying ideas.
+  * It gives you the **mental model** for Synaplex (Physics \> Geometry).
+  * It explains how the **Substrate view** and the **implementation** fit together.
+  * It shows you how the **repo is structured** so you can extend it without breaking the underlying ideas.
 
-If you want formal detail, go to `GEOMETRIC_CONSTITUTION.md` and `ARCHITECTURE.md`.
+If you want formal detail, go to `GEOMETRIC_CONSTITUTION.md`.
 If you want to know *what Synaplex is and how to use it*, start here.
 
----
+-----
 
 ## Quick Start
 
@@ -25,398 +25,222 @@ Get up and running with Synaplex in just a few lines:
 ```python
 from synaplex.quick_start import quick_start
 
-# Create a runtime with one agent
+# Create a runtime with one agent (Substrate initialized)
 runtime = quick_start()
 
 # Run a tick to see the cognitive loop in action
+# (Interference -> Reasoning -> Resurfacing)
 runtime.tick(0)
 ```
 
-That's it! The `quick_start()` helper sets up everything you need:
-- A runtime with one agent
-- A default lens and DNA
-- An in-memory manifold store
-- A dummy LLM client (for testing)
+The `quick_start()` helper sets up:
+
+  * A runtime with one agent.
+  * A default **Lens** and **DNA**.
+  * An in-memory **Substrate Store**.
+  * A dummy LLM client.
 
 **Requirements:**
-- Python 3.10+
-- Install dependencies: `pip install -e .` (from the repo root)
 
-**Next steps:**
-- See `examples/quick_start_example.py` for a complete minimal example
-- See `examples/multi_agent_example.py` for multiple agents with subscriptions
-- See `examples/comprehensive_example.py` for advanced features (tools, custom lenses, signals)
-- Read on for the full mental model and architecture
+  * Python 3.10+
+  * `pip install -e .`
 
----
+**Next Steps:**
 
-## 1. What Synaplex Is For
+  * See `examples/quick_start_example.py` for the basics.
+  * See `examples/texture_projection.py` to see how Agents generate Frottage Dumps.
+  * Read on for the full mental model.
 
-Synaplex exists to be a **substrate for manifold-native, multi-mind cognition**, not just another “multi-agent framework”.
+-----
 
-Concretely, it is designed to let you study and build systems where:
+## 1\. What Synaplex Is For
 
-* Each mind maintains its own **persistent internal worldview** (`M`), not just a scratchpad.
-* Internal structure evolves via **perturbations** (`P`), **attractors** (`A`), **curvature** (`K`), and **teleology** (`τ`) instead of being reset on every call.
-* Minds interact in a **non-hierarchical message-passing graph**: no global schema, no central controller, no privileged perspective.
-* Communication happens through **structured projections**, interpreted by receivers via their own lenses (`Φ`), never via direct access to another mind’s manifold.
-* You can run **nature/nurture experiments**:
+Synaplex exists to be a **substrate for high-density cognition**, not just another "multi-agent framework."
 
-  * change DNA, lenses, and graph wiring (**nature**),
-  * or change initial manifolds and update patterns (**nurture**),
-  * and observe how behavior and culture drift over time.
-* You can **study ablations** of the cognitive loop (graph-only, reasoning-without-manifold, etc.) in **meta-level experiments and harnesses** *around* Synaplex, while the core runtime and worlds always instantiate the full loop.
+Standard frameworks treat agents as **stateless processors** that exchange clean JSON.
+Synaplex treats agents as **stateful geologies** that exchange messy **Textures**.
 
-The core question Synaplex is built to explore:
+It is designed for systems where:
 
-> What happens when you give many Minds persistent worldviews `M` and let them co-evolve in a shared world through structured signals and projections?
+  * Each mind maintains a **Substrate** (`S`): A persistent, sedimentary accumulation of context, contradictions, and latent potential.
+  * Internal structure evolves via **Resurfacing**: New thoughts are deposited as layers; old thoughts settle into **Basins** (`A`).
+  * Minds interact via **Interference**: Communication is the projection of a high-entropy **Texture** (`T`), interpreted by a receiver's **Lens** (`L`).
+  * You can run **Nature/Nurture experiments**:
+      * Change the wiring/DNA (**Nature**).
+      * Change the initial sediment and impact patterns (**Nurture**).
 
----
+The core question:
 
-## 2. Core Mental Model
+> What happens when you give Minds a "messy" memory that accumulates like soil, rather than a "clean" memory that acts like a database?
+
+-----
+
+## 2\. Core Mental Model
 
 At the highest level, Synaplex is:
 
-> A **graph of Minds** with private manifolds, talking through structured messages.
+> A **Landscape of Substrates** interacting via **Optical Interference**.
 
 There are three major pieces:
 
-1. **Minds**
+### 1\. Minds (The Soil)
 
-   * Each Mind has:
+Each Mind has:
 
-     * **Nature**: DNA, lenses, tools, graph edges, deterministic EnvState surface.
-     * **Nurture**: a private manifold `M` with attractors `A`, curvature `K`, and teleology `τ`.
-     * **Loop**: a unified cognitive cycle:
+  * **Nature:** DNA, Lenses, Graph Edges, Deterministic `EnvState` (Physics).
+  * **Nurture:** A private **Substrate** `S` with Basins `A`, Viscosity `K` (resistance to change), and Gradient `τ` (slope).
+  * **Loop:** `Interference → Reasoning → Resurfacing`.
 
-       > **Perception → Reasoning → Internal Update**
+### 2\. Graph (The Light)
 
-2. **Graph**
+A message-passing environment that:
 
-   * A message-passing environment that:
+  * Routes **Signals** (cheap broadcasts).
+  * Manages **Textures** (rich, noisy projections).
+  * Calculates **Interference** (where Textures overlap Lenses).
 
-     * routes **signals** (cheap broadcasts),
-     * manages **subscriptions** (always-on projections),
-     * handles **active requests** and **projections**,
-     * maintains shared, structured **EnvState**.
+### 3\. Constitution (The Law)
 
-3. **Geometry**
+A conceptual layer (`GEOMETRIC_CONSTITUTION.md`) that says:
 
-   * A conceptual layer (in `GEOMETRIC_CONSTITUTION.md`) that says:
+  * **$S$** = Substrate (sedimentary memory).
+  * **$T$** = Texture (Frottage output).
+  * **$\Phi$** = Interference (Receiver-owned meaning).
+  * **$K$** = Viscosity (How hard is the mind to change?).
 
-     * `M` = manifold (internal worldview),
-     * `A` = attractors (habits / equilibria),
-     * `K` = curvature (sensitivity / risk),
-     * `τ` = teleology (direction of “improvement”),
-     * `P`, `H`, `Φ`, `Ω`, `Ξ` = operators acting on `M` and the world.
-   * The architecture is just this geometry rendered as loops, messages, and modules.
+You do **not** need to be a geologist to use Synaplex, but the material metaphors are there to keep the architecture from drifting into "database thinking."
 
-You do **not** need to think in Greek letters to use Synaplex, but the geometry is there as a **north star** to keep the architecture from drifting.
+-----
 
----
-
-## 3. The Cognitive Loop
+## 3\. The Cognitive Loop
 
 Every Mind runs the same loop:
 
-> **Perception → Reasoning → Internal Update**
+> **Interference (Input) → Reasoning (Churn) → Resurfacing (Output)**
 
-Synaplex never introduces alternative cognitive stacks. The meta layer and external experiment harnesses can *approximate* truncations (e.g., “graph-only” simulations), but the underlying Mind model and runtime loop stay the same.
+### 3.1 Interference (World → Mind)
 
-### 3.1 Perception (Environment → Mind)
+The runtime builds a **Percept** by:
 
-The runtime builds a **Percept** for a Mind by:
+1.  Collecting **Textures** from neighbors.
+2.  Overlaying the Mind's **Lenses**.
+3.  **Amplifying** the resonance (where Lens matches Texture).
+4.  **Preserving** the dissonance (the background noise remains visible).
 
-* collecting:
-
-  * signals,
-  * projections from subscribed agents,
-  * relevant EnvState views,
-* passing them through the Mind’s **lenses** (how it sees others and the world),
-* assembling a deterministic, structured view of “what’s visible right now”.
-
-No LLM calls; no manifold access.
-Geometrically: prepares inputs for `P` and `Φ` without touching `M`.
+*No LLM calls. No Substrate modification.*
 
 ### 3.2 Reasoning (Mind ↔ World)
 
-The Mind calls an LLM + tools using:
+The Mind calls an LLM using:
 
-* the Percept,
-* its manifold `M`,
-* its attractors `A`,
-* its curvature `K`,
-* its teleology `τ`.
+  * The Percept.
+  * Its current **Substrate** `S`.
+  * Its **Viscosity** `K` and **Basins** `A`.
 
 Here it:
 
-* interprets what it sees,
-* explores hypotheses (maybe via branches: explorer/skeptic/etc.),
-* requests more information,
-* emits signals or projections,
-* decides whether to trigger **holonomy** `H` (irreversible-ish actions: code changes, commitments).
+  * Churns the new input against old sediment.
+  * Generates **Frottage Dumps** (new Textures) to project outward.
+  * Decides whether to trigger **Impacts** (`P`) or **Holonomy** (`H`).
 
-Geometrically: this is where `P` and `Φ` deform `M`, and where candidate `H` moves are considered.
+### 3.3 Resurfacing (Mind → Substrate)
 
-### 3.3 Internal Update (Mind → Manifold)
+Finally, the Mind updates itself:
 
-Finally, the Mind revises its manifold:
+  * Deposits new sediment (adding to `S`).
+  * Adjusts **Viscosity** `K` (did we get surprised? Soften up. Were we right? Harden up).
+  * Writes a new `SubstrateEnvelope`.
 
-* integrates new evidence and branches,
-* applies forgetting/dissipation (`Ξ`),
-* updates attractors (`A`) and curvature (`K`),
-* evolves teleology (`τ`),
-* writes a new `ManifoldEnvelope` `M₁` to storage.
+*This is the only write-path to the Mind's memory.*
 
-This is the **only write-path** to the manifold.
+-----
 
-Geometrically: the manifold’s geometry is updated and re-encoded as opaque text.
+## 4\. Communication: Textures & Lenses
 
----
+Minds never read each other's Substrates. They only see:
 
-## 4. Communication: Signals, Subscriptions, Projections
+  * **Signals:** "I updated."
+  * **Textures:** "Here is a messy description of my reality."
+  * **EnvState:** "Here is the time and the stock price."
 
-Synaplex is a **non-hierarchical message-passing graph**. Minds never read each other’s manifolds. They only see:
+### 4.1 Textures (Frottage)
 
-* **Signals** (cheap broadcast hints),
-* **Projections** (structured, lens-conditioned slices),
-* **EnvState** (shared deterministic state).
+A Texture is a **Frottage Dump**.
 
-### 4.1 Signals
+  * **Rich:** It contains the "grain" of the thought, not just the summary.
+  * **Noisy:** It includes contradictions and "maybe"s.
+  * **Purpose:** To offer maximum surface area for other Minds to latch onto.
 
-Signals are:
+### 4.2 Lenses (Observation)
 
-* lightweight,
-* approximate,
-* world-facing indicators (e.g., “I’ve updated a portfolio”, “indexer completed a run”),
-* not worldview leaks.
+A Lens is a filter owned by the Receiver.
 
-They are **attentional hooks**, not content dumps.
+> "Mind B looks at Mind A's Texture through a 'Skeptic' Lens."
 
-### 4.2 Subscriptions
+  * The Sender does not know how it is being looked at.
+  * The Receiver creates the meaning via Interference.
 
-A subscription is a **structural edge** defined in DNA:
+-----
 
-> “Mind B always gets a projection from Mind A each tick.”
+## 5\. Vocabulary Cheat Sheet
 
-On every tick:
+  * **Substrate (`S`):** The Mind's private, sedimentary memory.
+  * **Texture (`T`):** The noisy, high-entropy output of a Mind.
+  * **Frottage:** The act of generating a Texture from a Substrate.
+  * **Interference (`Φ`):** The intersection of a Texture and a Lens.
+  * **Viscosity (`K`):** The resistance of a Mind to new ideas.
+  * **Basins (`A`):** Deep habits or stable concepts in the sediment.
+  * **Gradient (`τ`):** The natural "downhill" direction of thought.
 
-1. A constructs a projection envelope for B.
-2. B’s lens interprets that envelope into its own Percept.
-3. The runtime just wires things; it does not interpret.
+-----
 
-Subscriptions define **passive perception**.
+## 6\. Invariants (Hard Rules)
 
-### 4.3 Active Requests & Projections
+1.  **Every Mind has a Substrate.**
+2.  **Runtime never parses Substrates.** They are opaque blobs.
+3.  **Resurfacing is the only write-path.**
+4.  **Texture \> Summary.** Always project the mess.
+5.  **Receiver-Owned Meaning.** Sender emits Texture; Receiver applies Lens.
+6.  **EnvState is Physics.** No meanings, only facts.
+7.  **No Self-Cleaning.** Projections must not strip away context.
 
-Active requests are **directed queries**:
+-----
 
-* B asks A for some kind of view.
-* A responds with a projection.
-
-A projection may contain:
-
-* structured state from A’s EnvState,
-* analytics/factors,
-* sender-authored text that acts like a **frottage dump** over some region of A’s manifold (rich, possibly redundant, but on-topic),
-* manifold-derived views from indexers.
-
-Critically:
-
-* The runtime never parses or compresses this text.
-* The receiver’s Mind is responsible for **refraction** `Φ`:
-
-  * semantic compression (`Φ_sem`),
-  * teleological interpretation (`Φ_tel`).
-
-All lossy interpretation happens **inside the receiver**.
-
----
-
-## 5. Geometry: Lightweight Cheat Sheet
-
-The full story is in `GEOMETRIC_CONSTITUTION.md`. Here’s the short version for orientation:
-
-* `M` — **manifold**: internal worldview of a Mind.
-* `A` — **attractors**: stable habits/specs inside `M`.
-* `K` — **curvature**: sensitivity to perturbation (risk/volatility profile).
-* `τ` — **teleology**: internal sense of where “better” lies.
-* `P` — **perturbations**: new evidence hitting `M`.
-* `H` — **holonomy**: actions that scar world + manifold (irreversible-ish).
-* `Φ` — **projection/refraction**:
-
-  * how one Mind’s outputs are seen through another’s lens.
-* `Ω` — **meta-operator**:
-
-  * how meta processes change rules/DNA/graph.
-* `Ξ` — **forgetting/dissipation**:
-
-  * pruning and reshaping `M`.
-
-You don’t have to use this notation day-to-day, but it matters because:
-
-* It keeps the architecture from drifting into “just another agent framework”.
-* It lets you define **health metrics** over systems (dimensionality, refraction diversity, attractor saturation, holonomy rate, temperature).
-* It makes it easier to **port** the idea into other formalisms (Markov, category-theoretic, game-theoretic, etc.).
-
----
-
-## 6. Invariants (What Synaplex Refuses to Compromise On)
-
-These are spelled out in detail in `ARCHITECTURE.md`. At a high level:
-
-1. **Every Mind has a manifold.**
-2. **The runtime never parses or edits manifolds.**
-3. **Internal Update is the only write-path** to manifolds.
-4. **Manifold access is loop-bounded** (no access in Perception).
-5. **No cross-Mind manifold access.**
-6. **Receiver-owned semantics**:
-
-   * projections are interpreted via receiver lenses,
-   * no global schema overrides them.
-7. **Structured information lives in EnvState, not manifolds.**
-8. **Indexer flow is one-way**:
-
-   * manifolds → snapshots → indexers → structured views.
-9. **Minds are selection-blind**:
-
-   * they never see meta scores/evolution objectives.
-10. **Single cognitive loop for all Minds.**
-11. **Meta changes (`Ω`) cannot erase whole classes of tension**:
-
-    * you can refactor, but not collapse all meaningful disagreement.
-12. **Overloaded-but-on-topic projections are allowed; compression is receiver-owned.**
-
-If you change the code in ways that break these, you’re no longer running Synaplex—you’re building something else.
-
----
-
-## 7. Repo Layout
-
-The repo layout mirrors the architecture. Conceptual boundaries show up as directory boundaries.
+## 7\. Repo Layout
 
 ```text
 .
-├── README.md                 # Orientation & mental model (this file)
-├── GEOMETRIC_CONSTITUTION.md # Geometric primitives, operators, and health metrics
-├── ARCHITECTURE.md           # Operational mapping from geometry to loops, messages, modules
-├── DESIGN_NOTES.md           # Intent, philosophy, North Star, and research framing
+├── README.md                 # You are here
+├── GEOMETRIC_CONSTITUTION.md # The Law of Substrate (Physics)
+├── ARCHITECTURE.md           # Implementation Constraints
 ├── synaplex/
-│   ├── __init__.py
-│   ├── core/                 # External structure: graph, messages, DNA, lenses, env state
-│   │   ├── __init__.py
-│   │   ├── ids.py            # WorldId, AgentId, MessageId, etc.
-│   │   ├── errors.py
-│   │   ├── dna.py            # DNA = structural blueprint (roles, subscriptions, tools, params)
-│   │   ├── lenses.py         # Lens definitions and request/response shapes
-│   │   ├── env_state.py      # Shared deterministic state (nature)
-│   │   ├── messages.py       # Signals, projections, requests, percept structures
-│   │   ├── agent_interface.py
-│   │   ├── runtime_interface.py
-│   │   ├── runtime_inprocess.py
-│   │   └── graph_config.py   # Config for worlds: agent set, edges, subscriptions
-│   ├── cognition/            # Internal mind dynamics (LLM + manifold)
-│   │   ├── __init__.py
-│   │   ├── llm_client.py     # LLM + tool client abstractions
-│   │   ├── manifolds.py      # ManifoldEnvelope + ManifoldStore (private worldview snapshots)
-│   │   ├── mind.py           # Mind abstraction: unified loop wiring
-│   │   ├── branching.py      # Branching and reconciliation strategies
-│   │   ├── update.py         # Internal update (Ξ, A, K, τ evolution) strategies
-│   │   └── tools.py          # Tool wrappers used during Reasoning
-│   ├── manifolds_indexers/   # Offline manifold science
-│   │   ├── __init__.py
-│   │   ├── export.py         # runtime → snapshot export
-│   │   └── indexer_world/
-│   │       ├── __init__.py
-│   │       ├── types.py      # ManifoldSnapshot, IndexerConfig, etc.
-│   │       ├── agents.py     # Indexer agents (embeddings, clustering, manifold analysis)
-│   │       └── world_config.py
-│   ├── meta/                 # System-level evaluation & evolution
-│   │   ├── __init__.py
-│   │   ├── evaluation.py     # Metrics (D, R_div, A_sat, H_rate, T, etc.)
-│   │   ├── evolution.py      # DNA/graph search, population experiments (Ω moves)
-│   │   └── experiments.py    # Nature/nurture and counterfactual experiments
-│   └── worlds/               # Domain-specific instantiations
-│       ├── __init__.py
-│       └── fractalmesh/
-│           ├── __init__.py
-│           ├── config.py         # World configuration (agents, edges, runtime parameters)
-│           ├── dna_templates.py  # Role-specific DNA templates
-│           ├── lenses.py         # Domain lenses
-│           ├── agents.py         # Domain agents using the unified loop
-│           ├── tools.py          # Domain tools (APIs, data vendors)
-│           └── bootstrap.py      # Entrypoints for this world
-└── tests/
-    ├── __init__.py
-    ├── test_invariants_imports.py
-    ├── test_invariants_manifolds_privacy.py
-    ├── test_invariants_indexer_flow.py
-    ├── test_invariants_worlds_meta.py
-    └── test_invariants_loop_contract.py
+│   ├── core/                 # Physics (Graph, Lenses, EnvState)
+│   ├── cognition/            # Biology (Mind Loop, Substrate I/O, LLM)
+│   ├── substrate_science/    # Geology (Offline Analysis of Substrates)
+│   ├── meta/                 # Tectonics (Evolution & Experiments)
+│   └── worlds/               # Domain Implementations
 ```
 
-The tests act as **tripwires** against architectural drift:
+-----
 
-* `core` importing `cognition` (forbidden),
-* `worlds` importing `meta` (forbidden),
-* non-loop-bounded manifold access,
-* indexers writing to live manifolds,
-* or changes that break the Perception → Reasoning → Internal Update contract.
+## 8\. How to Work With Synaplex
 
----
+### 8.1 Building a World
 
-## 8. How to Work With Synaplex
+1.  Define **DNA** (Roles).
+2.  Define **Lenses** (How they see).
+3.  Define **Tools** (What they do).
+4.  **Do not** try to define the "schema" of their thoughts. Let the Substrate evolve.
 
-### 8.1 If you want to build a new world
+### 8.2 Running Experiments
 
-1. Read:
+  * Use `synaplex.meta` to evolve the graph.
+  * Use `substrate_science` to measure **Viscosity** and **Diversity**.
+  * **Never** let the agents know their metrics.
 
-   * `GEOMETRIC_CONSTITUTION.md` (to grok the geometric primitives),
-   * `ARCHITECTURE.md` (to see how they show up in code).
+-----
 
-2. Create a world under `synaplex/worlds/your_world/`:
+## 9\. Status & Direction
 
-   * `dna_templates.py` for roles (researcher, planner, critic, executor, etc.),
-   * `lenses.py` for how they see each other and EnvState,
-   * `agents.py` for Mind subclasses or factories,
-   * `config.py` for graph wiring and runtime parameters.
-
-3. Use the unified loop; don’t invent a new one.
-
-### 8.2 If you want to run experiments
-
-* Use `synaplex.meta` to:
-
-  * define metrics in geometric terms (D, R_div, A_sat, H_rate, T),
-  * design Ω moves (changes to DNA/graph),
-  * analyze manifold snapshots via `manifolds_indexers`.
-
-* Keep Minds **selection-blind**:
-
-  * do not feed scores back into their Reasoning or Internal Update.
-
-* Implement “graph-only” or “reasoning-only” behaviors as **external experiment harnesses** that sit around the runtime, not as alternate modes in `synaplex.core`.
-
-### 8.3 If you want to change the architecture
-
-* Change `GEOMETRIC_CONSTITUTION.md` and `ARCHITECTURE.md` **first**.
-* Then adjust code and tests to match.
-* Don’t sneak architectural changes directly into the code; that’s how geometry dies.
-
----
-
-## 9. Status & Direction
-
-Synaplex is both:
-
-* a **research tool** for exploring multi-Mind, manifold-native cognition, and
-* a **practical spine** for systems where you want LLMs to be Minds—not stateless function calls.
-
-If you keep the geometry and invariants intact, you can:
-
-* plug in different models,
-* run long-horizon simulations,
-* build domain-specific “worlds” (e.g., Idea World, research labs, planning systems),
-* and still know that you’re studying the same underlying object:
-
-> **a graph of Minds with persistent manifolds, evolving together.**
+Synaplex is a research platform for **Material Cognition**.
+If you keep the physics (Substrate/Texture) intact, you can build systems where intelligence **emerges from the mud**, rather than being forced down a pipeline.

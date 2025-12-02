@@ -146,57 +146,33 @@ class InProcessRuntime(RuntimeInterface):
 
             publisher = self._agents[publisher_id]
 
-            # Build request using receiver's lens
-            request_shape = {}
-            if receiver_lens:
-                context = {"tick": tick_id, "receiver": receiver_id.value}
-                request_shape = receiver_lens.build_request_shape(context)
-            else:
-                request_shape = {"tick": tick_id}
-
-            # Create request
+            # Create request (minimal - no lens shaping)
             request = Request(
                 id=self._generate_message_id(),
                 sender=receiver_id,
                 receiver=publisher_id,
-                shape=request_shape,
+                shape={},
             )
 
-            # Get projection from publisher
+            # Get projection from publisher - passes through unchanged
+            # No lens transformation. Receiver-owned semantics.
             try:
                 projection = publisher.create_projection(request)
-                # Apply receiver's lens transformation (receiver-owned semantics)
-                if receiver_lens:
-                    projection.payload = receiver_lens.transform_projection(
-                        projection.payload
-                    )
                 projections.append(projection)
-            except Exception as e:
-                # Log error but continue with other projections
-                # In a production system, this would use proper logging
-                # For now, we silently continue to avoid breaking the tick
-                # The error is that projection creation failed for this specific subscription
+            except Exception:
                 pass
 
         # Handle active requests from previous tick
         pending = self._pending_requests.pop(receiver_id, [])
         for request in pending:
             if request.receiver not in self._agents:
-                # Requested agent not registered - skip this request
                 continue
 
             publisher = self._agents[request.receiver]
             try:
                 projection = publisher.create_projection(request)
-                # Apply receiver's lens transformation
-                if receiver_lens:
-                    projection.payload = receiver_lens.transform_projection(
-                        projection.payload
-                    )
                 projections.append(projection)
-            except Exception as e:
-                # Projection creation failed for this request
-                # Continue with other requests to avoid breaking the tick
+            except Exception:
                 pass
 
         return projections
@@ -325,17 +301,19 @@ class InProcessRuntime(RuntimeInterface):
             signals = behavior.get("signals", [])
             if signals:
                 # Convert signal dicts to Signal objects if needed
+                # Note: frottage passes through unchanged (per FROTTAGE_CONTRACT)
                 signal_objects = []
                 for sig in signals:
                     if isinstance(sig, Signal):
                         signal_objects.append(sig)
                     elif isinstance(sig, dict):
-                        # Convert dict to Signal
+                        # Convert dict to Signal, preserving frottage
                         signal_objects.append(
                             Signal(
                                 id=sig.get("id", self._generate_message_id()),
                                 sender=agent_id,
                                 payload=sig.get("payload", sig),
+                                frottage=sig.get("frottage"),  # Pass through unchanged
                             )
                         )
                 self._current_tick_signals[agent_id] = signal_objects
@@ -355,6 +333,29 @@ class InProcessRuntime(RuntimeInterface):
                     "type": behavior.get("holonomy_type", "action"),
                     "description": behavior.get("holonomy_description", "Irreversible action"),
                 })
+            
+            # Collect requests for next tick's perception phase
+            requests = behavior.get("requests", [])
+            if requests:
+                request_objects = []
+                for req in requests:
+                    if isinstance(req, Request):
+                        request_objects.append(req)
+                    elif isinstance(req, dict):
+                        # Convert dict to Request
+                        request_objects.append(
+                            Request(
+                                id=req.get("id", self._generate_message_id()),
+                                sender=agent_id,
+                                receiver=req.get("receiver", AgentId(req.get("receiver", ""))),
+                                shape=req.get("shape", {}),
+                            )
+                        )
+                # Store requests by receiver for next tick
+                for req in request_objects:
+                    if req.receiver not in self._pending_requests:
+                        self._pending_requests[req.receiver] = []
+                    self._pending_requests[req.receiver].append(req)
         
         # Log EnvState snapshot if logger available
         if self.logger:
@@ -397,26 +398,3 @@ class InProcessRuntime(RuntimeInterface):
         # Count events in window
         recent_events = [e for e in self._holonomy_events if e["tick"] >= (max(e["tick"] for e in self._holonomy_events) - tick_window)]
         return len(recent_events) / tick_window
-
-            # Collect requests for next tick's perception phase
-            requests = behavior.get("requests", [])
-            if requests:
-                request_objects = []
-                for req in requests:
-                    if isinstance(req, Request):
-                        request_objects.append(req)
-                    elif isinstance(req, dict):
-                        # Convert dict to Request
-                        request_objects.append(
-                            Request(
-                                id=req.get("id", self._generate_message_id()),
-                                sender=agent_id,
-                                receiver=req.get("receiver", AgentId(req.get("receiver", ""))),
-                                shape=req.get("shape", {}),
-                            )
-                        )
-                # Store requests by receiver for next tick
-                for req in request_objects:
-                    if req.receiver not in self._pending_requests:
-                        self._pending_requests[req.receiver] = []
-                    self._pending_requests[req.receiver].append(req)

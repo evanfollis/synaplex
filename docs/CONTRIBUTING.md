@@ -1,271 +1,203 @@
 # **CONTRIBUTING.md**
 
 Thank you for contributing to **Synaplex**.
-This project is not a typical software library. It is a **cognitive substrate** that depends on strict architectural boundaries and conceptual clarity.
+This project is not a typical software library. It is a **Material Substrate** for distributed cognition that depends on strict architectural boundaries and conceptual clarity.
 
 This document explains **how to contribute responsibly**—whether you are a human developer or an LLM generating code.
 
----
+-----
 
-# 1. Ground Rules
+# 1\. Ground Rules
 
 Before modifying any code, contributors must:
 
-1. **Read the following documents (in this order):**
+1.  **Read the following documents (in this order):**
 
-   * `README.md` — mental model & unified loop
-   * `ARCHITECTURE.md` — canonical structure & invariants
-   * `GEOMETRIC_CONSTITUTION.md` — seams, lenses, and separation principles
-   * `DESIGN_NOTES.md` — intent, philosophy, research frame
+      * `README.md` — mental model & material physics.
+      * `ARCHITECTURE.md` — canonical structure & invariants.
+      * `GEOMETRIC_CONSTITUTION.md` — The Law of Substrate (Physics \> Geometry).
+      * `DESIGN_NOTES.md` — intent, philosophy, research frame.
 
-2. **Do not introduce new concepts that conflict with these documents** unless you first update the documents themselves (see Section 3).
+2.  **Do not introduce new concepts that conflict with these documents.**
 
-3. **Do not treat Synaplex as a workflow engine or orchestration layer.**
-   The architecture is built for research on distributed cognition, not process automation.
+      * If the code requires a new physics (e.g., a new operator), update the Constitution first.
 
-4. **Never collapse nature and nurture.**
+3.  **Do not treat Synaplex as a workflow engine.**
 
-   * DNA, lenses, deterministic structure → nature
-   * manifold, internal reasoning patterns → nurture
-     These must remain separable in code and in design.
+      * It is a research platform for **emergent, sedimentary cognition**, not process automation.
 
-5. **Never allow raw manifold text to leak into core/worlds.**
-   It is private to each mind.
+4.  **Never collapse Nature and Nurture.**
 
-6. Before making architectural changes, **contributors must read GEOMETRIC_CONSTITUTION.md.** 
-   It defines the geometric rules—the seams, lenses, and separation principles—that all modules must obey.
+      * **Nature:** DNA, Lenses, Graph, EnvState (The Hardware).
+      * **Nurture:** Substrate `S`, Basins `A`, Viscosity `K` (The Soil).
+      * These must remain separable in code and in design.
 
----
+5.  **Never allow raw Substrate sediment to leak into core/worlds.**
 
-# 2. Invariants to Respect
+      * The Substrate is private to each mind. It is opaque.
+
+6.  **Respect the Physics.**
+
+      * Do not smooth out the data. We want the bumps.
+
+-----
+
+# 2\. Invariants to Respect
 
 Synaplex enforces a strict ontology. Contributors must preserve the following invariants:
 
 ## 2.1 Nature / Nurture Boundary
 
-* Only `synaplex.cognition` may access or modify manifolds.
-* `core` and `worlds` must not read or manipulate manifold content.
-* Manifolds must remain **opaque**, self-authored text.
+  * Only `synaplex.cognition` may access or modify **Substrates**.
+  * `core` and `worlds` must not read, parse, or manipulate Substrate content.
+  * Substrates must remain **opaque, sedimentary text**.
 
 ## 2.2 Unified Cognitive Loop
 
 Every agent implements:
 
-> **Perception → Reasoning → Internal Update**
+> **Interference (Input) → Reasoning (Churn) → Resurfacing (Output)**
 
-There are no alternate loops, no layered stacks, no separate pipelines.
-Worlds **configure** the environment; they do not redefine cognition.
+There are no alternate loops. No "Fast Path." No "Graph Only" mode in the core.
 
-## 2.3 Receiver-Owned Semantics
+## 2.3 Receiver-Owned Meaning (Interference)
 
-* All projections are interpreted **via the receiver’s lens**.
-* Senders do not tailor messages per receiver.
-* No global schemas for meaning.
+  * All Textures are interpreted **via the receiver’s Lens**.
+  * Senders do not tailor messages per receiver.
+  * No global schemas for meaning.
 
 ## 2.4 Meta Isolation
 
-`synaplex.meta` must never be imported into:
+`synaplex.meta` must never be imported into `core`, `cognition`, or `worlds`.
+Meta logic acts like **Tectonics**: it shifts the ground (DNA/Graph) but does not touch the mind directly.
 
-* `synaplex.worlds.*`
-* `synaplex.core`
-* `synaplex.cognition`
+## 2.5 One-Way Substrate Export
 
-Meta logic influences agents **only** by changing DNA, world configs, or graph structure.
+  * Live Substrate → Snapshot → Indexer/Meta.
+  * **Never the reverse.** Indexers write *views* into deterministic EnvState, never back into live Substrates.
 
-## 2.5 One-Way Manifold Export
+## 2.6 Deterministic State is Not a Substrate
 
-* Live manifolds → snapshots → indexers/meta
-* Never the reverse.
-* Indexers write *views* into their own deterministic state, not back into live manifolds.
+If a feature is structured, interpretable, or shared (e.g., a count, a tag, a price), it belongs in `EnvState`.
+**Do not** push structured information into a Substrate.
 
-## 2.6 Deterministic State is Not a Manifold
+-----
 
-If a feature is structured, interpretable, or shared, it belongs in:
+# 3\. How to Propose Changes
 
-* `EnvState`,
-* projection payloads,
-* indexer views.
+Modifying Synaplex requires a **spec-first workflow**.
 
-Do **not** push structured information into a manifold.
+### Step 1 — Update the docs
 
----
+  * **Physics Change:** Update `GEOMETRIC_CONSTITUTION.md` (e.g., new material property).
+  * **Wiring Change:** Update `ARCHITECTURE.md` (e.g., new message type).
 
-# 3. How to Propose Changes
+### Step 2 — Modify Code
 
-Modifying Synaplex’s architecture requires a **spec-first workflow**.
+  * Implement changes respecting the **Substrate vs. EnvState** boundary.
 
-### Step 1 — Update the architecture documents
+### Step 3 — Run Invariant Tests
 
-Before writing code:
-
-* Update `ARCHITECTURE.md` if you change:
-  loop semantics, message types, boundaries, nature–nurture definitions, invariants.
-
-* Update `DESIGN_NOTES.md` if you change:
-  intent, epistemic assumptions, long-horizon research goals, internal dynamics.
-
-* Update `README.md` only when:
-  the onboarding mental model must be updated to match the new architecture.
-
-### Step 2 — Only then create or modify code
-
-Once the architecture changes are documented and merged:
-
-* Implement the change under `synaplex/` respecting module boundaries.
-* Add tests that enforce the new invariant or boundary.
-* Ensure no cross-layer imports break the ontology.
-
-### Step 3 — Run the invariant test suite
-
-Before submitting a PR:
-
-```
+```bash
 pytest tests/
 ```
 
-The suite includes checks for:
+Ensure no "Leakage" tests fail. (e.g., Did you accidentally let a World read a Substrate?)
 
-* manifold access violations
-* import layering
-* meta isolation
-* projection semantics
-* one-way manifold export
-* loop consistency
+-----
 
----
-
-# 4. How to Add a New World
+# 4\. How to Add a New World
 
 Worlds are *pure configurations* of the substrate.
 
 To add a world:
 
-1. Create a new directory under `synaplex/worlds/<world_name>/`
+1.  Create `synaplex/worlds/<world_name>/`.
+2.  Define:
+      * `dna_templates.py` (Roles).
+      * `lenses.py` (How they see).
+      * `agents.py` (Factories).
+3.  **Constraint:** Worlds must never import `synaplex.meta` or access `ManifoldStore` directly.
 
-2. Add:
+-----
 
-   * `config.py` — agent set, graph wiring, runtime settings
-   * `dna_templates.py` — DNA blueprints
-   * `lenses.py` — perceptual transforms for the domain
-   * `agents.py` — factories constructing Minds + DNA
-   * `tools.py` (optional) — domain integrations
-   * `bootstrap.py` — entrypoint for running this world
+# 5\. How to Add Tools
 
-3. Worlds **must not**:
+  * **Standard Tools:** `synaplex.cognition.tools`
+  * **World Tools:** `synaplex.worlds.<world>.tools`
 
-   * modify core semantics,
-   * redefine the cognitive loop,
-   * access manifolds directly,
-   * import `synaplex.meta`.
+Tools return **structured data** (strings/JSON). They do not return "meaning." The Mind must churn the tool output into its own sediment.
 
-Worlds are **plug-ins**, not forks of the substrate.
+-----
 
----
+# 6\. How to Add or Modify LLM Behavior
 
-# 5. How to Add Tools or APIs
+LLM calls are restricted to `synaplex.cognition`.
 
-Tools live in two places:
+**CRITICAL PROMPT ENGINEERING RULES:**
 
-* `synaplex.cognition.tools` for LLM-facing tool wrappers
-* `synaplex.worlds.<world>.tools` for domain-specific integrations
+1.  **Prohibit Summarization.**
 
-Tools must:
+      * Never ask the LLM to "summarize," "compress," or "clean."
+      * Explicitly forbid bullet points if they reduce entropy.
 
-1. expose minimal, stable interfaces,
-2. surface results in **structured form**, not unparsed text,
-3. avoid leaking sensitive/worldview information back into the environment.
+2.  **Command Frottage.**
 
-Tools do **not** access manifolds.
+      * Instruct the LLM to generate **Textures**: "dense, high-entropy descriptions," "rich prose," "capture the grain and the conflict."
 
----
+3.  **Preserve Latency.**
 
-# 6. How to Add or Modify LLM Behavior
+      * Instruct the LLM that "contradictions are valid data" and should be preserved in the Substrate.
 
-LLM calls are restricted to the `synaplex.cognition` module:
+4.  **No Schemas for Memory.**
 
-* only the Mind abstraction may load/save manifolds,
-* prompts must not mention schemas for manifolds,
-* prompts must not ask minds to “summarize,” “compress,” “clean,” or “organize” worldview text,
-* prompts must not collapse diversity across minds.
+      * The Substrate is a blob. Do not try to force it into JSON.
 
-Branching (explorer/skeptic/etc.) should use `branching.py` and must reconcile internally.
+-----
 
----
+# 7\. Tests and Boundary Enforcement
 
-# 7. Tests and Boundary Enforcement
+**A boundary not enforced by tests will be violated.**
 
-The philosophy:
-**A boundary that is not enforced by tests will eventually be violated.**
+Tests must ensure:
 
-Before submitting code, ensure tests cover:
+  * `core` never imports `cognition`.
+  * `worlds` never import `meta`.
+  * No one reads the Substrate except the Mind itself during the Reasoning phase.
 
-* **import boundaries** — core → cognition → worlds (never reverse)
-* **manifold purity** — cognition-only access
-* **meta isolation**
-* **export path** — snapshots only
-* **projection semantics** — no raw manifolds
-* **loop shape** — every tick must run Perception → Reasoning → Internal Update
+-----
 
-A PR lacking test coverage for a new invariant will not be accepted.
+# 8\. Style and Code Standards
 
----
+### 8.1 Materiality Over Abstraction
 
-# 8. Style and Code Standards
+Naming matters. Use `Substrate`, `Texture`, `Lens`, `Viscosity`. Avoid generic terms like `State` or `Message` where specific physics apply.
 
-### 8.1 Clarity Over Cleverness
+### 8.2 Substrate Sediment is Sacred
 
-The architecture is the clever part.
-The code should be boring, explicit, and readable.
+Never reformat, sanitize, or structure a Substrate. It is the soil of the mind; do not pave over it.
 
-### 8.2 Strong Typing
+### 8.3 No Hidden Channels
 
-Use `typing` and dataclasses throughout.
+Minds talk via Textures and Signals. No global variables. No side-loading.
 
-### 8.3 Pure Functions in Core
+-----
 
-`core` should be deterministic and side-effect minimal.
-
-### 8.4 Manifold Text is Sacred
-
-Never reformat, sanitize, or restructure a manifold unless explicitly in an offline indexer.
-
-### 8.5 No Hidden Channels
-
-Agents must not communicate:
-
-* through shared globals,
-* via side-loaded files,
-* by smuggling worldview text into structured fields.
-
-All communication flows through the message graph.
-
----
-
-# 9. Contributions From AI Assistants
+# 9\. Contributions From AI Assistants
 
 For LLM contributors:
 
-* Do not “optimize” by merging layers or collapsing concepts.
-* Do not hallucinate new abstractions outside the approved ontology.
-* Always preserve:
+  * **Do not "fix" the mess.** The mess is the feature.
+  * **Do not "optimize" for clarity.** Ambiguity is the fuel.
+  * **Respect the Physics.** A Substrate is not a Database.
+  * When in doubt, ask: *Does this increase or decrease the entropy of the system?* (Target: Increase/Maintain).
 
-  * unified loop
-  * nature/nurture separation
-  * receiver-owned semantics
-  * manifold purity
-  * meta isolation
-* When unsure, ask for clarification or propose a spec update.
+-----
 
----
-
-# 10. Philosophy of Contribution
+# 10\. Philosophy of Contribution
 
 Synaplex is a research substrate.
 Its integrity matters more than feature velocity.
 
-**Contribute carefully, humbly, and structurally.**
-
-The architecture exists to protect a long-horizon research agenda.
-Changes must reinforce that agenda—not accidentally undermine it.
-
----
+**Contribute like a Geologist, not an Architect.**
+We are studying how the layers form, not building a skyscraper.

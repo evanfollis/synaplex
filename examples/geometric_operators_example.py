@@ -27,97 +27,27 @@ from synaplex.manifolds_indexers.indexer_world import (
 )
 
 
-class ExampleLens(Lens):
-    """Example lens demonstrating Φ_sem and Φ_tel."""
-
-    def transform_projection(self, raw_projection: dict) -> dict:
-        """
-        Demonstrate both aspects of Φ:
-        - Φ_sem: Semantic compression
-        - Φ_tel: Teleological filtering
-        """
-        # Extract frottage envelope
-        frottage = raw_projection.get("frottage", {})
-        frames = frottage.get("frames", [])
-
-        # Φ_sem: Compress multiple frames into structured view
-        compressed = {}
-        for frame in frames:
-            frame_type = frame.get("type", "")
-            if frame_type == "direct_state":
-                compressed.update(frame.get("content", {}))
-
-        # Φ_tel: Filter based on teleological alignment
-        # (In this example, prioritize structural information)
-        if "tags" in compressed:
-            compressed["_teleological_weight"] = 1.0
-        else:
-            compressed["_teleological_weight"] = 0.5
-
-        return compressed
-
-
 def demonstrate_frottage():
-    """Demonstrate frottage generation in projections."""
+    """Frottage: pure unstructured semantic soup between Minds."""
     print("=== Frottage (F) Example ===")
 
-    # Create a simple mind
     agent_id = AgentId("example_agent")
-    llm_client = LLMClient()  # Mock LLM
+    llm_client = LLMClient()
     mind = Mind(agent_id=agent_id, llm_client=llm_client)
 
-    # Create a request
     request = Request(
         id=MessageId("req-1"),
         sender=AgentId("receiver"),
         receiver=agent_id,
-        shape={"type": "state_view"},
+        shape={},
     )
 
-    # Generate projection with frottage
     projection = mind.create_projection(request)
 
-    print(f"Projection payload keys: {list(projection.payload.keys())}")
-    print(f"Frottage envelope present: {'frottage' in projection.payload}")
-    if "frottage" in projection.payload:
-        frottage = projection.payload["frottage"]
-        print(f"Frottage frames: {len(frottage.get('frames', []))}")
-        print(f"Frottage redundancy: {frottage.get('redundancy_level')}")
-        print(f"Frottage on-topic: {frottage.get('on_topic')}")
-
-
-def demonstrate_lens_refraction():
-    """Demonstrate lens refraction (Φ_sem, Φ_tel)."""
-    print("\n=== Lens Refraction (Φ) Example ===")
-
-    lens = ExampleLens(name="example")
-
-    # Create a frottage envelope
-    raw_projection = {
-        "agent_id": "sender",
-        "state": {"tags": ["important", "structural"]},
-        "frottage": {
-            "frames": [
-                {
-                    "type": "direct_state",
-                    "content": {"tags": ["important", "structural"], "value": 42},
-                },
-                {
-                    "type": "contextual_hints",
-                    "content": {"implications": "This is significant"},
-                },
-            ],
-            "redundancy_level": "high",
-            "on_topic": True,
-        },
-    }
-
-    # Transform via lens (Φ_sem + Φ_tel)
-    transformed = lens.transform_projection(raw_projection)
-
-    print(f"Raw projection keys: {list(raw_projection.keys())}")
-    print(f"Transformed keys: {list(transformed.keys())}")
-    print(f"Teleological weight: {transformed.get('_teleological_weight')}")
+    print(f"Frottage present: {projection.frottage is not None}")
+    if projection.frottage:
+        print(f"Length: {len(projection.frottage)} chars")
+        print("(Raw text - no schema, no structure, receiver interprets)")
 
 
 def demonstrate_holonomy():
@@ -259,7 +189,6 @@ def main():
     print("=" * 50)
 
     demonstrate_frottage()
-    demonstrate_lens_refraction()
     demonstrate_holonomy()
     demonstrate_geometric_metadata()
     demonstrate_health_metrics()

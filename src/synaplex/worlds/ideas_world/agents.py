@@ -10,6 +10,49 @@ from synaplex.cognition.mind import Mind
 from synaplex.cognition.manifolds import FileManifoldStore
 
 
+# ---------------------------------------------------------------------------
+# Frottage generation for IDEAS_WORLD
+# ---------------------------------------------------------------------------
+
+def _generate_idea_frottage(
+    idea: Dict[str, Any],
+    llm_client: Optional[Any] = None,
+) -> Optional[str]:
+    """
+    Generate frottage for an idea.
+    
+    Frottage is semantic soup: dump everything—latent ideas, contradictions,
+    tangents, interdisciplinary possibilities. The receiver makes sense of it
+    with no special prompting. Just context.
+    """
+    if llm_client is None:
+        return _generate_idea_frottage_fallback(idea)
+    
+    # Simple: just dump everything about this idea
+    prompt = f"""Write everything you know, think, suspect, or wonder about this idea.
+Include half-formed thoughts, contradictions, tangents, connections to other fields.
+Don't structure it. Don't summarize. Just dump.
+
+{idea}"""
+    
+    try:
+        response = llm_client.complete(prompt)
+        text = getattr(response, "text", None)
+        if text is None:
+            text = str(response)
+        return text if text.strip() else _generate_idea_frottage_fallback(idea)
+    except Exception:
+        return _generate_idea_frottage_fallback(idea)
+
+
+def _generate_idea_frottage_fallback(idea: Dict[str, Any]) -> str:
+    """Fallback when LLM unavailable: just dump the idea content."""
+    content = idea.get('content', '')
+    if content:
+        return content
+    return str(idea)
+
+
 class IdeasArchivistMind(Mind):
     """
     Archivist mind that reads markdown idea files and emits idea signals.
@@ -118,10 +161,17 @@ class IdeasArchivistMind(Mind):
 
     def act(self, reasoning_output: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Process markdown files and emit idea signals.
+        Process markdown files and emit idea signals with frottage.
 
-        Geometry note: this lives in the Mind's outward behavior step,
-        but it does not depend on special modes or on the absence of a manifold.
+        Each idea signal includes:
+        - payload: small, structured meta for routing/filtering
+        - frottage: dense, on-topic text for receiver manifold perturbation
+        
+        Per FROTTAGE_CONTRACT:
+        - Frottage is sender-authored and opaque to core
+        - Never parsed by infrastructure; passed through as-is
+        - Compression happens in receiver Mind's reasoning/update
+        - Token cost is cheap; we prefer rich perturbations
         """
         signals: List[Dict[str, Any]] = []
 
@@ -141,18 +191,27 @@ class IdeasArchivistMind(Mind):
                 ideas = self._extract_ideas_from_markdown(content, md_file.name)
 
                 for idea in ideas:
+                    # Generate frottage for this idea
+                    # Use LLM if available for richer perturbations
+                    frottage = _generate_idea_frottage(idea, llm_client=self._llm)
+                    
                     signals.append(
                         {
+                            # Structured payload: small, schema-aware, for routing
                             "payload": {
-                                "type": "idea",
+                                "kind": "idea",
+                                "type": "idea",  # backward compat
                                 "title": idea["title"],
                                 "domain": idea.get("domain"),
                                 "tags": idea.get("tags", []),
                                 "status": idea.get("status", "seed"),
                                 "question": idea.get("question"),
-                                "content_preview": idea.get("content", "")[:200],
                                 "source_file": idea["source_file"],
-                            }
+                                # Note: content_preview removed from payload
+                                # Full content is in frottage, not structured meta
+                            },
+                            # Frottage: dense, unstructured text for manifold perturbation
+                            "frottage": frottage,
                         }
                     )
 

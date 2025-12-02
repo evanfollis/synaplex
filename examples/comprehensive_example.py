@@ -24,18 +24,11 @@ import shutil
 
 
 class CustomLens(Lens):
-    """Custom lens that filters signals by type."""
+    """Lens only filters. Receiver-owned semantics."""
     
     def should_attend(self, signal_payload: dict) -> bool:
-        """Only attend to signals with type 'important'."""
-        return signal_payload.get("type") == "important"
-    
-    def transform_projection(self, raw_projection: dict) -> dict:
-        """Transform projection to include metadata."""
-        return {
-            **raw_projection,
-            "transformed_by": "CustomLens",
-        }
+        """Filter signals. The Mind decides what's relevant."""
+        return True
 
 
 def create_example_tools() -> ToolRegistry:

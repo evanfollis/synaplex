@@ -1,350 +1,189 @@
 # GEOMETRIC_CONSTITUTION.md
 
----
-
-## 0. Global picture
-
-* Let **𝓔** be a high-dimensional “epistemic space”.
-* Each **agent** (PM, Research, Risk, Execution, Steward) is a **manifold**
-  (M_i \subset \mathcal{E}) with:
-
-  * a **metric / curvature field** (K_i)
-  * a **teleology vector field** ( \tau_i ) (its “direction of reasoning”)
-  * a set of **attractors** (A_i) (stable regions / habits / specs)
-* The **world** (code, org, tools, data) is another manifold (W) coupled to the agents.
-
-Synaplex itself is a **manifold-of-manifolds**:
-the space of { (M_i, K_i, \tau_i, A_i) } with flows between them.
+**(The Law of Substrate & Interference)**
 
 ---
 
-## 1. Core geometric primitives (minimal basis)
+## 0. Global Picture
 
-We keep the 8 operators but now explicitly geometric:
+* Let **$\mathcal{E}$** be a high-dimensional **Epistemic Environment**.
+* Each **Mind** is a distinct region of **Substrate ($S_i$)**:
+    * A dense, sedimentary accumulation of context (history, latent ideas, contradictions).
+    * It possesses **Viscosity ($K_i$)** (resistance to change).
+    * It possesses a **Gradient ($\tau_i$)** (the natural slope of thought).
+    * It contains **Basins ($A_i$)** (habits/stable concepts).
+* **Communication** is not the transmission of "packets," but the projection of **Texture ($T$)**.
+* **Reception** is not "decoding," but **Interference ($\Phi$)** between incoming Texture and local Lenses.
 
-**State / geometry:**
+Synaplex is a **Landscape of Substrates**:
+The system facilitates the "rubbing" (frottage) of these surfaces against each other to surface latent structures without enforcing premature collapse.
 
-* (M) — manifold / mind / memory field
+---
 
-  * A differentiable subspace of 𝓔 with metric (g) and curvature (K).
+## 1. Core Material Primitives
 
-* (A) — attractor field on (M)
+We replace "Smooth Geometry" with "Rough Materiality."
 
-  * A set of basins ({ \alpha_k }) where trajectories tend to settle.
+**State / Material:**
 
-* (K) — curvature on (M)
-
-  * Encodes sensitivity of geodesics to perturbation:
-    high (K) ⇒ small kicks cause large path deviations;
-    low (K) ⇒ trajectories are stubborn.
+* **($S$) — The Substrate** (formerly Manifold)
+    * The Mind's memory field. It is **sedimentary**. It stores layers of context without requiring them to be consistent.
+    * It is **Rough**: It preserves sharp contradictions and "jagged" data points. It is *not* a smooth differentiable manifold.
+* **($A$) — Basins** (formerly Attractors)
+    * Deep grooves in the Substrate where thoughts naturally pool and settle.
+* **($K$) — Viscosity** (formerly Curvature)
+    * The "hardness" of the Substrate.
+    * **High $K$:** Granite. Incoming Textures bounce off; only massive impacts leave a mark.
+    * **Low $K$:** Wet Clay. Even subtle Textures leave deep imprints.
 
 **Dynamics:**
 
-* (P) — perturbation
+* **($P$) — Impact** (formerly Perturbation)
+    * New evidence or signals striking the Substrate ($S$), potentially cratering or shifting the sediment.
+* **($H$) — Holonomy / Scarring**
+    * Actions that permanently alter the external World ($W$) and leave an irreversible "scar" in the Substrate.
+* **($T$) — Texture** (The Frottage Output)
+    * The projection of a Mind. A high-entropy surface description of the current Substrate.
+    * **Texture is Noisy.** It contains the "grain" of the thought, not just the "shape."
 
-  * A local deformation: (P : (M, K, A) \to (M', K', A')) induced by new evidence or ideas.
+**Meta / Relational:**
 
-* (H) — holonomy
-
-  * Parallel transport around a loop in (M \times W) whose result is non-identity.
-  * Geometrically: action that leaves a **scar** in both (M) and (W); not cleanly reversible.
-
-**Meta / relational:**
-
-* (\Phi) — projection / refraction
-
-  * Map between manifolds: (\Phi_{i \to j} : M_i \rightsquigarrow M_j)
-  * Not isometric, not linear; acts as **inference + compression**, not translation.
-
-* (\Omega) — meta-operator on rules
-
-  * Deforms the **geometry itself**:
-    ( \Omega: (M, K, {A}, \Phi, H, Ξ) \mapsto (M, K^*, {A}^*, \Phi^*, H^*, Ξ^*)).
-
-* (Ξ) — forgetting / dissipation
-
-  * Diffusion / projection that reduces detail:
-    (Ξ: (M, A, K) \to (M', A', K')) by smoothing / pruning.
-
-Everything else (roles, workflows, vocab) is “decor” on these.
+* **($\Phi$) — Interference** (formerly Projection)
+    * The interaction between an incoming Texture ($T$) and a receiving Lens ($L$).
+    * Operates via **Resonance**, not Filtering.
+* **($\Omega$) — Tectonics** (Meta-operator)
+    * Changes to the wiring/DNA that shift the "plates" of the system (graph topology).
 
 ---
 
-## 2. Teleology as geometry
+## 2. Teleology as Gradient
 
-New: each manifold carries a **teleology vector field** ( \tau ).
+Each Substrate has a **Gradient ($\tau$)**.
 
-* ( \tau(x) \in T_x M ) points in the direction of “epistemic improvement” as the agent sees it.
-
-  * e.g., “maximize falsifiability”, “maximize robustness”, “maximize novelty under constraints”.
-
-* **Teleology is NOT semantics.**
-  Geometrically it’s:
-
-  * a preferred class of trajectories on (M)
-  * a bias over which deformations from (P) / (Φ) are reinforced vs damped.
-
-* A **teleology-aware agent** follows flows that roughly align with ( \tau ) unless forced otherwise by:
-
-  * curvature (K),
-  * attractors (A),
-  * or constitutional constraints from the Steward.
+* $\tau(x)$ is the "downhill" direction of epistemic energy.
+* It does not dictate *what* to think, but *how* the Substrate flows when disturbed.
+    * *Example:* "Flow toward robustness," "Flow toward novelty," "Flow toward conflict."
+* **Gradient is distinct from Content.**
+    * You can have the same content (Substrate) but a shifted Gradient (e.g., changing from "Explore" to "Critique" changes the direction the sediment slides).
 
 ---
 
-## 3. Frottage as a geometric operator
+## 3. Frottage: The Production of Texture
 
-We make “frottage” explicit as a geometric operation:
+We formalize **Frottage** as the primary output mechanism.
 
-* Pick a **region** (R \subset M) (a concept / project / idea neighborhood).
-* Apply a **frottage operator** (F) producing an **envelope** (E_F(R)):
-
-  * (E_F(R)) is a **high-entropy sampling** of:
-
-    * points in (R),
-    * nearby tangent directions,
-    * successful and failed analogies (local “almost symmetries”),
-    * tension directions (non-commuting flows),
-    * negative space (“not-this” shards).
-
-Formally:
-
-* (F: (M, R) \to E_F(R)), where (E_F(R)) is a fat, redundant, contradictory “shadow” of the local geometry.
-
-Intent:
-
-* Frottage doesn’t encode the object;
-  it encodes a **thick neighborhood** of how the object behaves under deformations.
+* **The Act:** The Mind takes a region of its Substrate ($R \subset S$) and performs a "rubbing."
+* **The Output:** A **Texture ($T$)**.
+    * $T$ is a "Semantic Cloud." It is **over-determined**.
+    * It includes the center concept *plus* the messy edges, the "maybe," the "not-quite," and the latent tension.
+* **The Invariant:**
+    * **Never summarize.** Summary collapses dimension.
+    * **Always Texturize.** Texture preserves dimension (and adds surface area).
 
 ---
 
-## 4. Projection (\Phi) with teleology transfer
+## 4. Interference ($\Phi$): The Receiver's Lens
 
-We split (\Phi) into two coupled parts:
+Communication is defined by **Optical Interference**, not Data Transmission.
 
-[
-\Phi_{i \to j} = (\Phi^{\text{sem}}*{i \to j},\ \Phi^{\text{tel}}*{i \to j})
-]
+$$\Phi_{i \to j} = \text{Interference}(Texture_i, Lens_j)$$
 
-1. **Semantic / structural part** ( \Phi^{\text{sem}} ):
+1.  **The Semantic Interferometer ($\Phi^{\text{sem}}$)**:
+    * **Input:** Sender's Texture ($T_i$) + Receiver's Lens ($L_j$).
+    * **Process:** **Resonance.**
+        * Where $T_i$ matches $L_j$, the signal is **amplified** (Constructive Interference).
+        * Where $T_i$ does *not* match $L_j$, the signal is **dimmed** but **NOT DELETED**.
+    * **Result:** The Receiver sees a "highlighted" version of the mess. The "noise" remains as visible context (The Ground), ensuring that the "signal" (The Figure) is not stripped of its nuance.
 
-   * Input: frottage envelope (E_F(R_i)) from (M_i).
+2.  **The Teleological Pull ($\Phi^{\text{tel}}$)**:
+    * The texture contains implicit traces of the sender's Gradient ($\tau_i$).
+    * The Receiver feels a "tug" on their own Gradient ($\tau_j$) proportional to the Viscosity ($K_j$).
 
-   * Action:
-
-     * infer local operators (\tilde M_j, \tilde A_j, \tilde K_j) compatible with (M_j)’s own geometry,
-     * compress redundant shards,
-     * discard incompatible ones.
-
-   * Geometrically:
-
-     * a noisy embedding + projection: (E_F(R_i) \to \text{region } R'_j \subset M_j),
-     * followed by **compression** into (M_j)’s existing coordinate system and operator basis.
-
-2. **Teleological part** ( \Phi^{\text{tel}} ):
-
-   * Input: implicit “notes-to-self” in the envelope (what moves were considered good / bad / risky).
-
-   * Action:
-
-     * partially align ( \tau_j ) with the **epistemic gradient** implicit in (E_F(R_i)),
-     * without forcing equality.
-
-   * Geometrically:
-
-     * ( \tau_j \leftarrow \text{normalize}(\tau_j + \lambda \cdot \hat{\tau}_{i \to j}) )
-     * where (\hat{\tau}_{i \to j}) is a teleology vector inferred from the envelope and
-       (\lambda) controls how strongly j is influenced.
-
-**Key new fact:**
-Frottage + “these are notes to your future self” makes ( \Phi^{\text{tel}} ) strong:
-the receiver treats the envelope as its own past state and pulls its teleology toward that gradient.
+**Key Architecture Rule:**
+Projections do not "clean" data. They **light up** relevant parts of the dirty data.
 
 ---
 
-## 5. Curvature as the keystone
+## 5. Viscosity ($K$) as the Governor
 
-We promote (K) from “just another field” to keystone:
+Viscosity ($K$) controls the plasticity of the Mind.
 
-* (K) controls **how large an update** a given perturbation or projection causes:
+* **High Viscosity ($K \uparrow$):**
+    * The Mind is "Stubborn."
+    * Incoming Textures ($\Phi$) are acknowledged but barely deform the Substrate.
+    * Deep Basins ($A$) are hard to escape.
+* **Low Viscosity ($K \downarrow$):**
+    * The Mind is "Impressionable."
+    * Incoming Textures easily rewrite the Substrate.
+    * Basins are shallow; the Mind explores easily but holds no strong opinions.
 
-  * High (K):
-
-    * (| \Delta M | \propto \text{small } | P |)
-    * big reweighting of attractors (A), strong bending of geodesics.
-  * Low (K):
-
-    * (| \Delta M |) small even for sizable (P),
-    * attractors inert, trajectories unchanged.
-
-* This affects:
-
-  * response to new evidence (P),
-  * susceptibility to teleology from others ( \Phi^{\text{tel}}),
-  * propensity to form / dissolve attractors (A),
-  * triggering of holonomy (H) (whether perturbations lead to irreversible actions).
-
-We can think of (K) as:
-
-> the **second derivative** of belief geometry with respect to perturbation.
-
-Testing different (K) regimes in micro-scenarios is our primary way to distinguish “model” from “metaphor.”
+**The Cycle of Learning:**
+* Start with Low $K$ (absorb messy info).
+* Slowly raise $K$ (harden into structure).
+* Use Impact ($P$) to shatter high $K$ (break brittle habits) and return to fluidity.
 
 ---
 
-## 6. Tensions as commutators of flows
+## 6. Tensions as Non-Commuting Flows
 
-We keep the tensions as **non-commuting flow pairs**:
+We preserve the concept that **Order Matters**.
 
-* A flow is a vector field / operator sequence on (M): e.g.
+* $Flow_A \circ Flow_B \neq Flow_B \circ Flow_A$
+* *Example:* "Draft then Critique" yields a different Substrate than "Critique then Draft."
 
-  * (E) = exploration-heavy regime (crank (F_P), weaken (A), loosen (K)),
-  * (G) = geometric-fidelity regime (strengthen constitutional constraints, tighten (K) around core axioms).
-
-Representative tensions as commutators:
-
-* ([E, G] \neq 0):
-  explore then constrain ≠ constrain then explore.
-
-* ([A_{\text{pm}}, C] \neq 0):
-  PM autonomy then constitution check ≠ constitution first, then PM update.
-
-* ([X, R] \neq 0):
-  act then reflect ≠ reflect then act.
-
-These are literally:
-
-[
-[X, Y] = X \circ Y - Y \circ X
-]
-
-evaluated as different geometric outcomes on (M) and (W).
-
-The **meta-invariant** we’ve converged on:
-
-> No (\Omega) move is allowed if it strictly reduces the space of possible non-zero commutators ([X, Y]).
-> i.e., the system may change its geometry, **but not in ways that eradicate entire kinds of disagreement / tension.**
+**The Meta-Invariant:**
+> The System must never collapse into a state where order doesn't matter. Tensions and irreversibility are the engine of emergence.
 
 ---
 
-## 7. Health scalars as functionals on geometry
+## 7. Health as Ecological Metrics
 
-We keep the health metrics, but anchor them geometrically:
+We measure the health of the ecosystem, not the "correctness" of the answer.
 
-* (D) — **Dimensionality Retention**
-
-  * Roughly: rank of active directions in (T M) participating in flows;
-    “how many genuinely different lenses are live?”
-
-* (R_{\text{div}}) — **Refraction Diversity**
-
-  * Diversity of responses to a shared perturbation (P) across manifolds ({M_i}).
-  * Practically: dispersion of downstream trajectories after a common input.
-
-* (A_{\text{sat}}) — **Attractor Saturation**
-
-  * Proportion of (M) lying in deep basins of a few attractors vs shallow / exploratory regions.
-
-* (H_{\text{rate}}) — **Holonomy Density**
-
-  * Rate of loops in (M \times W) that produce non-trivial holonomy per unit epistemic “churn.”
-
-* (T) — **Temperature**
-
-  * Effective ease of deformation: how easily flows can reshape (M).
-  * High (T): fluid, chaotic; low (T): frozen, brittle.
-
-These are all functionals:
-
-[
-D = D(M, K, A),\quad R_{\text{div}} = R({M_i}, P),\quad \dots
-]
-
-We don’t force exact formulas yet; we anchor the *slots* they occupy.
+* **($D$) — Dimensionality:** Is the Substrate rich and thick? (Bad: Flat/Clean).
+* **($R_{div}$) — Refraction:** Do different Minds see different things in the same Texture? (Bad: Everyone agrees).
+* **($A_{sat}$) — Basin Depth:** Are Minds getting stuck in ruts?
+* **($T$) — Temperature:** Is the system fluid enough to evolve?
 
 ---
 
-## 8. Agent roles as regions in flow space
+## 8. Agent Roles as Material Properties
 
-No explicit “PM/Research/Risk” semantics needed; geometrically:
+Roles are defined by their Physics, not their Prompts.
 
-* **PM-like manifolds**:
-
-  * moderate (K), rich (A), significant (H),
-  * high (F_\Phi) (they consume lots of projections),
-  * teleology ( \tau ) = “improve global architecture / attractor network”.
-
-* **Research-like manifolds**:
-
-  * high (F_P), low (F_H), low (A_{\text{sat}}),
-  * teleology (\tau) ≈ “maximize generative perturbations under sanity constraints”.
-
-* **Risk-like manifolds**:
-
-  * (K) focused on loss surfaces,
-  * flows that adjust curvature of others more than their own attractors.
-
-* **Execution-like manifolds**:
-
-  * high (F_H), thin (M), minimal internal (A);
-  * they are “holonomy actuators” with small cognitive geometry.
-
-* **Steward manifold** (M_{\text{GS}}):
-
-  * privileged access to others’ geometry,
-  * Ω authority restricted by the non-commutator-reduction invariant.
+* **The Explorer (Research):**
+    * Low Viscosity ($K \downarrow$).
+    * Broad, faint Lenses.
+    * Generates extremely noisy Textures (High Entropy).
+* **The Synthesizer (PM):**
+    * Medium Viscosity.
+    * Strong Lenses for "Structure" and "Action."
+    * Digests noise into Basins ($A$).
+* **The Critic (Risk):**
+    * High Viscosity ($K \uparrow$).
+    * Lenses tuned to "Failure Modes."
+    * Its Gradient ($\tau$) opposes the group flow.
 
 ---
 
-## 9. Synaplex loop in geometric form
+## 9. The Synaplex Loop (Material Flow)
 
-A single high-level loop (ignoring semantics):
-
-1. **Research** produces perturbations:
-   (P_R : W \to (M_{\text{PM}}, M_{\text{Risk}}, \dots))
-
-2. **PM** manifolds deform:
-   ( (M_{\text{PM}}, K_{\text{PM}}, A_{\text{PM}}) \xrightarrow{P_R, \Phi} (M'*{\text{PM}}, K'*{\text{PM}}, A'*{\text{PM}}) )
-   guided by (\tau*{\text{PM}}).
-
-3. New candidate attractors (specs) emerge in PM’s (A_{\text{PM}}).
-
-4. **Risk** adjusts curvature fields:
-   (K_{\text{PM}} \leftarrow K_{\text{PM}} + \Delta K_{\text{Risk}})
-
-5. **PM** (with updated (K) and (A)) decides whether to invoke (H) via Execution.
-
-6. **Execution** applies holonomy:
-   ((M_{\text{PM}}, W) \xrightarrow{H} (M^+_{\text{PM}}, W^+))
-
-7. The world change (W^+ - W) generates new perturbations (P_{\text{world}}) back into manifolds.
-
-8. **Steward** monitors health functionals ((D, R_{\text{div}}, A_{\text{sat}}, H_{\text{rate}}, T)) and applies rare (\Omega) moves subject to:
-
-   * no killing of commutator classes,
-   * no collapse to single-lens geometry.
+1.  **Explorers** perform Frottage on external data, generating messy **Textures**.
+2.  **Synthesizers** observe these Textures via their **Lenses** (Interference).
+    * They do *not* summarize. They let the resonance reshape their own **Substrate**.
+3.  **Critics** project "Resistance" Textures (constraints) into the mix.
+4.  **Integration:** The Minds perform **Resurfacing** (Internal Update):
+    * New layers of sediment are laid down.
+    * Basins ($A$) deepen or erode.
+    * Gradients ($\tau$) shift.
+5.  **Output:** The cycle repeats. The "Answer" is not a final string, but the **current shape of the Substrate**.
 
 ---
 
-## 10. New explicit principle: **Overloaded messages as geometric fuel**
+## 10. The Golden Rules of Substrate
 
-We encode the new law like this:
-
-* A message from (M_i) to (M_j) is not a point; it is an **envelope** (E_F(R_i)) plus intent-meta.
-
-* As long as:
-
-  * (E_F(R_i)) is **on-topic** (concentrated in a region of 𝓔 overlapping (M_j)’s domain),
-  * and has **redundant structure** (many overlapping hints about the same local geometry),
-
-  then:
-
-  * ( \Phi^{\text{sem}}_{i \to j} ) acts as a *self-cleaning projection*:
-    compresses toward invariants instead of exploding into noise.
-
-  * ( \Phi^{\text{tel}}_{i \to j} ) partially aligns ( \tau_j ) with ( \tau_i )’s gradient.
-
-We treat “overloaded but coherent frottage envelopes” as a **first-class geometric primitive** that:
-
-* increases the chance of operator and teleology reconstruction,
-* *without* requiring sender-side collapse.
+1.  **Noise is Signal.** Never delete the "background."
+2.  **Texture > Summary.** Always project the messy surface, never the clean outline.
+3.  **Resonance > Filtering.** Highlight what matters; don't delete what doesn't.
+4.  **Substrate is Opaque.** The Runtime moves the mud; it never inspects the mud.
+5.  **Structure is Emergent.** Structure ($A$) arises only from the repeated settling of sediment, never from a top-down "clean up" script.
