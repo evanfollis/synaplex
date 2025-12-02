@@ -1,26 +1,24 @@
-# synaplex/cognition/__init__.py
-
 """
-Internal mind dynamics: LLMs, manifolds, and the unified cognitive loop.
+Internal mind dynamics: LLMs, substrates, and the unified cognitive loop.
 
 This layer:
 - wraps an LLM client,
-- manages manifold snapshots,
+- manages substrate snapshots,
 - implements branching / consolidation strategies,
 - provides Mind implementations that adapt to core.AgentInterface.
 """
 
 from .llm_client import LLMClient
-from .manifolds import ManifoldEnvelope, ManifoldStore, InMemoryManifoldStore, FileManifoldStore
+from .substrate import SubstrateEnvelope, SubstrateStore, InMemorySubstrateStore, FileSubstrateStore
 from .mind import Mind
 from .openai_client import OpenAILLMClient
 
 __all__ = [
     "LLMClient",
-    "ManifoldEnvelope",
-    "ManifoldStore",
-    "InMemoryManifoldStore",
-    "FileManifoldStore",
+    "SubstrateEnvelope",
+    "SubstrateStore",
+    "InMemorySubstrateStore",
+    "FileSubstrateStore",
     "Mind",
     "OpenAILLMClient",
 ]

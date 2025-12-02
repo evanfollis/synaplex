@@ -1,45 +1,45 @@
-# synaplex/meta/manifold_utils.py
+# synaplex/meta/substrate_utils.py
 
 from __future__ import annotations
 
 from typing import List, Optional
 
-from synaplex.cognition.manifolds import ManifoldEnvelope, ManifoldStore
+from synaplex.cognition.substrate import SubstrateEnvelope, SubstrateStore
 from synaplex.core.ids import AgentId
 
 
-class ManifoldUtils:
+class SubstrateUtils:
     """
-    Utilities for manipulating manifolds (nurture) for experiments.
+    Utilities for manipulating substrates (nurture) for experiments.
     
     Enables nature/nurture experiments by allowing independent
     manipulation of internal worldviews.
     """
     
     @staticmethod
-    def clone_manifold(
-        source_store: ManifoldStore,
-        target_store: ManifoldStore,
+    def clone_substrate(
+        source_store: SubstrateStore,
+        target_store: SubstrateStore,
         source_agent_id: AgentId,
         target_agent_id: AgentId,
-    ) -> Optional[ManifoldEnvelope]:
+    ) -> Optional[SubstrateEnvelope]:
         """
-        Clone a manifold from one agent to another.
+        Clone a substrate from one agent to another.
         
         Args:
-            source_store: Store containing source manifold
-            target_store: Store to write cloned manifold to
+            source_store: Store containing source substrate
+            target_store: Store to write cloned substrate to
             source_agent_id: Agent ID of source
             target_agent_id: Agent ID of target
         
         Returns:
-            Cloned manifold envelope, or None if source doesn't exist
+            Cloned substrate envelope, or None if source doesn't exist
         """
         source = source_store.load_latest(source_agent_id)
         if source is None:
             return None
         
-        cloned = ManifoldEnvelope(
+        cloned = SubstrateEnvelope(
             agent_id=target_agent_id,
             version=0,  # Start at version 0 for new agent
             content=source.content,  # Copy content verbatim
@@ -53,33 +53,33 @@ class ManifoldUtils:
         return cloned
     
     @staticmethod
-    def transplant_manifold(
-        source_store: ManifoldStore,
-        target_store: ManifoldStore,
+    def transplant_substrate(
+        source_store: SubstrateStore,
+        target_store: SubstrateStore,
         source_agent_id: AgentId,
         target_agent_id: AgentId,
-    ) -> Optional[ManifoldEnvelope]:
+    ) -> Optional[SubstrateEnvelope]:
         """
-        Transplant a manifold to a new agent (same as clone, but semantic difference).
+        Transplant a substrate to a new agent (same as clone, but semantic difference).
         
         This is useful for nurture experiments: same worldview, different nature (DNA).
         """
-        return ManifoldUtils.clone_manifold(
+        return SubstrateUtils.clone_substrate(
             source_store, target_store, source_agent_id, target_agent_id
         )
     
     @staticmethod
-    def merge_manifolds(
-        store: ManifoldStore,
+    def merge_substrates(
+        store: SubstrateStore,
         agent_ids: List[AgentId],
         target_agent_id: AgentId,
         merge_strategy: str = "concatenate",
-    ) -> Optional[ManifoldEnvelope]:
+    ) -> Optional[SubstrateEnvelope]:
         """
-        Merge multiple manifolds into one.
+        Merge multiple substrates into one.
         
         Args:
-            store: Store containing all source manifolds
+            store: Store containing all source substrates
             agent_ids: List of agent IDs to merge
             target_agent_id: Agent ID for merged result
             merge_strategy: How to merge
@@ -87,7 +87,7 @@ class ManifoldUtils:
                 - "interleave": Interleave content from all sources
         
         Returns:
-            Merged manifold envelope, or None if no sources exist
+            Merged substrate envelope, or None if no sources exist
         """
         sources = []
         for agent_id in agent_ids:
@@ -116,7 +116,7 @@ class ManifoldUtils:
         else:
             raise ValueError(f"Unknown merge_strategy: {merge_strategy}")
         
-        merged = ManifoldEnvelope(
+        merged = SubstrateEnvelope(
             agent_id=target_agent_id,
             version=0,
             content=merged_content,
@@ -130,28 +130,28 @@ class ManifoldUtils:
         return merged
     
     @staticmethod
-    def create_initial_manifold_variants(
+    def create_initial_substrate_variants(
         base_content: str,
-        store: ManifoldStore,
+        store: SubstrateStore,
         agent_ids: List[AgentId],
         variant_strategy: str = "identical",
-    ) -> List[ManifoldEnvelope]:
+    ) -> List[SubstrateEnvelope]:
         """
-        Create multiple initial manifolds with variations.
+        Create multiple initial substrates with variations.
         
         Useful for seeding populations with different initial worldviews.
         
         Args:
-            base_content: Base manifold content
-            store: Store to write manifolds to
-            agent_ids: List of agent IDs to create manifolds for
+            base_content: Base substrate content
+            store: Store to write substrates to
+            agent_ids: List of agent IDs to create substrates for
             variant_strategy: How to vary
                 - "identical": All identical
                 - "empty": All empty
                 - "numbered": Add agent number to content
         
         Returns:
-            List of created manifold envelopes
+            List of created substrate envelopes
         """
         envelopes = []
         for i, agent_id in enumerate(agent_ids):
@@ -164,7 +164,7 @@ class ManifoldUtils:
             else:
                 content = base_content
             
-            env = ManifoldEnvelope(
+            env = SubstrateEnvelope(
                 agent_id=agent_id,
                 version=0,
                 content=content,
@@ -178,4 +178,3 @@ class ManifoldUtils:
             envelopes.append(env)
         
         return envelopes
-

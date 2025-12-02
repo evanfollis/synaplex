@@ -5,16 +5,16 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .llm_client import LLMClient
-from .manifolds import ManifoldEnvelope
+from .substrate import SubstrateEnvelope
 from synaplex.core.ids import AgentId
 
 
 class UpdateMechanism:
     """
-    Encapsulates strategies for turning reasoning_output into a new manifold.
+    Encapsulates strategies for turning reasoning_output into a new substrate.
 
     This is where checkpoint rituals live. The update mechanism:
-    - Integrates prior manifold with new reasoning notes
+    - Integrates prior substrate with new reasoning notes
     - Preserves important tensions and contradictions
     - Maintains worldview continuity
     - Performs epistemic compression for the agent's future self (not human summaries)
@@ -32,28 +32,28 @@ class UpdateMechanism:
 
     def update_worldview(
         self,
-        prior: Optional[ManifoldEnvelope],
+        prior: Optional[SubstrateEnvelope],
         reasoning_output: Dict[str, Any],
-    ) -> ManifoldEnvelope:
+    ) -> SubstrateEnvelope:
         """
         Perform checkpoint ritual: integrate prior worldview with new reasoning.
 
         This is the Internal Update step of the unified loop.
-        The result is a new manifold envelope that:
-        - Builds on the prior manifold (if it exists)
+        The result is a new substrate envelope that:
+        - Builds on the prior substrate (if it exists)
         - Integrates new insights from reasoning
         - Preserves important contradictions and tensions
         - Is optimized for the agent's own future reasoning (not human readability)
 
         Args:
-            prior: Previous manifold envelope (None for initial manifold)
+            prior: Previous substrate envelope (None for initial substrate)
             reasoning_output: Dict with:
                 - "agent_id": AgentId
                 - "notes": str (internal notes from reasoning)
                 - "context": dict (percept-derived context, optional)
 
         Returns:
-            New ManifoldEnvelope with updated worldview
+            New SubstrateEnvelope with updated worldview
         """
         # Extract agent_id
         if prior is None:
@@ -85,14 +85,14 @@ class UpdateMechanism:
         # Preserve geometric hints from prior if they exist, allowing the Mind to update them
         if prior and prior.metadata:
             # Copy geometric hints from prior (Mind will update them in content/metadata)
-            if "curvature_hints" in prior.metadata:
-                metadata["curvature_hints"] = prior.metadata["curvature_hints"]
-            if "attractor_hints" in prior.metadata:
-                metadata["attractor_hints"] = prior.metadata["attractor_hints"]
-            if "teleology_hints" in prior.metadata:
-                metadata["teleology_hints"] = prior.metadata["teleology_hints"]
+            if "viscosity_hints" in prior.metadata:
+                metadata["viscosity_hints"] = prior.metadata["viscosity_hints"]
+            if "basin_hints" in prior.metadata:
+                metadata["basin_hints"] = prior.metadata["basin_hints"]
+            if "gradient_hints" in prior.metadata:
+                metadata["gradient_hints"] = prior.metadata["gradient_hints"]
 
-        return ManifoldEnvelope(
+        return SubstrateEnvelope(
             agent_id=agent_id,
             version=version,
             content=content,
@@ -100,7 +100,7 @@ class UpdateMechanism:
         )
 
     def _simple_update(
-        self, prior: Optional[ManifoldEnvelope], new_notes: str
+        self, prior: Optional[SubstrateEnvelope], new_notes: str
     ) -> str:
         """
         Simple update: concatenate prior and new notes.
@@ -117,14 +117,14 @@ class UpdateMechanism:
 
     def _checkpoint_ritual(
         self,
-        prior: Optional[ManifoldEnvelope],
+        prior: Optional[SubstrateEnvelope],
         new_notes: str,
         context: Dict[str, Any],
     ) -> str:
         """
         Perform LLM-backed checkpoint ritual.
 
-        This integrates the prior manifold with new reasoning notes.
+        This integrates the prior substrate with new reasoning notes.
         The prompt emphasizes:
         - This is for the agent's future self, not humans
         - Preserve tensions and contradictions when useful
@@ -146,12 +146,12 @@ class UpdateMechanism:
 
     def _build_checkpoint_prompt(
         self,
-        prior: Optional[ManifoldEnvelope],
+        prior: Optional[SubstrateEnvelope],
         new_notes: str,
         context: Dict[str, Any],
     ) -> str:
         """
-        Build the checkpoint prompt for manifold update.
+        Build the checkpoint prompt for substrate update.
 
         This prompt guides the LLM to:
         - Integrate prior worldview with new insights
@@ -160,13 +160,13 @@ class UpdateMechanism:
         - Optimize for future reasoning, not human readability
         """
         if prior is None:
-            # Initial manifold creation
-            return f"""You are creating your initial internal worldview based on your first reasoning.
+            # Initial substrate creation
+            return f"""You are creating your initial internal substrate based on your first reasoning.
 
 New reasoning notes:
 {new_notes}
 
-Create an internal worldview representation for your future self. This is NOT a summary for humans.
+Create an internal substrate for your future self. This is NOT a summary for humans.
 Focus on:
 - What you've learned or noticed
 - Patterns or structures you're beginning to recognize
@@ -176,29 +176,29 @@ Focus on:
 Write this as raw internal notes optimized for your own future reasoning, not for external readability.
 Structure it however helps you think better next time."""
 
-        # Update existing manifold
+        # Update existing substrate
         tick_info = f"Tick {context.get('tick', '?')}" if context.get("tick") is not None else "Current tick"
 
         # Extract geometric hints from prior metadata if available
         prior_metadata = prior.metadata if prior else {}
-        curvature_hints = prior_metadata.get("curvature_hints", {})
-        attractor_hints = prior_metadata.get("attractor_hints", [])
-        teleology_hints = prior_metadata.get("teleology_hints", {})
+        viscosity_hints = prior_metadata.get("viscosity_hints", {})
+        basin_hints = prior_metadata.get("basin_hints", [])
+        gradient_hints = prior_metadata.get("gradient_hints", {})
 
         # Build forgetting guidance
-        forgetting_guidance = self._apply_forgetting(prior, curvature_hints, attractor_hints)
+        forgetting_guidance = self._apply_forgetting(prior, viscosity_hints, basin_hints)
 
         # Build geometric evolution guidance
         geometric_evolution_guidance = self._build_geometric_evolution_guidance(
-            curvature_hints, attractor_hints, teleology_hints
+            viscosity_hints, basin_hints, gradient_hints
         )
 
-        return f"""You are updating your internal worldview through a checkpoint ritual.
+        return f"""You are updating your internal substrate through a checkpoint ritual.
 
 This is for YOUR future self, not for humans. Do NOT optimize for human readability.
 Do NOT summarize or clean up. This is epistemic compression for continued reasoning.
 
-Your prior worldview (version {prior.version}):
+Your prior substrate (version {prior.version}):
 ---
 {prior.content}
 ---
@@ -213,45 +213,45 @@ New reasoning notes from {tick_info}:
 {geometric_evolution_guidance}
 
 Your task:
-1. Integrate the new notes into your existing worldview
-2. Preserve important structural elements, invariants, and patterns from your prior worldview
+1. Integrate the new notes into your existing substrate
+2. Preserve important structural elements, invariants, and patterns from your prior substrate
 3. Maintain contradictions and tensions if they feel important or unresolved
 4. **Apply forgetting/dissipation (Ξ)**: Let go of details that no longer matter, prune outdated information,
    and reduce detail in regions that have become less relevant. This is geometric dissipation - smoothing
    and pruning to maintain focus on what matters.
 5. Update geometric hints if patterns have changed:
-   - Adjust attractor hints (A): strengthen stable patterns that persist, weaken those that fade
-   - Adjust curvature hints (K): note sensitivity changes - what perturbations matter more/less now
-   - Adjust teleology hints (τ): update your sense of "improvement direction" based on what worked
+   - Adjust basins (A): strengthen stable patterns that persist, weaken those that fade
+   - Adjust viscosity (K): note sensitivity changes - what perturbations matter more/less now
+   - Adjust gradient (τ): update your sense of "improvement direction" based on what worked
 6. Promote vague ideas into explicit scaffolds if they feel significant
 7. Note what changed and why (for your future self)
 
-Write the updated worldview. This should:
-- Build naturally on your prior worldview
+Write the updated substrate. This should:
+- Build naturally on your prior substrate
 - Incorporate new insights seamlessly
 - Maintain continuity while allowing evolution
 - Be optimized for YOUR own future reasoning, not external consumption
 - Preserve epistemic richness (don't collapse into summaries)
 - Explicitly prune and forget what no longer serves you (geometric dissipation)
 
-Your updated worldview:"""
+Your updated substrate:"""
 
     def _apply_forgetting(
         self,
-        prior: Optional[ManifoldEnvelope],
-        curvature_hints: Dict[str, Any],
-        attractor_hints: List[str],
+        prior: Optional[SubstrateEnvelope],
+        viscosity_hints: Dict[str, Any],
+        basin_hints: List[str],
     ) -> str:
         """
         Generate guidance for the forgetting/dissipation operator (Ξ).
 
         This guides the checkpoint ritual to explicitly prune and forget details
-        that no longer matter, reducing detail in less relevant regions of the manifold.
+        that no longer matter, reducing detail in less relevant regions of the substrate.
 
         Args:
-            prior: Previous manifold envelope (if exists)
-            curvature_hints: Hints about sensitivity patterns (K)
-            attractor_hints: Hints about stable patterns (A)
+            prior: Previous substrate envelope (if exists)
+            viscosity_hints: Hints about sensitivity patterns (K)
+            basin_hints: Hints about stable patterns (A)
 
         Returns:
             String guidance to include in checkpoint prompt
@@ -261,29 +261,29 @@ Your updated worldview:"""
 
         guidance_parts = [
             "**Forgetting/Dissipation (Ξ) Guidance:**",
-            "As you update your worldview, explicitly apply forgetting:",
+            "As you update your substrate, explicitly apply forgetting:",
         ]
 
-        # Guide based on attractor hints
-        if attractor_hints:
+        # Guide based on basin hints
+        if basin_hints:
             guidance_parts.append(
-                f"- You have identified these stable patterns/attractors: {', '.join(attractor_hints[:5])}"
+                f"- You have identified these stable patterns/basins: {', '.join(basin_hints[:5])}"
             )
             guidance_parts.append(
                 "- Strengthen details around these patterns if they persist; weaken details around patterns that fade"
             )
         else:
             guidance_parts.append(
-                "- Identify which patterns from your prior worldview are still relevant vs fading"
+                "- Identify which patterns from your prior substrate are still relevant vs fading"
             )
 
-        # Guide based on curvature hints
-        if curvature_hints:
+        # Guide based on viscosity hints
+        if viscosity_hints:
             guidance_parts.append(
-                "- Your prior sensitivity patterns suggest some regions are more/less important"
+                "- Your prior viscosity patterns suggest some regions are more/less important"
             )
             guidance_parts.append(
-                "- Prune detail in low-sensitivity regions; preserve detail in high-sensitivity regions"
+                "- Prune detail in low-viscosity regions; preserve detail in high-viscosity regions"
             )
 
         guidance_parts.extend([
@@ -297,73 +297,73 @@ Your updated worldview:"""
 
     def _build_geometric_evolution_guidance(
         self,
-        curvature_hints: Dict[str, Any],
-        attractor_hints: List[str],
-        teleology_hints: Dict[str, Any],
+        viscosity_hints: Dict[str, Any],
+        basin_hints: List[str],
+        gradient_hints: Dict[str, Any],
     ) -> str:
         """
         Build guidance for evolving geometric fields A, K, τ.
 
         This guides the checkpoint ritual to explicitly update:
-        - A (attractors): stable patterns/habits
-        - K (curvature): sensitivity to perturbations
-        - τ (teleology): direction of improvement
+        - A (basins): stable patterns/habits
+        - K (viscosity): resistance/sensitivity to perturbations
+        - τ (gradient): direction of improvement
 
         Args:
-            curvature_hints: Prior curvature hints (K)
-            attractor_hints: Prior attractor hints (A)
-            teleology_hints: Prior teleology hints (τ)
+            viscosity_hints: Prior viscosity hints (K)
+            basin_hints: Prior basin hints (A)
+            gradient_hints: Prior gradient hints (τ)
 
         Returns:
             String guidance to include in checkpoint prompt
         """
         guidance_parts = [
             "**Geometric Evolution Guidance (A, K, τ):**",
-            "As you update your worldview, explicitly evolve your geometric fields:",
+            "As you update your substrate, explicitly evolve your geometric fields:",
         ]
 
-        # Attractor evolution (A)
-        if attractor_hints:
+        # Basin evolution (A)
+        if basin_hints:
             guidance_parts.append(
-                f"\n**Attractors (A) - Current stable patterns:** {', '.join(attractor_hints[:5])}"
+                f"\n**Basins (A) - Current stable patterns:** {', '.join(basin_hints[:5])}"
             )
             guidance_parts.extend([
-                "- Strengthen attractors that persist and prove useful",
-                "- Weaken or remove attractors that fade or become counterproductive",
+                "- Strengthen basins that persist and prove useful",
+                "- Weaken or remove basins that fade or become counterproductive",
                 "- Identify new stable patterns emerging from your reasoning",
                 "- Note which patterns are becoming habits vs exploratory",
             ])
         else:
             guidance_parts.extend([
-                "\n**Attractors (A) - Stable patterns:**",
+                "\n**Basins (A) - Stable patterns:**",
                 "- Identify patterns, habits, or conceptual equilibria that are stabilizing",
                 "- Note what you tend to fall back to when uncertain",
                 "- Track which explanations or frameworks are becoming stable",
             ])
 
-        # Curvature evolution (K)
-        if curvature_hints:
+        # Viscosity evolution (K)
+        if viscosity_hints:
             guidance_parts.append(
-                f"\n**Curvature (K) - Current sensitivity patterns:** {str(curvature_hints)[:100]}..."
+                f"\n**Viscosity (K) - Current sensitivity patterns:** {str(viscosity_hints)[:100]}..."
             )
             guidance_parts.extend([
-                "- Update sensitivity: what perturbations matter more/less now?",
-                "- Note regions of high curvature (where small changes cause big shifts)",
-                "- Note regions of low curvature (where you're resistant to change)",
+                "- Update viscosity: what perturbations matter more/less now?",
+                "- Note regions of high viscosity (where you're resistant to change)",
+                "- Note regions of low viscosity (mud) (where small changes leave deep tracks)",
                 "- Adjust based on what surprised you or what you shrugged off",
             ])
         else:
             guidance_parts.extend([
-                "\n**Curvature (K) - Sensitivity to perturbations:**",
+                "\n**Viscosity (K) - Resistance/Sensitivity:**",
                 "- Track how sensitive you are to different types of new information",
                 "- Note what causes you to radically reweight vs. what you ignore",
                 "- Identify your risk/volatility profile: where are you brittle vs. flexible?",
             ])
 
-        # Teleology evolution (τ)
-        if teleology_hints:
+        # Gradient evolution (τ)
+        if gradient_hints:
             guidance_parts.append(
-                f"\n**Teleology (τ) - Current improvement direction:** {str(teleology_hints)[:100]}..."
+                f"\n**Gradient (τ) - Current improvement direction:** {str(gradient_hints)[:100]}..."
             )
             guidance_parts.extend([
                 "- Update your sense of 'what better looks like' based on what worked",
@@ -373,24 +373,23 @@ Your updated worldview:"""
             ])
         else:
             guidance_parts.extend([
-                "\n**Teleology (τ) - Direction of improvement:**",
+                "\n**Gradient (τ) - Direction of improvement:**",
                 "- Define your internal sense of 'better' - what are you optimizing for?",
                 "- Track what reasoning directions seem promising",
                 "- Note your epistemic gradient: where does improvement lie?",
             ])
 
         guidance_parts.append(
-            "\nAfter updating your worldview, consider updating these geometric hints in your metadata:"
+            "\nAfter updating your substrate, consider updating these geometric hints in your metadata:"
         )
         guidance_parts.append(
-            "- 'attractor_hints': List of stable patterns you've identified"
+            "- 'basin_hints': List of stable patterns you've identified"
         )
         guidance_parts.append(
-            "- 'curvature_hints': Dict describing your sensitivity patterns"
+            "- 'viscosity_hints': Dict describing your sensitivity patterns"
         )
         guidance_parts.append(
-            "- 'teleology_hints': Dict describing your improvement direction"
+            "- 'gradient_hints': Dict describing your improvement direction"
         )
 
         return "\n".join(guidance_parts)
-

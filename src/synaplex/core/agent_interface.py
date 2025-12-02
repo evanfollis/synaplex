@@ -15,7 +15,7 @@ class AgentInterface(ABC):
 
     The world drives the unified loop by calling:
         perceive(...) → reason(...) → act(...)
-    The internal update of the manifold is handled inside the implementation.
+    The internal update of the substrate is handled inside the implementation.
     """
 
     def __init__(self, agent_id: AgentId) -> None:
@@ -42,7 +42,7 @@ class AgentInterface(ABC):
         Perform LLM-backed reasoning as part of the unified cognitive loop.
 
         Every Mind follows the same loop: Perception → Reasoning → Internal Update.
-        This method implements the Reasoning step, which uses the percept and manifold
+        This method implements the Reasoning step, which uses the percept and substrate
         to produce reasoning notes and outward behavior.
 
         Returns a reasoning_output dict that will be passed to act().
@@ -71,7 +71,7 @@ class AgentInterface(ABC):
 
         The projection payload should contain:
         - structured state from EnvState
-        - manifold-derived views (if any, never raw manifold text)
+        - substrate-derived views (if any, never raw substrate text)
         - any other structured data the sender chooses to expose
 
         Args:

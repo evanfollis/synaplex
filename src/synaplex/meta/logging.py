@@ -16,7 +16,7 @@ class TickEvent:
     """A single event recorded during a tick."""
     tick: int
     agent_id: str
-    event_type: str  # "percept", "reasoning", "action", "manifold_update"
+    event_type: str  # "percept", "reasoning", "action", "substrate_update"
     data: Dict[str, Any]
     timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
@@ -39,7 +39,7 @@ class RunLogger:
     
     Logs:
     - Per-tick events (percepts, reasoning outputs, actions)
-    - Manifold snapshots at configurable intervals
+    - Substrate snapshots at configurable intervals
     - Projection/signal flows
     - EnvState snapshots
     - Run metadata
@@ -57,7 +57,7 @@ class RunLogger:
         Args:
             world_id: World identifier
             log_dir: Directory to store logs
-            snapshot_interval: How often to capture manifold snapshots (every N ticks)
+            snapshot_interval: How often to capture substrate snapshots (every N ticks)
         """
         self.world_id = world_id
         self.log_dir = Path(log_dir) / world_id.value
@@ -90,7 +90,7 @@ class RunLogger:
     ) -> None:
         """Log a reasoning event."""
         self._current_tick = max(self._current_tick, tick)
-        # Don't log full manifold content, just metadata
+        # Don't log full substrate content, just metadata
         safe_data = {
             "agent_id": reasoning_output.get("agent_id"),
             "notes_length": len(reasoning_output.get("notes", "")),
@@ -121,7 +121,7 @@ class RunLogger:
         )
         self.events.append(event)
     
-    def log_manifold_snapshot(
+    def log_substrate_snapshot(
         self,
         agent_id: AgentId,
         tick: int,
@@ -129,7 +129,7 @@ class RunLogger:
         content_length: int,
         metadata: Dict[str, Any],
     ) -> None:
-        """Log a manifold snapshot (without content, just metadata)."""
+        """Log a substrate snapshot (without content, just metadata)."""
         if tick % self.snapshot_interval != 0:
             return  # Only log at intervals
         
@@ -137,7 +137,7 @@ class RunLogger:
         event = TickEvent(
             tick=tick,
             agent_id=agent_id.value,
-            event_type="manifold_snapshot",
+            event_type="substrate_snapshot",
             data={
                 "version": version,
                 "content_length": content_length,

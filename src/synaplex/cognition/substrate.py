@@ -1,10 +1,10 @@
-# synaplex/cognition/manifolds.py
+# synaplex/cognition/substrate.py
 
 from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -12,19 +12,19 @@ from synaplex.core.ids import AgentId
 
 
 @dataclass
-class ManifoldEnvelope:
+class SubstrateEnvelope:
     """
-    Opaque container for a mind's internal worldview snapshot.
+    Opaque container for a mind's internal substrate (sediment).
 
     The system does not parse or interpret 'content' here.
 
     The 'metadata' dict may optionally contain geometric hints authored by the Mind:
-    - 'curvature_hints': Dict[str, Any] - hints about K (sensitivity patterns, risk profiles)
-    - 'attractor_hints': List[str] - hints about A (stable patterns, habits, equilibria)
-    - 'teleology_hints': Dict[str, Any] - hints about τ (improvement directions, epistemic gradients)
+    - 'viscosity_hints': Dict[str, Any] - hints about K (sensitivity patterns, risk profiles)
+    - 'basin_hints': List[str] - hints about A (stable patterns, habits, equilibria)
+    - 'gradient_hints': Dict[str, Any] - hints about τ (improvement directions, epistemic gradients)
 
     These are hints, not enforced schemas. The Mind authors them for its own future use
-    and for indexer analysis. The runtime never parses or validates them.
+    and for science analysis. The runtime never parses or validates them.
     """
     agent_id: AgentId
     version: int
@@ -32,69 +32,69 @@ class ManifoldEnvelope:
     metadata: Dict[str, Any]
 
 
-class ManifoldStore(ABC):
+class SubstrateStore(ABC):
     """
-    Abstract base interface for manifold storage.
+    Abstract base interface for substrate storage.
 
     Implementations must provide:
-    - load_latest(agent_id) -> Optional[ManifoldEnvelope]
+    - load_latest(agent_id) -> Optional[SubstrateEnvelope]
     - save(envelope) -> None
     """
 
     @abstractmethod
-    def load_latest(self, agent_id: AgentId) -> Optional[ManifoldEnvelope]:
-        """Load the latest version of a manifold for an agent."""
+    def load_latest(self, agent_id: AgentId) -> Optional[SubstrateEnvelope]:
+        """Load the latest version of a substrate for an agent."""
         pass
 
     @abstractmethod
-    def save(self, envelope: ManifoldEnvelope) -> None:
-        """Save a manifold envelope."""
+    def save(self, envelope: SubstrateEnvelope) -> None:
+        """Save a substrate envelope."""
         pass
 
 
-class InMemoryManifoldStore(ManifoldStore):
+class InMemorySubstrateStore(SubstrateStore):
     """
-    Minimal in-memory manifold store.
+    Minimal in-memory substrate store.
 
-    Manifolds are lost when the process exits.
+    Substrates are lost when the process exits.
     Useful for testing or temporary runs.
     """
 
     def __init__(self) -> None:
-        self._by_agent: Dict[AgentId, ManifoldEnvelope] = {}
+        self._by_agent: Dict[AgentId, SubstrateEnvelope] = {}
 
-    def load_latest(self, agent_id: AgentId) -> Optional[ManifoldEnvelope]:
+    def load_latest(self, agent_id: AgentId) -> Optional[SubstrateEnvelope]:
         return self._by_agent.get(agent_id)
 
-    def save(self, envelope: ManifoldEnvelope) -> None:
+    def save(self, envelope: SubstrateEnvelope) -> None:
         self._by_agent[envelope.agent_id] = envelope
 
 
-class FileManifoldStore(ManifoldStore):
+class FileSubstrateStore(SubstrateStore):
     """
-    File-based manifold store for persistence across restarts.
+    File-based substrate store for persistence across restarts.
 
     Storage layout:
         root/
             <agent_id>/
                 v<version>.json
 
-    Each file contains a JSON representation of ManifoldEnvelope.
+    Each file contains a JSON representation of SubstrateEnvelope.
     The latest version is determined by the highest version number.
     """
 
-    def __init__(self, root: str | Path = "manifolds") -> None:
+    def __init__(self, root: str | Path = "substrates") -> None:
         """
         Initialize file-based store.
 
         Args:
-            root: Root directory for manifold storage. Will be created if it doesn't exist.
+            root: Root directory for substrate storage. Will be created if it doesn't exist.
         """
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _agent_dir(self, agent_id: AgentId) -> Path:
-        """Get directory for an agent's manifolds."""
+        """Get directory for an agent's substrates."""
         # Sanitize agent_id for filesystem use
         agent_slug = "".join(c if c.isalnum() or c in "-_" else "_" for c in agent_id.value)
         d = self.root / agent_slug
@@ -105,8 +105,8 @@ class FileManifoldStore(ManifoldStore):
         """Get file path for a specific version."""
         return self._agent_dir(agent_id) / f"v{version}.json"
 
-    def load_latest(self, agent_id: AgentId) -> Optional[ManifoldEnvelope]:
-        """Load the latest version of a manifold for an agent."""
+    def load_latest(self, agent_id: AgentId) -> Optional[SubstrateEnvelope]:
+        """Load the latest version of a substrate for an agent."""
         agent_dir = self._agent_dir(agent_id)
 
         # Find all version files
@@ -133,18 +133,18 @@ class FileManifoldStore(ManifoldStore):
             # Reconstruct AgentId
             agent_id_obj = AgentId(data["agent_id"])
 
-            return ManifoldEnvelope(
+            return SubstrateEnvelope(
                 agent_id=agent_id_obj,
                 version=data["version"],
                 content=data["content"],
                 metadata=data["metadata"],
             )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            # If file is corrupted, return None (will create new manifold)
+        except (json.JSONDecodeError, KeyError, ValueError):
+            # If file is corrupted, return None (will create new substrate)
             return None
 
-    def save(self, envelope: ManifoldEnvelope) -> None:
-        """Save a manifold envelope to disk."""
+    def save(self, envelope: SubstrateEnvelope) -> None:
+        """Save a substrate envelope to disk."""
         path = self._envelope_path(envelope.agent_id, envelope.version)
 
         # Convert to JSON-serializable dict
@@ -167,9 +167,9 @@ class FileManifoldStore(ManifoldStore):
                 temp_path.unlink()
             raise
 
-    def load_version(self, agent_id: AgentId, version: int) -> Optional[ManifoldEnvelope]:
+    def load_version(self, agent_id: AgentId, version: int) -> Optional[SubstrateEnvelope]:
         """
-        Load a specific version of a manifold (optional helper method).
+        Load a specific version of a substrate (optional helper method).
 
         Returns None if version doesn't exist.
         """
@@ -183,7 +183,7 @@ class FileManifoldStore(ManifoldStore):
 
             agent_id_obj = AgentId(data["agent_id"])
 
-            return ManifoldEnvelope(
+            return SubstrateEnvelope(
                 agent_id=agent_id_obj,
                 version=data["version"],
                 content=data["content"],

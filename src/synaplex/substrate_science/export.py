@@ -1,21 +1,21 @@
-# synaplex/manifolds_indexers/export.py
+# synaplex/substrate_science/export.py
 
 from __future__ import annotations
 
 from typing import Iterable, List
 
-from synaplex.cognition.manifolds import ManifoldEnvelope
-from .types import ManifoldSnapshot
+from synaplex.cognition.substrate import SubstrateEnvelope
+from .types import SubstrateSnapshot
 
 
 class SnapshotExporter:
     """
-    One-way export from live manifolds to offline snapshots.
+    One-way export from live substrates to offline snapshots.
     """
 
-    def export(self, envelopes: Iterable[ManifoldEnvelope]) -> List[ManifoldSnapshot]:
+    def export(self, envelopes: Iterable[SubstrateEnvelope]) -> List[SubstrateSnapshot]:
         return [
-            ManifoldSnapshot(
+            SubstrateSnapshot(
                 agent_id=e.agent_id,
                 version=e.version,
                 content=e.content,

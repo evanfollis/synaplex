@@ -72,7 +72,7 @@ class InProcessRuntime(RuntimeInterface):
         self._current_tick_signals: Dict[AgentId, List[Signal]] = {}
         # Track pending requests for next tick's perception phase
         self._pending_requests: Dict[AgentId, List[Request]] = {}
-        # Track holonomy events (H): irreversible-ish actions that scar world + manifold
+        # Track holonomy events (H): irreversible-ish actions that scar world + substrate
         self._holonomy_events: List[Dict[str, Any]] = []
 
     def register_agent(
@@ -278,15 +278,15 @@ class InProcessRuntime(RuntimeInterface):
             if self.logger:
                 self.logger.log_reasoning(agent_id, tick_id, reasoning_output)
                 
-                # Log manifold snapshot if version info is available
+                # Log substrate snapshot if version info is available
                 context = reasoning_output.get("context", {})
-                if "manifold_version" in context:
-                    self.logger.log_manifold_snapshot(
+                if "substrate_version" in context:
+                    self.logger.log_substrate_snapshot(
                         agent_id,
                         tick_id,
-                        context.get("manifold_version", 0),
-                        context.get("manifold_content_length", 0),
-                        context.get("manifold_metadata", {}),
+                        context.get("substrate_version", 0),
+                        context.get("substrate_content_length", 0),
+                        context.get("substrate_metadata", {}),
                     )
 
         # 3. Actions: Process outward behavior
@@ -324,7 +324,7 @@ class InProcessRuntime(RuntimeInterface):
                 for key, value in env_updates.items():
                     self.env_state.set(key, value)
 
-            # Track holonomy (H): irreversible-ish actions that scar world + manifold
+            # Track holonomy (H): irreversible-ish actions that scar world + substrate
             holonomy_marker = behavior.get("holonomy_marker", False)
             if holonomy_marker:
                 self._holonomy_events.append({
@@ -366,7 +366,7 @@ class InProcessRuntime(RuntimeInterface):
         Get all holonomy events tracked so far.
 
         Holonomy (H) represents irreversible-ish actions that scar both the world
-        (via EnvState changes) and the manifold (via worldview commitment).
+        (via EnvState changes) and the substrate (via worldview commitment).
         These are actions that cannot be cleanly reversed.
 
         Returns:

@@ -21,10 +21,10 @@ class BranchingStrategy:
     Strategy for creating internal branches (explorer, skeptic, etc.) and consolidating them.
 
     Branching enables internal multiplicity - a mind can explore multiple reasoning
-    paths from the same starting point and then reconcile them into a unified worldview.
+    paths from the same starting point and then reconcile them into a unified substrate.
 
     Branches are ephemeral - they exist only within a single tick's reasoning.
-    From the Mind's perspective, history is M₀ → M₁, not individual branches.
+    From the Mind's perspective, history is S₀ → S₁, not individual branches.
     """
 
     def __init__(
@@ -58,7 +58,7 @@ class BranchingStrategy:
 
         Args:
             base_prompt: The base reasoning prompt
-            context: Context dict (percept, manifold, etc.)
+            context: Context dict (percept, substrate, etc.)
             styles: List of branch styles (e.g., ["explorer", "skeptic"]).
                    If None, uses default_styles.
 
@@ -97,7 +97,7 @@ class BranchingStrategy:
     def consolidate(
         self,
         branches: List[BranchOutput],
-        prior_manifold: Optional[str] = None,
+        prior_substrate: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
@@ -110,7 +110,7 @@ class BranchingStrategy:
 
         Args:
             branches: List of branch outputs to consolidate
-            prior_manifold: Optional prior manifold content for context
+            prior_substrate: Optional prior substrate content for context
             context: Optional context dict (percept info, etc.)
 
         Returns:
@@ -124,7 +124,7 @@ class BranchingStrategy:
             return "\n\n".join(f"{b.notes}" for b in branches)
 
         # Build consolidation prompt
-        prompt = self._build_consolidation_prompt(branches, prior_manifold, context)
+        prompt = self._build_consolidation_prompt(branches, prior_substrate, context)
 
         try:
             response = self._llm.complete(prompt)
@@ -194,7 +194,7 @@ Reason using this style and produce internal notes from this perspective."""
     def _build_consolidation_prompt(
         self,
         branches: List[BranchOutput],
-        prior_manifold: Optional[str],
+        prior_substrate: Optional[str],
         context: Optional[Dict[str, Any]],
     ) -> str:
         """
@@ -226,11 +226,11 @@ Your task:
 This is for YOUR future self, not for external consumption.
 Write consolidated internal notes that help you reason better next time."""
 
-        # Optionally include prior manifold for context
-        if prior_manifold:
-            prompt = f"""Your prior worldview context:
+        # Optionally include prior substrate for context
+        if prior_substrate:
+            prompt = f"""Your prior substrate context:
 ---
-{prior_manifold[:500]}...
+{prior_substrate[:500]}...
 ---
 
 {prompt}"""

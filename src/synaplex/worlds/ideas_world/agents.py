@@ -7,7 +7,7 @@ from synaplex.core.ids import AgentId
 from synaplex.core.messages import MessageId, Signal
 from synaplex.cognition.openai_client import OpenAILLMClient
 from synaplex.cognition.mind import Mind
-from synaplex.cognition.manifolds import FileManifoldStore
+from synaplex.cognition.substrate import FileSubstrateStore
 
 
 # ---------------------------------------------------------------------------
@@ -59,24 +59,24 @@ class IdeasArchivistMind(Mind):
 
     Geometry-pure version:
 
-    - Still a full Mind: it has a manifold and runs the unified loop.
-    - In v0, it *uses* the manifold minimally; behavior is mostly driven by EnvState + filesystem.
-    - Over time, its manifold can learn about your own idea-ingest habits.
+    - Still a full Mind: it has a substrate and runs the unified loop.
+    - In v0, it *uses* the substrate minimally; behavior is mostly driven by EnvState + filesystem.
+    - Over time, its substrate can learn about your own idea-ingest habits.
     """
 
     def __init__(
         self,
         agent_id: AgentId,
         ideas_dir: Path,
-        manifold_store: Optional[FileManifoldStore] = None,
+        substrate_store: Optional[FileSubstrateStore] = None,
         llm_client: Optional[OpenAILLMClient] = None,
         **kwargs: Any,
     ):
         super().__init__(
             agent_id=agent_id,
             llm_client=llm_client or OpenAILLMClient(),
-            manifold_store=manifold_store or FileManifoldStore(
-                root="manifolds/ideas_world/archivist"
+            substrate_store=substrate_store or FileSubstrateStore(
+                root="substrates/ideas_world/archivist"
             ),
             **kwargs,
         )
@@ -165,7 +165,7 @@ class IdeasArchivistMind(Mind):
 
         Each idea signal includes:
         - payload: small, structured meta for routing/filtering
-        - frottage: dense, on-topic text for receiver manifold perturbation
+        - frottage: dense, on-topic text for receiver substrate perturbation
         
         Per FROTTAGE_CONTRACT:
         - Frottage is sender-authored and opaque to core
@@ -210,7 +210,7 @@ class IdeasArchivistMind(Mind):
                                 # Note: content_preview removed from payload
                                 # Full content is in frottage, not structured meta
                             },
-                            # Frottage: dense, unstructured text for manifold perturbation
+                            # Frottage: dense, unstructured text for substrate perturbation
                             "frottage": frottage,
                         }
                     )
@@ -233,32 +233,32 @@ def make_archivist_mind(
     store_root: Optional[str] = None,
     **kwargs: Any,
 ) -> IdeasArchivistMind:
-    """Factory for archivist mind (full-loop, manifold-native)."""
-    store = FileManifoldStore(
-        root=(store_root or "manifolds/ideas_world/archivist")
+    """Factory for archivist mind (full-loop, substrate-native)."""
+    store = FileSubstrateStore(
+        root=(store_root or "substrates/ideas_world/archivist")
     )
     return IdeasArchivistMind(
         agent_id=AgentId(agent_id),
         ideas_dir=Path(ideas_dir),
-        manifold_store=store,
+        substrate_store=store,
         **kwargs,
     )
 
 
-def _make_manifold_mind(
+def _make_substrate_mind(
     agent_id: str,
     store_root: Optional[str],
     **kwargs: Any,
 ) -> Mind:
-    """Helper: full-loop, manifold-native Mind for idea-centric roles."""
+    """Helper: full-loop, substrate-native Mind for idea-centric roles."""
     llm = OpenAILLMClient()
-    store = FileManifoldStore(
-        root=(store_root or "manifolds/ideas_world")
+    store = FileSubstrateStore(
+        root=(store_root or "substrates/ideas_world")
     )
     return Mind(
         agent_id=AgentId(agent_id),
         llm_client=llm,
-        manifold_store=store,
+        substrate_store=store,
         **kwargs,
     )
 
@@ -268,7 +268,7 @@ def make_architect_mind(
     store_root: Optional[str] = None,
     **kwargs: Any,
 ) -> Mind:
-    return _make_manifold_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+    return _make_substrate_mind(agent_id=agent_id, store_root=store_root, **kwargs)
 
 
 def make_critic_mind(
@@ -276,7 +276,7 @@ def make_critic_mind(
     store_root: Optional[str] = None,
     **kwargs: Any,
 ) -> Mind:
-    return _make_manifold_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+    return _make_substrate_mind(agent_id=agent_id, store_root=store_root, **kwargs)
 
 
 def make_synaplex_mind(
@@ -284,7 +284,7 @@ def make_synaplex_mind(
     store_root: Optional[str] = None,
     **kwargs: Any,
 ) -> Mind:
-    return _make_manifold_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+    return _make_substrate_mind(agent_id=agent_id, store_root=store_root, **kwargs)
 
 
 def make_topic_mind(
@@ -292,7 +292,7 @@ def make_topic_mind(
     store_root: Optional[str] = None,
     **kwargs: Any,
 ) -> Mind:
-    return _make_manifold_mind(agent_id=agent_id, store_root=store_root, **kwargs)
+    return _make_substrate_mind(agent_id=agent_id, store_root=store_root, **kwargs)
 
 
 # Topic convenience factories
@@ -329,8 +329,8 @@ def make_cognitive_architectures_mind(
     return make_topic_mind(agent_id=agent_id, store_root=store_root, **kwargs)
 
 
-def make_manifolds_mind(
-    agent_id: str = "manifolds",
+def make_substrates_mind(
+    agent_id: str = "substrates",
     store_root: Optional[str] = None,
     **kwargs: Any,
 ) -> Mind:

@@ -17,7 +17,7 @@ from synaplex.core.dna import DNA
 from synaplex.core.lenses import Lens
 from synaplex.cognition.llm_client import LLMClient, LLMResponse
 from synaplex.cognition.mind import Mind
-from synaplex.cognition.manifolds import ManifoldStore, InMemoryManifoldStore
+from synaplex.cognition.substrate import SubstrateStore, InMemorySubstrateStore
 
 
 class DummyLLMClient(LLMClient):
@@ -40,7 +40,7 @@ def quick_start(
     agent_id: str = "agent-1",
     world_id: str = "quick-start-world",
     llm_client: Optional[LLMClient] = None,
-    manifold_store: Optional[ManifoldStore] = None,
+    substrate_store: Optional[SubstrateStore] = None,
 ) -> InProcessRuntime:
     """
     Create a minimal Synaplex runtime ready to use.
@@ -52,7 +52,7 @@ def quick_start(
         agent_id: ID for the agent (default: "agent-1")
         world_id: ID for the world (default: "quick-start-world")
         llm_client: Optional LLM client. If None, uses DummyLLMClient for testing.
-        manifold_store: Optional manifold store. If None, uses InMemoryManifoldStore.
+        substrate_store: Optional substrate store. If None, uses InMemorySubstrateStore.
     
     Returns:
         InProcessRuntime configured with one agent, ready to call tick()
@@ -92,19 +92,18 @@ def quick_start(
     if llm_client is None:
         llm_client = DummyLLMClient()
     
-    # Create manifold store if not provided
-    if manifold_store is None:
-        manifold_store = InMemoryManifoldStore()
+    # Create substrate store if not provided
+    if substrate_store is None:
+        substrate_store = InMemorySubstrateStore()
     
     # Create Mind
     mind = Mind(
         agent_id=agent_id_obj,
         llm_client=llm_client,
-        manifold_store=manifold_store,
+        substrate_store=substrate_store,
     )
     
     # Register agent
     runtime.register_agent(mind, dna=dna, lens=lens)
     
     return runtime
-

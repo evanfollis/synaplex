@@ -1,10 +1,10 @@
-# synaplex/manifolds_indexers/indexer_world/bootstrap.py
+# synaplex/substrate_science/indexer_world/bootstrap.py
 
 from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from ..types import ManifoldSnapshot
+from ..types import SubstrateSnapshot
 from .agents import (
     EmbeddingAgent,
     ClusteringAgent,
@@ -14,9 +14,9 @@ from .agents import (
 
 class IndexerWorld:
     """
-    Indexer world for offline manifold analysis.
+    Indexer world for offline substrate analysis.
     
-    Processes exported manifold snapshots to:
+    Processes exported substrate snapshots to:
     - Generate embeddings
     - Cluster similar worldviews
     - Analyze trajectories
@@ -40,7 +40,7 @@ class IndexerWorld:
     
     def process_snapshots(
         self,
-        snapshots: List[ManifoldSnapshot],
+        snapshots: List[SubstrateSnapshot],
     ) -> Dict[str, Any]:
         """
         Process a batch of snapshots.
@@ -58,7 +58,7 @@ class IndexerWorld:
         clusters = self.clustering_agent.cluster(embeddings, self.embedding_agent)
         
         # Group snapshots by agent for trajectory analysis
-        by_agent: Dict[str, List[ManifoldSnapshot]] = {}
+        by_agent: Dict[str, List[SubstrateSnapshot]] = {}
         for snapshot in snapshots:
             agent_key = snapshot.agent_id.value
             if agent_key not in by_agent:
@@ -118,4 +118,3 @@ def bootstrap_indexer_world(
         embedding_dim=embedding_dim,
         n_clusters=n_clusters,
     )
-

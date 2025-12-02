@@ -1,4 +1,4 @@
-# synaplex/manifolds_indexers/types.py
+# synaplex/substrate_science/types.py
 
 from dataclasses import dataclass
 from typing import Any, Dict
@@ -7,9 +7,9 @@ from synaplex.core.ids import AgentId
 
 
 @dataclass
-class ManifoldSnapshot:
+class SubstrateSnapshot:
     """
-    One exported snapshot of a mind's worldview.
+    One exported snapshot of a mind's substrate.
 
     This is the object indexer worlds operate on.
     """

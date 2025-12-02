@@ -8,7 +8,7 @@ from synaplex.core.ids import AgentId, MessageId
 from synaplex.core.messages import Percept, Projection, Request
 
 from .llm_client import LLMClient
-from .manifolds import ManifoldEnvelope, ManifoldStore, InMemoryManifoldStore
+from .substrate import SubstrateEnvelope, SubstrateStore, InMemorySubstrateStore
 from .branching import BranchingStrategy, BranchOutput
 from .update import UpdateMechanism
 from .tools import ToolRegistry
@@ -33,10 +33,10 @@ class Mind(AgentInterface):
     Responsibilities:
     - Respect the unified loop:
         Perception → Reasoning → Internal Update
-    - Maintain manifold privacy:
-        Only this class loads/saves ManifoldEnvelope;
-        no manifold text ever leaves the Mind.
-    - Every Mind always has a manifold and runs the full cognitive loop.
+    - Maintain substrate privacy:
+        Only this class loads/saves SubstrateEnvelope;
+        no substrate text ever leaves the Mind.
+    - Every Mind always has a substrate and runs the full cognitive loop.
     """
 
     def __init__(
@@ -44,7 +44,7 @@ class Mind(AgentInterface):
         agent_id: AgentId,
         llm_client: LLMClient,
         *,
-        manifold_store: Optional[ManifoldStore] = None,
+        substrate_store: Optional[SubstrateStore] = None,
         update_mechanism: Optional[UpdateMechanism] = None,
         branching_strategy: Optional[BranchingStrategy] = None,
         tool_registry: Optional[ToolRegistry] = None,
@@ -53,7 +53,7 @@ class Mind(AgentInterface):
 
         self._llm = llm_client
         # Default to in-memory store for backward compatibility
-        self._store = manifold_store or InMemoryManifoldStore()
+        self._store = substrate_store or InMemorySubstrateStore()
         # UpdateMechanism gets LLM client for checkpoint rituals
         self._update_mechanism = update_mechanism or UpdateMechanism(llm_client=llm_client)
         # BranchingStrategy gets LLM client if provided
@@ -63,8 +63,8 @@ class Mind(AgentInterface):
 
         self._last_percept: Optional[Percept] = None
 
-        # Invariant: every Mind always has a manifold envelope.
-        self._ensure_initial_manifold()
+        # Invariant: every Mind always has a substrate envelope.
+        self._ensure_initial_substrate()
 
     # -------------------------------------------------------------------------
     # Unified loop hooks (AgentInterface)
@@ -76,7 +76,7 @@ class Mind(AgentInterface):
 
         The runtime constructs the Percept.
         This method simply caches it for the subsequent Reasoning step.
-        No manifold access, no LLM calls.
+        No substrate access, no LLM calls.
         """
         self._last_percept = percept
 
@@ -85,7 +85,7 @@ class Mind(AgentInterface):
         Reasoning + Internal Update.
 
         Every Mind always runs the full cognitive loop:
-        - Loads its manifold
+        - Loads its substrate
         - Reasons with it
         - Updates it via Internal Update checkpoint ritual
 
@@ -100,18 +100,18 @@ class Mind(AgentInterface):
         """
         context = self._build_context_from_percept(self._last_percept)
         
-        # Load the manifold (always exists due to _ensure_initial_manifold)
-        prior_envelope = self._load_manifold()
+        # Load the substrate (always exists due to _ensure_initial_substrate)
+        prior_envelope = self._load_substrate()
         
-        # Include the current manifold content only for the Mind's own use.
+        # Include the current substrate content only for the Mind's own use.
         # This never leaves the Mind.
-        context_with_manifold = dict(context)
-        context_with_manifold["manifold"] = prior_envelope.content
+        context_with_substrate = dict(context)
+        context_with_substrate["substrate"] = prior_envelope.content
 
-        # Run reasoning with manifold
-        result = self._run_reasoning_with_manifold(context_with_manifold)
+        # Run reasoning with substrate
+        result = self._run_reasoning_with_substrate(context_with_substrate)
 
-        # Internal Update: checkpoint ritual → new ManifoldEnvelope
+        # Internal Update: checkpoint ritual → new SubstrateEnvelope
         envelope = self._update_mechanism.update_worldview(
             prior=prior_envelope,
             reasoning_output={
@@ -122,10 +122,10 @@ class Mind(AgentInterface):
         )
         self._store.save(envelope)
         
-        # Include manifold version info in result for logging
-        result.context["manifold_version"] = envelope.version
-        result.context["manifold_content_length"] = len(envelope.content)
-        result.context["manifold_metadata"] = envelope.metadata
+        # Include substrate version info in result for logging
+        result.context["substrate_version"] = envelope.version
+        result.context["substrate_content_length"] = len(envelope.content)
+        result.context["substrate_metadata"] = envelope.metadata
 
         return self._result_to_dict(result)
 
@@ -179,7 +179,7 @@ class Mind(AgentInterface):
         return {
             "agent_id": self.agent_id.value,
             # Add more structured state as needed
-            # Never include manifold content here
+            # Never include substrate content here
         }
 
     def _generate_frottage(
@@ -192,12 +192,12 @@ class Mind(AgentInterface):
         contradictions, unexplored threads, tangential connections. The receiver
         makes sense of it with no special prompting—just context.
         """
-        # Load manifold for context
+        # Load substrate for context
         try:
-            manifold = self._load_manifold()
-            manifold_content = manifold.content if manifold else ""
+            substrate = self._load_substrate()
+            substrate_content = substrate.content if substrate else ""
         except Exception:
-            manifold_content = ""
+            substrate_content = ""
         
         # Simple prompt: just dump everything relevant
         prompt = f"""Write everything you know, think, suspect, or wonder about this topic.
@@ -207,7 +207,7 @@ Don't structure it. Don't summarize. Just dump.
 Context:
 {visible_state}
 
-{manifold_content if manifold_content else ""}
+{substrate_content if substrate_content else ""}
 
 {request.shape if request.shape else ""}"""
         
@@ -230,17 +230,17 @@ Context:
     # Internal helpers
     # -------------------------------------------------------------------------
 
-    def _ensure_initial_manifold(self) -> None:
+    def _ensure_initial_substrate(self) -> None:
         """
-        Guarantee that a ManifoldEnvelope exists for this Mind.
+        Guarantee that a SubstrateEnvelope exists for this Mind.
 
-        Every Mind always has a manifold. This is an architectural invariant.
+        Every Mind always has a substrate. This is an architectural invariant.
         """
         existing = self._store.load_latest(self.agent_id)
         if existing is not None:
             return
 
-        initial = ManifoldEnvelope(
+        initial = SubstrateEnvelope(
             agent_id=self.agent_id,
             version=0,
             content="",
@@ -248,25 +248,25 @@ Context:
         )
         self._store.save(initial)
 
-    def _load_manifold(self) -> ManifoldEnvelope:
+    def _load_substrate(self) -> SubstrateEnvelope:
         """
-        Load the latest manifold envelope, guaranteed to exist after __init__.
+        Load the latest substrate envelope, guaranteed to exist after __init__.
 
         Raises:
-            RuntimeError: If manifold store fails to load and recovery fails
+            RuntimeError: If substrate store fails to load and recovery fails
         """
         try:
             env = self._store.load_latest(self.agent_id)
         except Exception as e:
             raise RuntimeError(
-                f"Failed to load manifold for agent '{self.agent_id.value}': {type(e).__name__}: {str(e)}. "
-                f"This may indicate a problem with the manifold store."
+                f"Failed to load substrate for agent '{self.agent_id.value}': {type(e).__name__}: {str(e)}. "
+                f"This may indicate a problem with the substrate store."
             ) from e
 
         if env is None:
-            # This should not happen if _ensure_initial_manifold is respected,
+            # This should not happen if _ensure_initial_substrate is respected,
             # but we keep a defensive fallback.
-            env = ManifoldEnvelope(
+            env = SubstrateEnvelope(
                 agent_id=self.agent_id,
                 version=0,
                 content="",
@@ -276,7 +276,7 @@ Context:
                 self._store.save(env)
             except Exception as e:
                 raise RuntimeError(
-                    f"Failed to create recovery manifold for agent '{self.agent_id.value}': "
+                    f"Failed to create recovery substrate for agent '{self.agent_id.value}': "
                     f"{type(e).__name__}: {str(e)}"
                 ) from e
         return env
@@ -337,18 +337,18 @@ Context:
     # Reasoning
     # -------------------------------------------------------------------------
 
-    def _run_reasoning_with_manifold(self, context: Dict[str, Any]) -> ReasoningResult:
+    def _run_reasoning_with_substrate(self, context: Dict[str, Any]) -> ReasoningResult:
         """
-        Reasoning with manifold.
+        Reasoning with substrate.
 
-        The manifold content is included in the context and may be used by the Mind
+        The substrate content is included in the context and may be used by the Mind
         for internal thinking, but never leaves this class.
 
         If branching is enabled, generates multiple reasoning branches and consolidates them.
         """
         # Extract tool names from context if available (from DNA via runtime)
         tool_names = context.get("available_tools", None)
-        base_prompt = self._build_prompt(context, include_manifold=True, tool_names=tool_names)
+        base_prompt = self._build_prompt(context, include_substrate=True, tool_names=tool_names)
 
         # Check if branching is enabled (has LLM client)
         if self._branching._llm is not None:
@@ -361,10 +361,10 @@ Context:
 
             if branches:
                 # Consolidate branches into unified notes
-                prior_manifold = context.get("manifold", "")
+                prior_substrate = context.get("substrate", "")
                 notes = self._branching.consolidate(
                     branches=branches,
-                    prior_manifold=prior_manifold if prior_manifold else None,
+                    prior_substrate=prior_substrate if prior_substrate else None,
                     context=context,
                 )
             else:
@@ -384,13 +384,13 @@ Context:
     # Prompting and LLM interaction
     # -------------------------------------------------------------------------
 
-    def _build_prompt(self, context: Dict[str, Any], *, include_manifold: bool = True, tool_names: Optional[List[str]] = None) -> str:
+    def _build_prompt(self, context: Dict[str, Any], *, include_substrate: bool = True, tool_names: Optional[List[str]] = None) -> str:
         """
         Build prompt for reasoning. Frottage is just context—no special handling needed.
         """
         visible_context = dict(context)
-        if not include_manifold and "manifold" in visible_context:
-            visible_context.pop("manifold", None)
+        if not include_substrate and "substrate" in visible_context:
+            visible_context.pop("substrate", None)
         
         # Extract any frottage and include as simple context
         frottage_sections = self._extract_frottage_for_prompt(visible_context)

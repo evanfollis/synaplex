@@ -1,16 +1,16 @@
-# synaplex/manifolds_indexers/indexer_world/agents.py
+# synaplex/substrate_science/indexer_world/agents.py
 
 from __future__ import annotations
 
 import hashlib
 from typing import Any, Dict, List, Optional
 
-from ..types import ManifoldSnapshot
+from ..types import SubstrateSnapshot
 
 
 class EmbeddingAgent:
     """
-    Agent that converts manifold snapshots to embeddings.
+    Agent that converts substrate snapshots to embeddings.
     
     Uses a simple hash-based embedding for now (deterministic, no external deps).
     Can be extended to use sentence transformers or other embedding models.
@@ -26,9 +26,9 @@ class EmbeddingAgent:
         self.embedding_dim = embedding_dim
         self._cache: Dict[str, List[float]] = {}
     
-    def embed(self, snapshot: ManifoldSnapshot) -> List[float]:
+    def embed(self, snapshot: SubstrateSnapshot) -> List[float]:
         """
-        Generate embedding for a manifold snapshot.
+        Generate embedding for a substrate snapshot.
         
         Uses a simple hash-based approach for determinism by default.
         Can be extended to use sentence-transformers or other embedding models.
@@ -37,7 +37,7 @@ class EmbeddingAgent:
         a custom embedding function to the constructor.
         
         Args:
-            snapshot: Manifold snapshot to embed
+            snapshot: Substrate snapshot to embed
             
         Returns:
             Embedding vector as list of floats
@@ -91,7 +91,7 @@ class EmbeddingAgent:
         self._cache[cache_key] = embedding
         return embedding
     
-    def embed_batch(self, snapshots: List[ManifoldSnapshot]) -> Dict[str, List[float]]:
+    def embed_batch(self, snapshots: List[SubstrateSnapshot]) -> Dict[str, List[float]]:
         """
         Embed multiple snapshots.
         
@@ -185,7 +185,7 @@ class ClusteringAgent:
 
 class TrajectoryAgent:
     """
-    Agent that analyzes manifold evolution over time.
+    Agent that analyzes substrate evolution over time.
     
     Tracks version-to-version changes and evolution patterns.
     """
@@ -196,7 +196,7 @@ class TrajectoryAgent:
     
     def analyze_trajectory(
         self,
-        snapshots: List[ManifoldSnapshot],
+        snapshots: List[SubstrateSnapshot],
         embedding_agent: EmbeddingAgent,
     ) -> Dict[str, Any]:
         """
@@ -268,8 +268,8 @@ class TrajectoryAgent:
     
     def compare_trajectories(
         self,
-        trajectory1: List[ManifoldSnapshot],
-        trajectory2: List[ManifoldSnapshot],
+        trajectory1: List[SubstrateSnapshot],
+        trajectory2: List[SubstrateSnapshot],
         embedding_agent: EmbeddingAgent,
     ) -> Dict[str, Any]:
         """
@@ -316,11 +316,11 @@ class TrajectoryAgent:
         }
 
 
-class AttractorDetector:
+class BasinDetector:
     """
-    Agent that detects stable patterns (attractors A) in manifolds.
+    Agent that detects basins (stable patterns A) in substrates.
     
-    Analyzes manifold snapshots to identify:
+    Analyzes substrate snapshots to identify:
     - Recurring themes and patterns
     - Stable conceptual equilibria
     - Habits and persistent structures
@@ -328,30 +328,30 @@ class AttractorDetector:
     
     def __init__(self, embedding_agent: Optional[EmbeddingAgent] = None) -> None:
         """
-        Initialize attractor detector.
+        Initialize basin detector.
         
         Args:
             embedding_agent: Optional embedding agent for similarity computation
         """
         self.embedding_agent = embedding_agent or EmbeddingAgent()
     
-    def detect_attractors(
+    def detect_basins(
         self,
-        snapshots: List[ManifoldSnapshot],
+        snapshots: List[SubstrateSnapshot],
         min_stability: float = 0.7,
     ) -> Dict[str, Any]:
         """
-        Detect attractors (stable patterns) from a sequence of snapshots.
+        Detect basins (stable patterns) from a sequence of snapshots.
         
         Args:
             snapshots: List of snapshots in chronological order (same agent)
-            min_stability: Minimum similarity threshold for attractor stability
+            min_stability: Minimum similarity threshold for basin stability
             
         Returns:
-            Dict with detected attractors and their properties
+            Dict with detected basins and their properties
         """
         if len(snapshots) < 2:
-            return {"attractors": [], "stability_scores": []}
+            return {"basins": [], "stability_scores": []}
         
         # Sort by version
         sorted_snapshots = sorted(snapshots, key=lambda s: s.version)
@@ -360,7 +360,7 @@ class AttractorDetector:
         embeddings = [self.embedding_agent.embed(s) for s in sorted_snapshots]
         
         # Detect stable regions (high similarity over time)
-        attractors = []
+        basins = []
         stability_scores = []
         
         # Look for patterns that persist across versions
@@ -369,68 +369,71 @@ class AttractorDetector:
             stability_scores.append(similarity)
             
             if similarity >= min_stability:
-                # This region is stable (attractor)
-                attractors.append({
+                # This region is stable (basin)
+                basins.append({
                     "version_range": (sorted_snapshots[i].version, sorted_snapshots[i + 1].version),
                     "stability": similarity,
                     "snapshot_indices": (i, i + 1),
                 })
         
-        # Extract attractor hints from metadata if available
-        attractor_hints = []
+        # Extract basin hints from metadata if available
+        basin_hints = []
         for snapshot in sorted_snapshots:
             metadata = snapshot.metadata or {}
-            hints = metadata.get("attractor_hints", [])
-            attractor_hints.extend(hints)
+            hints = metadata.get("basin_hints", [])
+            basin_hints.extend(hints)
         
         # Deduplicate
-        attractor_hints = list(set(attractor_hints))
+        basin_hints = list(set(basin_hints))
         
         return {
-            "attractors": attractors,
+            "basins": basins,
             "stability_scores": stability_scores,
-            "attractor_hints": attractor_hints,
+            "basin_hints": basin_hints,
             "avg_stability": sum(stability_scores) / len(stability_scores) if stability_scores else 0.0,
         }
 
 
-class CurvatureAnalyzer:
+class ViscosityAnalyzer:
     """
-    Agent that analyzes curvature (K) patterns in manifolds.
+    Agent that analyzes viscosity (K) patterns in substrates.
     
-    Curvature encodes sensitivity to perturbations. This analyzer detects:
-    - High-curvature regions (where small changes cause big shifts)
-    - Low-curvature regions (where the manifold is resistant to change)
+    Viscosity encodes resistance to perturbations. This analyzer detects:
+    - High-viscosity regions (resistant to change)
+    - Low-viscosity regions (sensitive to change, "mud")
     - Sensitivity patterns and risk profiles
     """
     
     def __init__(self, embedding_agent: Optional[EmbeddingAgent] = None) -> None:
         """
-        Initialize curvature analyzer.
+        Initialize viscosity analyzer.
         
         Args:
             embedding_agent: Optional embedding agent for similarity computation
         """
         self.embedding_agent = embedding_agent or EmbeddingAgent()
     
-    def analyze_curvature(
+    def analyze_viscosity(
         self,
-        snapshots: List[ManifoldSnapshot],
+        snapshots: List[SubstrateSnapshot],
     ) -> Dict[str, Any]:
         """
-        Analyze curvature patterns from manifold evolution.
+        Analyze viscosity patterns from substrate evolution.
         
-        High curvature = high sensitivity (small perturbations cause large changes)
-        Low curvature = low sensitivity (resistant to perturbations)
+        High viscosity = low sensitivity (resistant to perturbations)
+        Low viscosity = high sensitivity (muddy, accepts deep tracks)
+        
+        Note: This is inverse to curvature in some metaphors, but here:
+        K = Resistance. High K = Granite. Low K = Mud.
         
         Args:
             snapshots: List of snapshots in chronological order (same agent)
             
         Returns:
-            Dict with curvature analysis
+            Dict with viscosity analysis
         """
         if len(snapshots) < 2:
-            return {"curvature_profile": "unknown", "sensitivity_regions": []}
+            return {"viscosity_profile": "unknown", "sensitivity_regions": []}
         
         sorted_snapshots = sorted(snapshots, key=lambda s: s.version)
         
@@ -455,60 +458,60 @@ class CurvatureAnalyzer:
                 "change_magnitude": distance + (content_diff / 1000.0),  # Normalized
             })
         
-        # High change magnitude = high curvature (sensitive to perturbations)
-        # Low change magnitude = low curvature (resistant)
+        # High change magnitude = LOW viscosity (accepted change easily)
+        # Low change magnitude = HIGH viscosity (resisted change)
         avg_change = sum(m["change_magnitude"] for m in change_magnitudes) / len(change_magnitudes) if change_magnitudes else 0.0
         
-        # Extract curvature hints from metadata if available
-        curvature_hints = {}
+        # Extract viscosity hints from metadata if available
+        viscosity_hints = {}
         for snapshot in sorted_snapshots:
             metadata = snapshot.metadata or {}
-            hints = metadata.get("curvature_hints", {})
+            hints = metadata.get("viscosity_hints", {})
             if hints:
-                curvature_hints.update(hints)
+                viscosity_hints.update(hints)
         
-        # Classify curvature profile
+        # Classify viscosity profile
         if avg_change > 0.5:
-            profile = "high"  # High sensitivity
+            profile = "low"  # High change = Low viscosity (Mud)
         elif avg_change > 0.2:
             profile = "moderate"
         else:
-            profile = "low"  # Low sensitivity, resistant to change
+            profile = "high"  # Low change = High viscosity (Granite)
         
         return {
-            "curvature_profile": profile,
+            "viscosity_profile": profile,
             "avg_change_magnitude": avg_change,
             "change_magnitudes": change_magnitudes,
-            "curvature_hints": curvature_hints,
+            "viscosity_hints": viscosity_hints,
             "sensitivity_regions": [
                 m for m in change_magnitudes if m["change_magnitude"] > avg_change
             ],
         }
 
 
-class TeleologyExtractor:
+class GradientExtractor:
     """
-    Agent that extracts teleology (τ) patterns from manifolds.
+    Agent that extracts gradient (τ) patterns from substrates.
     
-    Teleology is the internal sense of "improvement direction" - what the agent
+    Gradient is the internal sense of "improvement direction" - what the agent
     is optimizing for, what directions of reasoning seem promising.
     """
     
     def __init__(self, embedding_agent: Optional[EmbeddingAgent] = None) -> None:
         """
-        Initialize teleology extractor.
+        Initialize gradient extractor.
         
         Args:
             embedding_agent: Optional embedding agent for similarity computation
         """
         self.embedding_agent = embedding_agent or EmbeddingAgent()
     
-    def extract_teleology(
+    def extract_gradient(
         self,
-        snapshots: List[ManifoldSnapshot],
+        snapshots: List[SubstrateSnapshot],
     ) -> Dict[str, Any]:
         """
-        Extract teleology (improvement direction) from manifold evolution.
+        Extract gradient (improvement direction) from substrate evolution.
         
         Analyzes what directions of change seem to represent "improvement"
         from the agent's perspective.
@@ -517,23 +520,23 @@ class TeleologyExtractor:
             snapshots: List of snapshots in chronological order (same agent)
             
         Returns:
-            Dict with teleology analysis
+            Dict with gradient analysis
         """
         if len(snapshots) < 2:
-            return {"teleology_direction": "unknown", "improvement_patterns": []}
+            return {"gradient_direction": "unknown", "improvement_patterns": []}
         
         sorted_snapshots = sorted(snapshots, key=lambda s: s.version)
         
-        # Extract teleology hints from metadata
-        teleology_hints = {}
+        # Extract gradient hints from metadata
+        gradient_hints = {}
         for snapshot in sorted_snapshots:
             metadata = snapshot.metadata or {}
-            hints = metadata.get("teleology_hints", {})
+            hints = metadata.get("gradient_hints", {})
             if hints:
-                teleology_hints.update(hints)
+                gradient_hints.update(hints)
         
         # Analyze evolution direction
-        # Look for patterns in how the manifold evolves (what changes are "improvements")
+        # Look for patterns in how the substrate evolves (what changes are "improvements")
         evolution_patterns = []
         for i in range(len(sorted_snapshots) - 1):
             prev = sorted_snapshots[i]
@@ -552,7 +555,7 @@ class TeleologyExtractor:
                 "active_evolution": content_growth > 0 or version_increment > 0,
             })
         
-        # Determine teleology direction
+        # Determine gradient direction
         active_evolutions = [p for p in evolution_patterns if p["active_evolution"]]
         if active_evolutions:
             direction = "active"  # Actively improving
@@ -560,10 +563,9 @@ class TeleologyExtractor:
             direction = "static"  # Stable, not actively evolving
         
         return {
-            "teleology_direction": direction,
-            "teleology_hints": teleology_hints,
+            "gradient_direction": direction,
+            "gradient_hints": gradient_hints,
             "evolution_patterns": evolution_patterns,
             "improvement_patterns": active_evolutions,
             "avg_content_growth": sum(p["content_growth"] for p in evolution_patterns) / len(evolution_patterns) if evolution_patterns else 0,
         }
-

@@ -1,12 +1,10 @@
-# synaplex/manifolds_indexers/__init__.py
-
 """
-Offline manifold science.
+Offline substrate science (Geology).
 
 This layer operates on exported snapshots only.
 """
 
-from .types import ManifoldSnapshot
+from .types import SubstrateSnapshot
 from .export import SnapshotExporter
 from .indexer_world import (
     EmbeddingAgent,
@@ -16,7 +14,7 @@ from .indexer_world import (
 )
 
 __all__ = [
-    "ManifoldSnapshot",
+    "SubstrateSnapshot",
     "SnapshotExporter",
     "EmbeddingAgent",
     "ClusteringAgent",
