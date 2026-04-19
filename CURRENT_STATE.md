@@ -22,15 +22,17 @@ Dual purpose: evaluations (a) are differentiated content backed by replayable ca
 
 ## What's done
 
-- 2026-04-19: project approved in plan mode (`/plan` workflow, commit to come).
-- 2026-04-19: `/opt/workspace/projects/agentstack/` skeleton created — directory layout, CLAUDE.md, CURRENT_STATE.md, README.
-- 2026-04-19: supervisor governance files written — `projects/products/agentstack.md` + ADR-0026.
+- 2026-04-19: project approved in plan mode.
+- 2026-04-19: agentstack skeleton (CLAUDE.md, CURRENT_STATE.md, README.md, directory layout, git init) — commit `61aa752`.
+- 2026-04-19: supervisor governance landed — ADR-0026 + `supervisor/projects/products/agentstack.md`, commit `78a88ae`.
+- 2026-04-19: **atlas canon adapter landed** — `src/atlas/adapters/discovery/{emit.py, migrate.py, MAPPING.md}` with 16 pytest cases. Migration backfilled 47 Claims + 123 Evidence + 82 phase-transition EventLogEntries + 1 Policy (tier-mapping). All 0 validation failures against canon v0.1.0 schemas. Atlas regression clean (97/97 tests passing, was 81/81). Commit `<atlas-head>` on atlas/main.
+- 2026-04-19: **first lab Claim pre-registered** — `lab/.canon/claims/b7ff216f4eec6e58.json` for the memory-systems-v1 evaluation. Methodology at `lab/evals/memory-systems-v1/methodology.md` hash-bound into the Claim's ArtifactPointer. Validated against canon v0.1.0.
 
 ## What's in flight
 
-- **Track 1 (atlas canon adapter)**: writing `atlas/adapters/discovery/{emit.py,migrate.py}` + `MAPPING.md` (atlas.quality → canon.tier lossy map declared as Policy).
-- **Track 2 (skillfoundry canon adapter)**: deferred to after atlas adapter lands (per ADR-0026).
-- **Track 3 (editorial launch)**: not yet started. Domain registration, landing page, newsletter pipeline pending.
+- **Track 2 (skillfoundry canon adapter)**: next up. Adapter pattern proven by atlas; skillfoundry's markdown → canon mapping is the mirror.
+- **Track 3 (editorial launch)**: Astro site scaffold pending. Domain registration (`agentstack.dev`, ~$12/yr CF Registrar) pending principal confirmation of cost. Site can first deploy to `agentstack.pages.dev` without the custom domain.
+- **Eval execution (Week 6 per plan)**: memory-systems-v1 is pre-registered; actual runs against Letta / mem0 / MemGPT / Claude-memory APIs are the Week 6 action.
 
 ## What's next (blocking / unblocking path)
 
