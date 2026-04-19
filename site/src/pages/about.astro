@@ -1,0 +1,44 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About agentstack" description="Why this publication exists and how to read it.">
+  <h1 class="text-3xl font-bold mb-6 tracking-tight">About agentstack</h1>
+
+  <div class="prose max-w-2xl">
+    <p class="text-lg">
+      There is no good publication aimed at engineers <em>building</em> agent platforms.
+      Existing content is either vendor-produced (biased) or consumer-oriented (too general).
+      agentstack fills the gap — in-the-trenches content on harnesses, context, memory,
+      integrations, and orchestration, backed by a systematic evaluation lab whose findings
+      you can defend in a production design review.
+    </p>
+
+    <h2 class="text-xl font-semibold mt-8 mb-3">Why canon envelopes</h2>
+    <p>
+      Every lab finding is emitted as a canon envelope conforming to the
+      <a href="https://synaplex.ai/discovery-framework/0.1.0/">discovery-framework spec</a> —
+      an obligations model (not a state machine) that forces pre-registration, typed evidence,
+      cited contradictions, and hash-bound artifacts. Fast blogs can out-publish us;
+      they cannot out-replay us.
+    </p>
+
+    <h2 class="text-xl font-semibold mt-8 mb-3">Editorial independence</h2>
+    <p>
+      Sponsored evaluations exist and are priced. They use the <em>same</em> methodology
+      pipeline as organic ones, run through the <em>same</em> adversarial review, and
+      carry a cryptographic <code>Policy.provenance.sponsor</code> field in canon so the
+      provenance is mechanically inspectable. Sponsors do not get preview or veto over
+      findings. If that's not the kind of sponsorship a vendor wants, that's fine —
+      we publish organic evaluations too.
+    </p>
+
+    <h2 class="text-xl font-semibold mt-8 mb-3">What we won't do</h2>
+    <ul>
+      <li>1:1 consulting or audits. Everything we publish is one-to-many.</li>
+      <li>Take vendor-provided benchmark numbers at face value.</li>
+      <li>Retract an eval because a vendor asked politely.</li>
+      <li>Bury a negative finding.</li>
+    </ul>
+  </div>
+</Layout>

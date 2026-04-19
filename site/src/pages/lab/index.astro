@@ -1,0 +1,38 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Lab" description="Systematic third-party evaluations of agent platform components. Pre-registered, hash-bound, replayable.">
+  <h1 class="text-3xl font-bold mb-4 tracking-tight">Lab</h1>
+  <p class="text-lg mb-8 max-w-2xl" style="color: var(--color-ink-dim);">
+    Rigorously pre-registered evaluations of agent platform components.
+    Every eval publishes a reader-facing writeup <em>and</em> the underlying
+    canon envelope so you can replay the methodology, audit the evidence
+    hashes, and cite the finding in a production design review.
+  </p>
+
+  <h2 class="text-xl font-semibold mb-3 mt-10">In flight</h2>
+  <ul class="space-y-3 max-w-2xl">
+    <li>
+      <a href="/lab/memory-systems-v1/">Memory systems: Letta vs mem0 vs MemGPT vs Claude memory</a>
+      <span class="text-sm ml-2" style="color: var(--color-ink-dim);">(pre-registered — results publish Week 8)</span>
+    </li>
+  </ul>
+
+  <h2 class="text-xl font-semibold mb-3 mt-10">Planned</h2>
+  <ul class="space-y-3 max-w-2xl">
+    <li>Agent harness head-to-head on SWE-Bench-Verified (model held constant)</li>
+    <li>MCP server implementation survey across the top 50 public servers</li>
+    <li>Orchestration framework comparison (LangGraph / CrewAI / Inngest Agents) on a multi-step task suite</li>
+  </ul>
+
+  <div class="mt-12 text-sm" style="color: var(--color-ink-dim);">
+    <p>
+      Evaluation methodology follows the
+      <a href="https://synaplex.ai/discovery-framework/0.1.0/">discovery-framework canon</a>:
+      every claim is pre-registered with falsification criteria, every evidence record is
+      hash-bound to its raw artifact, and every decision cites all known contradictory
+      evidence. Post-hoc narrative changes don't happen here.
+    </p>
+  </div>
+</Layout>

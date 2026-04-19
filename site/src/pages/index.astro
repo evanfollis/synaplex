@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+---
+
+<Layout
+  title="agentstack — systematic evaluation of agent platforms"
+  description="Weekly deep-dives and rigorously-pre-registered third-party evaluations of agent harnesses, memory systems, context repositories, and integration specs. For engineers building agent platforms."
+>
+  <section class="mb-12">
+    <p class="text-sm uppercase tracking-wider mb-3" style="color: var(--color-ink-dim);">
+      For engineers building agent platforms
+    </p>
+    <h1 class="text-4xl sm:text-5xl font-bold leading-tight tracking-tight mb-6">
+      The systematic-evaluation lab for <span style="color: var(--color-accent);">agent systems</span>.
+    </h1>
+    <p class="text-xl leading-relaxed max-w-2xl" style="color: var(--color-ink-dim);">
+      Weekly deep-dives on harnesses, memory, context, integrations, and orchestration — plus rigorous, pre-registered third-party evaluations published as replayable canon envelopes. Every finding you can cite in a production design review.
+    </p>
+  </section>
+
+  <NewsletterSignup />
+
+  <section class="mb-12">
+    <h2 class="text-2xl font-semibold mb-4 mt-10 tracking-tight">
+      How the lab works
+    </h2>
+    <ol class="space-y-4 max-w-2xl">
+      <li>
+        <strong>Every eval pre-registers its falsification criteria</strong> — the claim is recorded in canon
+        before any data is collected. Post-hoc narrative changes don't happen here.
+      </li>
+      <li>
+        <strong>Raw artifacts are hash-bound.</strong> Transcripts, datasets, and methodology specs are
+        referenced by SHA-256 content hash. Post-hoc edits produce new records, not silent overwrites.
+      </li>
+      <li>
+        <strong>Adversarial review before publish.</strong> Every evaluation's methodology is
+        pressure-tested against an opposing-perspective agent before the writeup ships.
+      </li>
+      <li>
+        <strong>Sponsored evaluations are cryptographically distinguished.</strong> Paid evals carry a
+        <code>Policy.provenance.sponsor</code> attestation in canon. You can always tell.
+      </li>
+    </ol>
+  </section>
+
+  <section class="mb-12">
+    <h2 class="text-2xl font-semibold mb-4 mt-10 tracking-tight">
+      What we're working on
+    </h2>
+    <ul class="space-y-3 max-w-2xl">
+      <li>
+        <strong>First lab:</strong> Memory systems comparison — Letta, mem0, MemGPT,
+        Claude built-in memory, evaluated on 5 task suites (with one held-out) at
+        N≥10 runs per cell. Pre-registration live;
+        <a href="/lab/memory-systems-v1/">methodology here</a>. Results publish mid-week-8.
+      </li>
+      <li>
+        <strong>Second lab:</strong> Harness head-to-head on SWE-Bench-Verified, model held constant.
+      </li>
+      <li>
+        <strong>Directory build-out:</strong> harness · memory · orchestration · integration.
+        Quality-graded, not star-count-graded.
+      </li>
+    </ul>
+  </section>
+</Layout>

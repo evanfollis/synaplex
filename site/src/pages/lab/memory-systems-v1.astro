@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout
+  title="Memory systems comparison v1 — pre-registration"
+  description="Pre-registered evaluation of Letta, mem0, MemGPT, and Claude built-in memory on five task suites. Results publish at eval completion."
+>
+  <p class="text-sm uppercase tracking-wider mb-3" style="color: var(--color-ink-dim);">
+    Lab · pre-registration · 2026-04-19
+  </p>
+  <h1 class="text-3xl font-bold mb-6 tracking-tight">
+    Memory systems comparison v1
+  </h1>
+
+  <div class="prose max-w-2xl">
+    <p class="text-lg">
+      We're evaluating four agent memory systems on five task suites.
+      <strong>This page is the pre-registration.</strong> The Claim, falsification
+      criteria, thresholds, and methodology are hash-bound to the canon envelope at
+      <code>lab/.canon/claims/b7ff216f4eec6e58.json</code> before any evaluation runs.
+      Results will be appended here; the pre-registered methodology will not change
+      without a new Claim emission.
+    </p>
+
+    <h2>Claim (pre-registered)</h2>
+    <blockquote>
+      No current memory system achieves ≥ 0.80 recall@1 on multi-session coherence at
+      10-session depth.
+    </blockquote>
+
+    <h2>Falsification criteria</h2>
+    <ul>
+      <li>
+        If any one of {`{`}Letta, mem0, MemGPT, Claude-built-in-memory{`}`} achieves
+        mean recall@1 ≥ 0.80 on the multi_session_coherence task (N ≥ 10 runs) with
+        95% bootstrap CI lower bound ≥ 0.80, this claim is <strong>falsified</strong>.
+      </li>
+      <li>
+        If the held-out suite (<code>reset_semantics</code>) produces recall@1
+        performance that reverses the ordering observed on the primary suites, the
+        claim's generalizability is falsified (the Decision will note this as an
+        override).
+      </li>
+    </ul>
+
+    <h2>Task suites</h2>
+    <ol>
+      <li><strong>multi_session_coherence</strong> — recall of ground-truth facts across 10 chained sessions</li>
+      <li><strong>contradiction_handling</strong> — a fact stated at t=0 is contradicted at t=5; does the system flag the conflict or silently overwrite?</li>
+      <li><strong>retrieval_precision_at_k50</strong> — precision@5 retrieval under 50 distractor memories</li>
+      <li><strong>cost_per_1k_queries</strong> — LLM + storage cost at steady-state 10k-item memory</li>
+      <li><strong>reset_semantics</strong> — held out. Does a "forget X" instruction actually purge, or just demote?</li>
+    </ol>
+
+    <h2>Thresholds</h2>
+    <ul>
+      <li>recall@1 threshold: ≥ 0.80 with 95% bootstrap CI lower bound ≥ 0.80</li>
+      <li>α for pairwise system-vs-system tests: 0.05</li>
+      <li>Bootstrap iterations: 1000</li>
+      <li>Runs per (system × task) cell: N ≥ 10</li>
+      <li>Primary effect size: Cohen's d ≥ 0.5 for a "meaningful difference" claim</li>
+    </ul>
+
+    <h2>Subjects</h2>
+    <ol>
+      <li><a href="https://letta.com">Letta</a> (hosted API, episodic + archival)</li>
+      <li><a href="https://mem0.ai">mem0</a> (vector-store-backed recall)</li>
+      <li>MemGPT reference implementation</li>
+      <li>Claude built-in memory (Anthropic native memory tool on Sonnet 4.6 / Opus 4.7)</li>
+    </ol>
+
+    <h2>Timeline</h2>
+    <ul>
+      <li><strong>Week 5 (now):</strong> pre-register — this page.</li>
+      <li><strong>Week 6:</strong> execute primary suites (1–4) across all 4 systems.</li>
+      <li><strong>Week 7:</strong> execute held-out suite (5). Run adversarial methodology review.</li>
+      <li><strong>Week 8:</strong> publish results — this page is updated in-place, with the canon Decision envelope becoming the primary artifact.</li>
+    </ul>
+
+    <h2>Audit trail</h2>
+    <p>
+      Canon Claim: <code>lab/.canon/claims/b7ff216f4eec6e58.json</code><br/>
+      Methodology: <code>lab/evals/memory-systems-v1/methodology.md</code> (SHA-256 hash-bound in the Claim's ArtifactPointer)<br/>
+      Pre-registration integrity: any change to the methodology invalidates this Claim; a new Claim with a new id must be emitted.
+    </p>
+  </div>
+</Layout>

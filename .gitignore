@@ -1,0 +1,36 @@
+# Node / Astro
+site/node_modules/
+site/dist/
+site/.astro/
+site/.wrangler/
+site/.env
+site/.env.local
+site/.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets (never commit)
+.secrets/
+secrets/
+*.pem
+*.key
+
+# Transcripts / ephemeral
+.cache/
+*.log

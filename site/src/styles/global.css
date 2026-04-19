@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* agentstack — editorial type system
+ * Deliberately sparse; the publication's identity lives in the content,
+ * not in ornament. Optimize for scan-readability on long-form posts and
+ * fast contrast on directory listings.
+ */
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --color-ink: #0f1220;
+  --color-ink-dim: #4a5068;
+  --color-paper: #fafaf7;
+  --color-accent: #d64545;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  filter: brightness(0.9);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+pre {
+  background: #eaeaea;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #d8d8d0;
+  margin: 2.5rem 0;
+}

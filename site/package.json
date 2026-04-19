@@ -1,0 +1,22 @@
+{
+  "name": "agentstack-site",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "description": "agentstack — publication + evaluation lab for engineers building agent platforms",
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.14",
+    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/tailwind": "^6.0.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^5.18.1",
+    "tailwindcss": "^3.4.19"
+  }
+}
