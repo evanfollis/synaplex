@@ -32,8 +32,11 @@ from .paths import (
     synthesis_path,
 )
 
-TARGET_BYTES = 8 * 1024
-MAX_ITEMS = 18
+# Synthesis must fit comfortably under the workspace context-always-load cap
+# (30KB aggregate, shared with ~47KB of existing governance files). Keep the
+# briefing terse: headlines + one-line-per-item, not full summaries.
+TARGET_BYTES = 3 * 1024
+MAX_ITEMS = 12
 
 
 def _iso_week_for(d: _date) -> str:
@@ -93,10 +96,10 @@ def _themed_heuristic(
                 break
         if not placed:
             buckets.setdefault("other", []).append(item)
-    # limit per-theme
+    # limit per-theme (tight cap — briefing not digest)
     for k in buckets:
         buckets[k].sort(key=lambda x: -x.get("score", 0))
-        buckets[k] = buckets[k][:5]
+        buckets[k] = buckets[k][:2]
     ordered = [(k, buckets[k]) for k in (
         "harnesses", "memory", "orchestration", "integrations", "eval", "context", "other"
     ) if buckets.get(k)]
@@ -147,31 +150,19 @@ def _render_heuristic(
         return "\n".join(lines) + "\n"
 
     for theme, bucket in themed:
-        lines.append(f"## {theme} ({len(bucket)})")
-        lines.append("")
+        lines.append(f"## {theme}")
         for item in bucket:
-            title = item.get("title", "(untitled)").replace("\n", " ").strip()[:160]
+            title = item.get("title", "(untitled)").replace("\n", " ").strip()[:120]
             url = item.get("url", "")
             src = item.get("source", "?")
             score = item.get("score", 0)
-            lines.append(f"- **[{title}]({url})** — {src} · score {score:.2f}")
-            if item.get("summary"):
-                summary = item["summary"].replace("\n", " ")[:240]
-                lines.append(f"  {summary}")
-            lines.append("")
+            lines.append(f"- [{title}]({url}) — {src} · {score:.2f}")
         lines.append("")
 
-    lines.append("## How to read this")
-    lines.append("")
     lines.append(
-        "This synthesis is produced by the synaplex Layer 1 intake loop and "
-        "auto-injected into executive session context so the AI-landscape "
-        "signal gap collapses to ≤7 days. The heuristic provider here scores "
-        "items by beat-keyword match; the Sonnet provider (when "
-        "ANTHROPIC_API_KEY is configured) scores and synthesizes in a beat "
-        "editor's voice. See ADR-0029 and `projects/synaplex/intake/README.md`."
+        "_Synaplex Layer 1 intake — heuristic briefing. Set ANTHROPIC_API_KEY "
+        "for prose synthesis. See ADR-0029 and intake/README.md._"
     )
-    lines.append("")
     return "\n".join(lines) + "\n"
 
 
