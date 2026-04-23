@@ -3,7 +3,7 @@
   "spec_version": "0.1.0",
   "object_type": "Claim",
   "emitted_at": "2026-04-19T04:25:00Z",
-  "emitter": "L3:agentstack",
+  "emitter": "L3:synaplex",
   "layer": "L3",
   "roles": ["Claim"],
   "role_declared_at": "2026-04-19T04:25:00Z",
@@ -36,5 +36,5 @@
     "version": "1",
     "media_type": "text/markdown"
   },
-  "instance_id": "agentstack"
+  "instance_id": "synaplex"
 }
