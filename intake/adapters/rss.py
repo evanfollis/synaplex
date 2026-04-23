@@ -35,6 +35,7 @@ import feedparser  # type: ignore[import-untyped]
 from ..beats import Beat
 from ..friction import emit_failure, emit_stuck, emit_success
 from ..hashing import content_id
+from ..limits import layer1_cap
 from ..paths import raw_path
 from . import IngestResult
 
@@ -82,6 +83,8 @@ def ingest(beat: Beat, date: str) -> IngestResult:
 
     count = 0
     deduped = 0
+    capped = 0
+    cap = layer1_cap()
     seen: set[str] = set()
     errored_feeds: list[str] = []
     fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -105,6 +108,9 @@ def ingest(beat: Beat, date: str) -> IngestResult:
                 item_id = content_id(url, title)
                 if item_id in seen:
                     deduped += 1
+                    continue
+                if count >= cap:
+                    capped += 1
                     continue
                 seen.add(item_id)
                 summary_html = entry.get("summary") or entry.get("description") or ""
@@ -131,9 +137,17 @@ def ingest(beat: Beat, date: str) -> IngestResult:
         emit_stuck("intake", "rss", reason, ref)
     else:
         reason = f"{count} items, {deduped} deduped"
+        if capped:
+            reason += f", {capped} dropped by daily cap ({cap})"
         if errored_feeds:
             reason += f", {len(errored_feeds)} feed errors"
         emit_success("intake", "rss", reason, ref)
+    if capped:
+        emit_failure(
+            "intake", "rss",
+            f"daily cap hit: {capped} items dropped past {cap}-item cap",
+            ref,
+        )
     if errored_feeds and count > 0:
         # also surface partial-failure; downstream synthesis may need to know
         # which feeds were missing.

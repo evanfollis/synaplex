@@ -82,11 +82,9 @@ def score_heuristic(item: dict, beat: Beat) -> tuple[float, str]:
 
     # small arxiv bonus if categories overlap with beat's arxiv categories
     if item.get("source") == "arxiv":
-        cats = [c.split(".")[-1].upper() for c in item.get("categories", [])]
-        target = {c.upper() for c in beat.arxiv_categories}
-        if any(f"CS.{c}" in {c.upper() for c in item.get("categories", [])} for c in []):
-            pass  # reserved
-        if any(tc.split(".")[-1].upper() in [c.split(".")[-1].upper() for c in item.get("categories", [])] for tc in beat.arxiv_categories):
+        item_cats = {c.upper() for c in item.get("categories", [])}
+        beat_cats = {c.upper() for c in beat.arxiv_categories}
+        if item_cats & beat_cats:
             score = min(1.0, score + 0.15)
 
     # HN: comment-count / score bump (popular + on-topic is worth more)

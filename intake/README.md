@@ -93,6 +93,55 @@ handoff constraint). When enabled:
 The two providers write the same `scored.jsonl` shape, so swapping is
 transparent to downstream layers.
 
+## Operational controls (ADR-0029 §Adversarial review response)
+
+The accepted ADR-0029 attaches eight operational controls to the loop,
+authorized by the 2026-04-23T18:00Z handoff. Which ones are live in
+this package today, and which are deferred to Layer 2:
+
+**Live (Layer 1 scope):**
+
+- **§6 Layer 1 rate limit.** Each adapter caps at
+  `intake.limits.LAYER1_MAX_ITEMS_PER_SOURCE_PER_DAY` (200). The cap is
+  soft (truncate past-cap items + emit a `failure` friction event); it
+  protects against a runaway feed dumping its full archive into the
+  day's raw file. arxiv + hackernews naturally cap below 200; rss is
+  the one that actually hits the limit when a newly-discovered feed
+  has a deep archive.
+- **§7 Reasoning/Validation boundary semantics (documented below).**
+- **§8 Integrity job stub** lives at `projects/synaplex/integrity/` and
+  runs via `synaplex-integrity.timer` (04:37 UTC daily). First pass
+  walks `lab/.canon/candidates/` (currently empty — Layer 2 not built)
+  and emits a summary friction event. The TTL sweep logic is in place;
+  it becomes load-bearing when candidates start flowing.
+
+**Deferred to the Layer 2 handoff:**
+
+- §1 Per-source trust tracking (needs promotion data from Layer 2).
+- §2 Scoring-accuracy tracking (needs validation outcomes from L3).
+- §3 `reasoning_note` required field (Layer 2 candidate write path).
+- §4 Bootstrap throttle (Layer 2 candidate emission).
+- §5 Candidate TTL + quarantine paths (the TTL sweep logic is here;
+  quarantine populates from Layer 2's validation-failure path).
+
+### §7 Boundary semantics
+
+Layer 2 (reasoning) performs: schema validation on candidate envelopes,
+referential integrity (candidate references to intake items resolve),
+cross-canon dedup against existing envelopes, basic well-formedness
+(no null-required-fields).
+
+Layer 3 (validation proper) performs: adversarial review (Codex),
+counter-search against the intake corpus for strongest disagreement,
+canon integrity (hash, refint, schema consistency across `.canon/`
+trees).
+
+The distinction is amplitude, not kind. If Layer 2 implementation grows
+Layer-3-shaped validation logic, pause and write a follow-on ADR
+proposing to collapse them. Do not silently accumulate validation in
+L2 while keeping the naming distinct — that's the failure mode the
+ADR-0029 adversarial review called out.
+
 ## Friction events
 
 Every adapter call emits at least one friction event:
