@@ -10,11 +10,17 @@ phase: rebrand landed; Layer 1 intake first pass in flight
 
 ## One-line status
 
-Repo rebranded from `agentstack` → `synaplex` per ADR-0027 (synaplex is the
-system). Layer 1 intake subsystem (ADR-0029) scaffolding underway: RSS +
-arxiv + HN adapters + per-beat scoring + daily digest. First digest target:
-`runtime/intake/digests/agent-platforms-2026-04-24.md`. Site deploy to
-`synaplex.ai` deferred to a separate handoff.
+Repo rebranded from `agentstack` → `synaplex` per ADR-0027. Layer 1
+intake subsystem (ADR-0029) shipped first pass: RSS + arxiv + HN
+adapters, dual-provider (heuristic / Sonnet) scoring for the
+`agent-platforms` beat, daily digest, weekly synthesis + `latest.md`
+symlink, friction event log, systemd unit files authored. Synthesis
+briefing is auto-injected into workspace-root executive sessions via
+the amended `/opt/workspace/CLAUDE.md` context-always-load block.
+First pipeline run produced 2026-04-23 digest (17 items through
+cutoff; top at 0.86 "Unrolling the Codex agent loop") and 2026-W17
+synthesis (1.7KB). Systemd timers NOT enabled (pending operator
+coordination).
 
 ## Commits on this repo
 
@@ -132,11 +138,24 @@ synaplex has executed several evals.
 
 (carried forward across turns — session handoff file has more detail)
 
-1. **GitHub remote name confirmation** — handoff suggests
+1. **context-always-load cap collision (URGENT)** —
+   `/opt/workspace/CLAUDE.md` always-load aggregate is ~49KB vs the 30KB
+   hook cap. `active-issues.md` alone is 24KB. Synthesis amendment did
+   NOT cause the collision (was pre-existing) but escalation rule says
+   URGENT when touched. See
+   `runtime/.handoff/URGENT-synaplex-always-load-cap-collision-2026-04-23T17-35Z.md`.
+   Principal decision needed: trim active-issues (recommended) or raise
+   hook cap.
+2. **GitHub remote name confirmation** — handoff suggests
    `evanfollis/synaplex`; repo creation is irreversible external action
    so awaits explicit confirmation.
-2. **Cloudflare Pages deploy authorization** (carries over).
-3. **Kernel reboot** — 6.8.0-110 installed, still running 6.8.0-107.
-4. **Layer 1 systemd enable** — timer units authored but
+3. **Cloudflare Pages deploy authorization** (carries over).
+4. **Kernel reboot** — 6.8.0-110 installed, still running 6.8.0-107.
+5. **Layer 1 systemd enable** — timer units authored but
    `systemctl enable --now` requires coordination with supervisor per
-   handoff constraint.
+   handoff constraint. Without enable, intake + score + digest +
+   synthesize must run manually.
+6. **ANTHROPIC_API_KEY provisioning** — intake currently runs on the
+   heuristic scorer (no LLM calls). When the key lands in
+   `runtime/.secrets/synaplex.env`, the Sonnet scorer + Sonnet
+   synthesizer activate automatically at the next cron firing.
