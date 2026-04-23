@@ -1,0 +1,154 @@
+"""arxiv adapter via the public arxiv API.
+
+First pass: query the arxiv API for the beat's categories, filtered to the
+last N days (default 3 to allow for reruns catching up after outages).
+`http://export.arxiv.org/api/query` returns Atom; feedparser digests it.
+
+Raw item shape mirrors rss.py, with source="arxiv" and a `categories` field
+captured from the entry's arxiv:primary_category + tags.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import ssl
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+import feedparser  # type: ignore[import-untyped]
+
+from ..beats import Beat
+from ..friction import emit_failure, emit_stuck, emit_success
+from ..hashing import content_id
+from ..paths import raw_path
+from . import IngestResult
+
+API_BASE = "http://export.arxiv.org/api/query"
+USER_AGENT = "synaplex-intake/0.1 (+https://synaplex.ai/intake)"
+TIMEOUT = 25.0
+WINDOW_DAYS = 3
+MAX_RESULTS = 100
+_WS_RE = re.compile(r"\s+")
+
+
+def _category_query(categories: tuple[str, ...]) -> str:
+    return "+OR+".join(f"cat:{c}" for c in categories)
+
+
+def _fetch(url: str) -> bytes:
+    req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/atom+xml"})
+    ctx = ssl.create_default_context()
+    with urlopen(req, timeout=TIMEOUT, context=ctx) as r:
+        return r.read()
+
+
+def _normalize(text: str) -> str:
+    return _WS_RE.sub(" ", (text or "").strip())
+
+
+def _within_window(entry, window_start: datetime) -> bool:
+    for key in ("published_parsed", "updated_parsed"):
+        parsed = entry.get(key)
+        if parsed:
+            try:
+                dt = datetime(*parsed[:6], tzinfo=timezone.utc)
+                return dt >= window_start
+            except Exception:
+                continue
+    return True
+
+
+def ingest(beat: Beat, date: str) -> IngestResult:
+    out = raw_path("arxiv", date)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(days=WINDOW_DAYS)
+
+    params = {
+        "search_query": _category_query(beat.arxiv_categories),
+        "sortBy": "submittedDate",
+        "sortOrder": "descending",
+        "start": 0,
+        "max_results": MAX_RESULTS,
+    }
+    # manual encoding so `+OR+` isn't double-encoded
+    qs = "&".join(
+        f"{k}={v}" if k == "search_query" else f"{k}={urlencode({k: v}).split('=', 1)[1]}"
+        for k, v in params.items()
+    )
+    url = f"{API_BASE}?{qs}"
+
+    try:
+        raw = _fetch(url)
+    except Exception as exc:
+        emit_failure("intake", "arxiv", f"fetch failed: {type(exc).__name__}: {exc}", "")
+        out.write_text("", encoding="utf-8")
+        return IngestResult(source="arxiv", count=0, deduped=0, out_path=str(out))
+
+    # arxiv rate-limits; respect the 3s guideline
+    time.sleep(1.0)
+
+    parsed = feedparser.parse(raw)
+    count = 0
+    deduped = 0
+    seen: set[str] = set()
+    fetched_at = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    with open(out, "w", encoding="utf-8") as fp:
+        for entry in parsed.entries:
+            if not _within_window(entry, window_start):
+                continue
+            link = (entry.get("link") or "").strip()
+            title = _normalize(entry.get("title") or "")
+            if not link or not title:
+                continue
+            item_id = content_id(link, title)
+            if item_id in seen:
+                deduped += 1
+                continue
+            seen.add(item_id)
+            summary = _normalize(entry.get("summary") or "")[:1200]
+            authors = [
+                (a.get("name") if isinstance(a, dict) else str(a))
+                for a in entry.get("authors", [])
+            ]
+            categories = []
+            for tag in entry.get("tags", []) or []:
+                term = tag.get("term") if isinstance(tag, dict) else None
+                if term:
+                    categories.append(term)
+            published_parsed = entry.get("published_parsed") or entry.get("updated_parsed")
+            published = ""
+            if published_parsed:
+                try:
+                    published = datetime(*published_parsed[:6], tzinfo=timezone.utc).isoformat(
+                        timespec="seconds"
+                    ).replace("+00:00", "Z")
+                except Exception:
+                    pass
+            item = {
+                "id": item_id,
+                "source": "arxiv",
+                "url": link,
+                "title": title,
+                "summary": summary,
+                "authors": authors,
+                "categories": categories,
+                "published": published,
+                "fetched_at": fetched_at,
+                "beat": beat.id,
+            }
+            fp.write(json.dumps(item, ensure_ascii=False) + "\n")
+            count += 1
+
+    ref = str(out)
+    if count == 0:
+        emit_stuck("intake", "arxiv", f"no arxiv items in {WINDOW_DAYS}d window", ref)
+    else:
+        emit_success("intake", "arxiv", f"{count} items, {deduped} deduped", ref)
+    return IngestResult(source="arxiv", count=count, deduped=deduped, out_path=ref)
