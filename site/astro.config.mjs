@@ -4,9 +4,10 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
 
-// Canonical site URL. Override at build time with ASTRO_SITE env var once
-// the custom domain is registered; pages.dev URL is fine for the first deploy.
-const site = process.env.ASTRO_SITE || 'https://agentstack.pages.dev';
+// Canonical site URL. Production deploy target is synaplex.ai (apex).
+// Override at build time with ASTRO_SITE env var for staging previews.
+// The CF zone for synaplex.ai is already provisioned.
+const site = process.env.ASTRO_SITE || 'https://synaplex.ai';
 
 export default defineConfig({
   site,

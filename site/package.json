@@ -1,6 +1,6 @@
 {
-  "name": "agentstack-site",
-  "version": "0.1.0",
+  "name": "synaplex-site",
+  "version": "0.2.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "preview": "astro preview",
     "astro": "astro"
   },
-  "description": "agentstack — publication + evaluation lab for engineers building agent platforms",
+  "description": "synaplex.ai — the system. Publication + evaluation lab for the structure of AI systems.",
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",
     "@astrojs/sitemap": "^3.7.2",

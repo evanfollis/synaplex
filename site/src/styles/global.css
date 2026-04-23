@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* agentstack — editorial type system
- * Deliberately sparse; the publication's identity lives in the content,
- * not in ornament. Optimize for scan-readability on long-form posts and
+/* synaplex — editorial type system
+ * Deliberately sparse; the system's identity lives in the accumulated canon,
+ * not in ornament. Optimize for scan-readability on long-form pieces and
  * fast contrast on directory listings.
  */
 

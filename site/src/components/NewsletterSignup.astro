@@ -1,14 +1,15 @@
 ---
-// Buttondown embed — replace BUTTONDOWN_USERNAME at first deploy.
+// Buttondown embed — set PUBLIC_BUTTONDOWN_USER at build time for the real user.
 // The form POSTs directly to Buttondown, so no backend is required.
-const buttondownUser = import.meta.env.PUBLIC_BUTTONDOWN_USER || 'agentstack';
+const buttondownUser = import.meta.env.PUBLIC_BUTTONDOWN_USER || 'synaplex';
 ---
 
 <div class="border border-gray-200 bg-white rounded-md p-6 my-8">
   <h3 class="text-lg font-semibold mb-1">Get the weekly synthesis</h3>
   <p class="text-sm mb-4" style="color: var(--color-ink-dim);">
-    One long-form post every Friday on the architecture of agent platforms.
-    Daily news scan opt-in after signup.
+    One long-form piece every week on the structure of AI systems —
+    synthesized from that week's accepted claims. Opt-in to daily
+    intake digests after signup.
   </p>
   <form
     action={`https://buttondown.com/api/emails/embed-subscribe/${buttondownUser}`}
