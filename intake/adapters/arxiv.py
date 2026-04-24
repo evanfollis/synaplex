@@ -22,8 +22,9 @@ from urllib.request import Request, urlopen
 import feedparser  # type: ignore[import-untyped]
 
 from ..beats import Beat
-from ..friction import emit_failure, emit_stuck, emit_success
+from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
+from ..limits import layer1_cap
 from ..paths import raw_path
 from . import IngestResult
 
@@ -96,6 +97,8 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     parsed = feedparser.parse(raw)
     count = 0
     deduped = 0
+    capped = 0
+    cap = layer1_cap()
     seen: set[str] = set()
     fetched_at = now.isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -110,6 +113,9 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             item_id = content_id(link, title)
             if item_id in seen:
                 deduped += 1
+                continue
+            if count >= cap:
+                capped += 1
                 continue
             seen.add(item_id)
             summary = _normalize(entry.get("summary") or "")[:1200]
@@ -150,5 +156,14 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     if count == 0:
         emit_stuck("intake", "arxiv", f"no arxiv items in {WINDOW_DAYS}d window", ref)
     else:
-        emit_success("intake", "arxiv", f"{count} items, {deduped} deduped", ref)
+        reason = f"{count} items, {deduped} deduped"
+        if capped:
+            reason += f", {capped} dropped by daily cap ({cap})"
+        emit_success("intake", "arxiv", reason, ref)
+    if capped:
+        emit_throttled(
+            "intake", "arxiv",
+            f"daily cap hit: {capped} items dropped past {cap}-item cap",
+            ref,
+        )
     return IngestResult(source="arxiv", count=count, deduped=deduped, out_path=ref)

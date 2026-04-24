@@ -33,8 +33,9 @@ from datetime import datetime, timezone
 from urllib.request import Request, urlopen
 
 from ..beats import Beat
-from ..friction import emit_failure, emit_stuck, emit_success
+from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
+from ..limits import layer1_cap
 from ..paths import raw_path
 from . import IngestResult
 
@@ -90,6 +91,8 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     ids = list(dict.fromkeys(list(top) + list(new)))  # preserve order, dedup
     count = 0
     deduped = 0
+    capped = 0
+    cap = layer1_cap()
     seen: set[str] = set()
     fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -114,6 +117,9 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             item_id = content_id(url, title)
             if item_id in seen:
                 deduped += 1
+                continue
+            if count >= cap:
+                capped += 1
                 continue
             seen.add(item_id)
             published = ""
@@ -146,5 +152,14 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     if count == 0:
         emit_stuck("intake", "hackernews", "no hackernews items classified", ref)
     else:
-        emit_success("intake", "hackernews", f"{count} items, {deduped} deduped", ref)
+        reason = f"{count} items, {deduped} deduped"
+        if capped:
+            reason += f", {capped} dropped by daily cap ({cap})"
+        emit_success("intake", "hackernews", reason, ref)
+    if capped:
+        emit_throttled(
+            "intake", "hackernews",
+            f"daily cap hit: {capped} items dropped past {cap}-item cap",
+            ref,
+        )
     return IngestResult(source="hackernews", count=count, deduped=deduped, out_path=ref)

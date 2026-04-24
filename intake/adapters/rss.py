@@ -33,7 +33,7 @@ from urllib.request import Request, urlopen
 import feedparser  # type: ignore[import-untyped]
 
 from ..beats import Beat
-from ..friction import emit_failure, emit_stuck, emit_success
+from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
 from ..paths import raw_path
@@ -143,18 +143,26 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             reason += f", {len(errored_feeds)} feed errors"
         emit_success("intake", "rss", reason, ref)
     if capped:
-        emit_failure(
+        # `throttled`, not `failure` — the cap is designed behavior, not an
+        # incident. meta-scan + adversarial review filter `failure`; marking
+        # this as `throttled` keeps the incident channel clean while
+        # preserving the signal.
+        emit_throttled(
             "intake", "rss",
             f"daily cap hit: {capped} items dropped past {cap}-item cap",
             ref,
         )
-    if errored_feeds and count > 0:
-        # also surface partial-failure; downstream synthesis may need to know
-        # which feeds were missing.
-        emit_failure(
-            "intake", "rss",
-            f"{len(errored_feeds)} of {len(beat.rss_feeds)} feeds failed",
-            ref,
+    if errored_feeds:
+        # Name the failing feed(s) inline so the friction log is actionable
+        # without re-running the adapter with debug tracing. S3-P2
+        # generalization: a silent failure is indistinguishable from stuck.
+        from ..friction import emit as _emit
+        _emit(
+            layer="intake",
+            source="rss",
+            eventType="failure",
+            reason="feed failures (see extra.failing_feeds)",
+            ref=ref,
+            extra={"failing_feeds": errored_feeds},
         )
-
     return IngestResult(source="rss", count=count, deduped=deduped, out_path=ref)

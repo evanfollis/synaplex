@@ -27,7 +27,10 @@ from typing import Literal
 from .paths import FRICTION_LOG, ensure_dirs
 
 Layer = Literal["intake", "reasoning", "validation", "presentation"]
-EventType = Literal["success", "failure", "stuck", "escalated"]
+# `throttled` is a non-failure health signal for rate-limit/cap enforcement —
+# separate from `failure` so meta-scan + adversarial review don't treat
+# designed truncation as an incident. Added 2026-04-24 per reflection OBS-C.
+EventType = Literal["success", "failure", "stuck", "escalated", "throttled"]
 SourceType = Literal["user", "system", "smoke", "cron"]
 
 
@@ -88,3 +91,7 @@ def emit_failure(layer: Layer, source: str, reason: str, ref: str = "") -> dict:
 
 def emit_stuck(layer: Layer, source: str, reason: str, ref: str = "") -> dict:
     return emit(layer=layer, source=source, eventType="stuck", reason=reason, ref=ref)
+
+
+def emit_throttled(layer: Layer, source: str, reason: str, ref: str = "") -> dict:
+    return emit(layer=layer, source=source, eventType="throttled", reason=reason, ref=ref)

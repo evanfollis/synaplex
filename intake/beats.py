@@ -64,8 +64,12 @@ AGENT_PLATFORMS = Beat(
     ),
     rss_feeds=(
         # Curated first-pass feed list from the handoff + canonical agent-platform voices.
+        # Note: Anthropic's news surface moved to a Next.js site that does not
+        # publish RSS as of 2026-04-24 (probed /news/rss.xml and /rss.xml — both
+        # 404; no <link rel=alternate> in /news HTML). Revisit once Anthropic
+        # ships an official feed. Tracked: removed 2026-04-24 per URGENT
+        # rss-feed-failure-unidentified.
         "https://simonwillison.net/atom/everything/",
-        "https://www.anthropic.com/news/rss.xml",
         "https://openai.com/blog/rss.xml",
         "https://lilianweng.github.io/index.xml",
         "https://huyenchip.com/feed.xml",
