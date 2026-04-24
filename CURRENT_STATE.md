@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-23
+updated: 2026-04-24T14:50Z (post-reflection fixes: Anthropic feed + throttled type + arxiv/HN cap)
 owner: executive (principal: evan)
-phase: rebrand landed; Layer 1 intake first pass in flight
+phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
 
 # synaplex — current state
@@ -17,10 +17,13 @@ adapters, dual-provider (heuristic / Sonnet) scoring for the
 symlink, friction event log, systemd unit files authored. Synthesis
 briefing is auto-injected into workspace-root executive sessions via
 the amended `/opt/workspace/CLAUDE.md` context-always-load block.
-First pipeline run produced 2026-04-23 digest (17 items through
-cutoff; top at 0.86 "Unrolling the Codex agent loop") and 2026-W17
-synthesis (1.7KB). Systemd timers NOT enabled (pending operator
-coordination).
+First pipeline run produced 2026-04-23 digest (17 items) and 2026-W17
+synthesis (1.7KB). 2026-04-24 digest rendered (11 items — Anthropic feed
+removed from list after 404 confirmed, see below). Systemd timers
+**confirmed active** via `systemctl list-timers`: synaplex-intake
+(4h), synaplex-score (hourly), synaplex-digest (daily 06:57Z),
+synaplex-synthesize (Sun 04:07Z), synaplex-integrity (daily 04:37Z)
+— all emit `sourceType: "cron"` correctly.
 
 ## Commits on this repo
 
@@ -66,16 +69,22 @@ synaplex has executed several evals.
 
 ## What's next (deployable)
 
-1. **Complete Layer 1 first pass**: adapters running on timer, daily
-   digest written, friction events accumulating.
-2. **Site deploy handoff**: per ADR-0027 deploy target is `synaplex.ai`
+1. **Site deploy handoff**: per ADR-0027 deploy target is `synaplex.ai`
    (apex or `www.synaplex.ai`); CF zone already provisioned. Principal
    confirmation before final DNS cut-over.
-3. **Layer 2 reasoning (subsequent handoff)**: per-beat daily job that
+2. **Layer 2 reasoning (subsequent handoff)**: per-beat daily job that
    loads pod canon state + intake synthesis and writes candidate
    envelopes to pod `.canon/candidates/`.
-4. **Podcast + Reddit + GitHub + Substack intake** (wave 2).
-5. **First eval execution** (memory-systems-v1, Week 6 per plan).
+3. **Podcast + Reddit + GitHub + Substack intake** (wave 2).
+4. **First eval execution** (memory-systems-v1, Week 6 per plan).
+
+Resolved this turn (three <30min fixes from reflection's P1–P3):
+- ✓ RSS feed URL now named inline in friction event `extra.failing_feeds`.
+- ✓ Failing Anthropic feed (`/news/rss.xml` → 404) removed from
+  `beats.py` with a comment explaining rediscovery probe.
+- ✓ `throttled` eventType added (`friction.py`); cap hits on rss +
+  arxiv + hn now emit `throttled` not `failure`.
+- ✓ `layer1_cap()` applied to arxiv + HN for symmetry.
 
 ## Known infra gotchas
 
@@ -118,8 +127,8 @@ synaplex has executed several evals.
   single dedup contract. Any adapter that short-cuts this produces
   silent corruption across joins.
 - **Silent layer rule (S3-P2)**: every layer must emit typed friction
-  events for success + failure + stuck + escalated states. A layer
-  that only emits on the happy path is indistinguishable from stuck.
+  events for success + failure + stuck + escalated + throttled states. A
+  layer that only emits on the happy path is indistinguishable from stuck.
 
 ## Truth sources (non-transcript)
 
@@ -132,7 +141,7 @@ synaplex has executed several evals.
   — L1 canon (v0.1.0, frozen).
 - `lab/.canon/` — this repo's canon envelope store.
 - `runtime/intake/` — Layer 1 raw + scored + digest + synthesis surface.
-- `runtime/friction/events.jsonl` — cross-layer typed-event log.
+- `/opt/workspace/runtime/friction/events.jsonl` — cross-layer typed-event log (workspace-level path).
 
 ## Pending principal actions
 
@@ -151,11 +160,40 @@ synaplex has executed several evals.
    so awaits explicit confirmation.
 3. **Cloudflare Pages deploy authorization** (carries over).
 4. **Kernel reboot** — 6.8.0-110 installed, still running 6.8.0-107.
-5. **Layer 1 systemd enable** — timer units authored but
-   `systemctl enable --now` requires coordination with supervisor per
-   handoff constraint. Without enable, intake + score + digest +
-   synthesize must run manually.
+5. ~~Layer 1 systemd timer enable~~ — **RESOLVED**: timers were
+   enabled after the original handoff; `systemctl list-timers`
+   confirms all five are active (intake 4h, score hourly, digest
+   daily 06:57Z, synthesize Sun 04:07Z, integrity daily 04:37Z).
+   Left here for one cycle as a trail.
 6. **ANTHROPIC_API_KEY provisioning** — intake currently runs on the
    heuristic scorer (no LLM calls). When the key lands in
    `runtime/.secrets/synaplex.env`, the Sonnet scorer + Sonnet
    synthesizer activate automatically at the next cron firing.
+
+## Known broken or degraded
+(updated 2026-04-24T14:50Z — three reflection fixes landed)
+
+- ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
+  this turn — `layer1_cap()` now applied symmetrically in all three
+  adapters; cap hits emit `eventType: throttled`.
+- ~~RSS feeds emit `eventType: failure` for expected cap-hit
+  truncation~~ **FIXED** this turn — new `throttled` eventType in
+  `friction.py`; meta-scan's failure channel stays clean.
+- ~~One RSS feed fails on every run~~ **FIXED** this turn —
+  `https://www.anthropic.com/news/rss.xml` returns 404, removed from
+  `beats.py` with rediscovery note. `rss.py` now names the failing
+  feed URLs inline in the friction event's `extra.failing_feeds`
+  field so future regressions are actionable from the log alone.
+- **`score:stuck` at midnight** (still live) — score timer fires at
+  top of hour before ingest has run for the new day. Produces a
+  daily spurious stuck event. Fix: add `After=synaplex-intake.service`
+  to `synaplex-score.service`, or tolerate empty-first-window in
+  `score.py`. Deferred — not load-bearing.
+
+## What the next agent must read first
+
+1. This file.
+2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
+3. `intake/limits.py` — the cap is only partially deployed. Before adding new adapters, apply it to arxiv + HN first.
+4. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
+5. Prior reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-24T02-40-51Z.md` — P1–P3 are all ≤30min fixes; address them before adding features.
