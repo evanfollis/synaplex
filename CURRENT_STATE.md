@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-24T14:50Z (post-reflection fixes: Anthropic feed + throttled type + arxiv/HN cap)
+updated: 2026-04-25T15:50Z (post-reflection: score timer shifted to :20; cap collision verified resolved)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -147,14 +147,13 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 
 (carried forward across turns — session handoff file has more detail)
 
-1. **context-always-load cap collision (URGENT)** —
-   `/opt/workspace/CLAUDE.md` always-load aggregate is ~49KB vs the 30KB
-   hook cap. `active-issues.md` alone is 24KB. Synthesis amendment did
-   NOT cause the collision (was pre-existing) but escalation rule says
-   URGENT when touched. See
-   `runtime/.handoff/URGENT-synaplex-always-load-cap-collision-2026-04-23T17-35Z.md`.
-   Principal decision needed: trim active-issues (recommended) or raise
-   hook cap.
+1. ~~context-always-load cap collision~~ — **RESOLVED 2026-04-25T15:50Z**:
+   `active-issues.md` has been trimmed from ~24KB to 3.8KB (likely
+   archived to a separate file by the principal/supervisor session).
+   Empirical hook check: aggregate is now 29.6KB total across all 7
+   files, no truncation, synthesis injects. The original URGENT was
+   archived to `runtime/.handoff/ARCHIVE/2026-04-25/`. Left here for
+   one cycle as a trail.
 2. **GitHub remote name confirmation** — handoff suggests
    `evanfollis/synaplex`; repo creation is irreversible external action
    so awaits explicit confirmation.
@@ -171,7 +170,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-04-24T14:50Z — three reflection fixes landed)
+(updated 2026-04-25T14:35:04Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -184,16 +183,24 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   `beats.py` with rediscovery note. `rss.py` now names the failing
   feed URLs inline in the friction event's `extra.failing_feeds`
   field so future regressions are actionable from the log alone.
-- **`score:stuck` at midnight** (still live) — score timer fires at
-  top of hour before ingest has run for the new day. Produces a
-  daily spurious stuck event. Fix: add `After=synaplex-intake.service`
-  to `synaplex-score.service`, or tolerate empty-first-window in
-  `score.py`. Deferred — not load-bearing.
+- ~~`score:stuck` at midnight~~ **FIXED** 2026-04-25T15:50Z —
+  `synaplex-score.timer` shifted from `OnCalendar=hourly` (top-of-
+  hour) to `OnCalendar=*-*-* *:20:00` so the score job reliably lags
+  intake's :17 firing by ~3 minutes. URGENT proposed
+  `After=synaplex-intake.service` was misdiagnosis: the line is
+  already on the unit, and `After=` only orders within a startup
+  transaction, not across timer firings. Tonight's midnight will be
+  the first un-stuck transition.
+- **synthesis-translator emits malformed ISO timestamps** (**2nd reflection cycle unaddressed**) —
+  `supervisor/scripts/lib/synthesis-translator.sh:7` uses `%H-%M-%S` (dashes) in
+  the `ts` JSON field instead of `%H:%M:%S` (colons). Fix is one line in supervisor scripts
+  (not project code) — out of synaplex session scope; needs workspace-executive or
+  principal session. Carrying forward.
 
 ## What the next agent must read first
 
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
-3. `intake/limits.py` — the cap is only partially deployed. Before adding new adapters, apply it to arxiv + HN first.
-4. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-5. Prior reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-24T02-40-51Z.md` — P1–P3 are all ≤30min fixes; address them before adding features.
+3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-25T14-35-04Z.md` — score:stuck at 2/3 carry-forward threshold (fires tomorrow midnight); synthesis-translator timestamp bug in 2nd cycle; CURRENT_STATE.md uncommitted (commit it).
+5. **always-load cap collision**: referenced URGENT handoff file is gone from disk — verify whether the 30KB cap issue was resolved or the file was lost.
