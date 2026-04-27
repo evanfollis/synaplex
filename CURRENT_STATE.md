@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-25T15:50Z (post-reflection: score timer shifted to :20; cap collision verified resolved)
+updated: 2026-04-27T05:05Z (post-reflection: no-clobber discipline + _gather_week dedup landed)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -170,7 +170,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-04-25T14:35:04Z — reflection pass)
+(updated 2026-04-27T02:28:22Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -183,24 +183,32 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   `beats.py` with rediscovery note. `rss.py` now names the failing
   feed URLs inline in the friction event's `extra.failing_feeds`
   field so future regressions are actionable from the log alone.
-- ~~`score:stuck` at midnight~~ **FIXED** 2026-04-25T15:50Z —
-  `synaplex-score.timer` shifted from `OnCalendar=hourly` (top-of-
-  hour) to `OnCalendar=*-*-* *:20:00` so the score job reliably lags
-  intake's :17 firing by ~3 minutes. URGENT proposed
-  `After=synaplex-intake.service` was misdiagnosis: the line is
-  already on the unit, and `After=` only orders within a startup
-  transaction, not across timer firings. Tonight's midnight will be
-  the first un-stuck transition.
-- **synthesis-translator emits malformed ISO timestamps** (**2nd reflection cycle unaddressed**) —
-  `supervisor/scripts/lib/synthesis-translator.sh:7` uses `%H-%M-%S` (dashes) in
-  the `ts` JSON field instead of `%H:%M:%S` (colons). Fix is one line in supervisor scripts
-  (not project code) — out of synaplex session scope; needs workspace-executive or
-  principal session. Carrying forward.
+- ~~`score:stuck` at midnight~~ **FIXED** 2026-04-25T15:50Z, **CONFIRMED** 2026-04-26T00:21Z —
+  `synaplex-score.timer` shifted to `OnCalendar=*-*-* *:20:00`; score now lags
+  intake's :18 firing by ~3 minutes. No `stuck` event at 2026-04-26T00:01Z —
+  fix verified working on first midnight after deployment.
+- ~~synthesis-translator emits malformed ISO timestamps~~ **FIXED** in supervisor session 2026-04-25 —
+  `supervisor/scripts/lib/synthesis-translator.sh` now uses separate `ISO_FILENAME` (dashes,
+  for file paths) and `ISO_TS` (colons, for JSON `ts` field). Confirmed by 2026-04-25T15:42:22Z
+  friction event carrying valid ISO 8601 timestamp.
+- ~~Heuristic weekly synthesis has duplicate items~~ **FIXED** 2026-04-27T05:05Z —
+  `_gather_week` now dedupes by `content_id` (highest-scoring instance wins on
+  collision). Verified: today's gather returns 985 items, 985 distinct IDs.
+- ~~arxiv adapter destroys daily data on stuck runs~~ **FIXED** 2026-04-27T05:05Z —
+  no-clobber discipline applied to all three adapters via shared
+  `intake.adapters.merge_jsonl_by_id` helper. Adapters now collect new items
+  in memory, merge with existing file by `content_id`, and write atomically.
+  Empty fetch + existing content → file preserved (verified manually:
+  arxiv-2026-04-27.jsonl held at 100 items through a "0 new" run that
+  previously would have destroyed it). IngestResult dataclass extended with
+  `total` and `preserved` fields; CLI + friction events report new/preserved/
+  total. arxiv-2026-04-26.jsonl is permanently lost (collected destruction
+  occurred before the fix).
 
 ## What the next agent must read first
 
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-25T14-35-04Z.md` — score:stuck at 2/3 carry-forward threshold (fires tomorrow midnight); synthesis-translator timestamp bug in 2nd cycle; CURRENT_STATE.md uncommitted (commit it).
-5. **always-load cap collision**: referenced URGENT handoff file is gone from disk — verify whether the 30KB cap issue was resolved or the file was lost.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-27T02-28-22Z.md` — **NEW**: arxiv data-destroying overwrite bug (CRITICAL P1); synthesis dedup still unaddressed (3rd cycle); pipeline day 7 of 10.
+5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
