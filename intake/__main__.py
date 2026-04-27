@@ -45,14 +45,14 @@ def cmd_ingest(args) -> int:
         for name, fn in ADAPTERS.items():
             r = fn(beat, date)
             results.append(r)
-            print(f"[{name}] {r.count} items, {r.deduped} deduped -> {r.out_path}")
+            print(f"[{name}] {r.count} new, {r.preserved} preserved, {r.total} total -> {r.out_path}")
         return 0
     fn = ADAPTERS.get(source)
     if not fn:
         print(f"unknown source: {source}; expected one of rss|arxiv|hackernews|all", file=sys.stderr)
         return 2
     r = fn(beat, date)
-    print(f"[{source}] {r.count} items, {r.deduped} deduped -> {r.out_path}")
+    print(f"[{source}] {r.count} new, {r.preserved} preserved, {r.total} total -> {r.out_path}")
     return 0
 
 
@@ -92,7 +92,7 @@ def cmd_run_daily(args) -> int:
     print(f"== run-daily beat={beat.id} date={date} ==")
     for name, fn in ADAPTERS.items():
         r = fn(beat, date)
-        print(f"[{name}] {r.count} items, {r.deduped} deduped -> {r.out_path}")
+        print(f"[{name}] {r.count} new, {r.preserved} preserved, {r.total} total -> {r.out_path}")
     s = score_mod.score_day(beat.id, date)
     print(f"[score] provider={s['provider']} count={s['count']} -> {s['out']}")
     d = digest_mod.render(beat.id, date)

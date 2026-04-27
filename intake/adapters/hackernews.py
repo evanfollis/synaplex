@@ -37,7 +37,7 @@ from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
 from ..paths import raw_path
-from . import IngestResult
+from . import IngestResult, merge_jsonl_by_id
 
 BASE = "https://hacker-news.firebaseio.com/v0"
 USER_AGENT = "synaplex-intake/0.1 (+https://synaplex.ai/intake)"
@@ -84,75 +84,83 @@ def ingest(beat: Beat, date: str) -> IngestResult:
         top = _json(f"{BASE}/topstories.json")[:TAKE_TOP]
         new = _json(f"{BASE}/newstories.json")[:TAKE_NEW]
     except Exception as exc:
-        emit_failure("intake", "hackernews", f"stream fetch failed: {type(exc).__name__}: {exc}", "")
-        out.write_text("", encoding="utf-8")
+        # No-clobber: stream-fetch failure must NOT destroy the existing
+        # daily file. Emit failure and bail; existing items are intact.
+        emit_failure(
+            "intake", "hackernews",
+            f"stream fetch failed: {type(exc).__name__}: {exc}", str(out),
+        )
         return IngestResult(source="hackernews", count=0, deduped=0, out_path=str(out))
 
     ids = list(dict.fromkeys(list(top) + list(new)))  # preserve order, dedup
-    count = 0
     deduped = 0
     capped = 0
     cap = layer1_cap()
     seen: set[str] = set()
+    new_items: list[dict] = []
     fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
-    with open(out, "w", encoding="utf-8") as fp:
-        for hn_id in ids:
-            item = _fetch_item(hn_id)
-            if not item:
-                continue
-            kind = _classify(item)
-            if kind is None:
-                continue
-            title = (item.get("title") or "").strip()
-            if not title:
-                continue
-            url = (item.get("url") or "").strip()
-            if not url:
-                url = f"https://news.ycombinator.com/item?id={hn_id}"
-            # hn 'text' field is HTML but short; we keep it as-is for summary
-            summary = (item.get("text") or "")[:1200]
-            if not url and not summary:
-                continue
-            item_id = content_id(url, title)
-            if item_id in seen:
-                deduped += 1
-                continue
-            if count >= cap:
-                capped += 1
-                continue
-            seen.add(item_id)
-            published = ""
-            if item.get("time"):
-                try:
-                    published = datetime.fromtimestamp(item["time"], tz=timezone.utc).isoformat(
-                        timespec="seconds"
-                    ).replace("+00:00", "Z")
-                except Exception:
-                    pass
-            record = {
-                "id": item_id,
-                "source": "hackernews",
-                "hn_id": hn_id,
-                "hn_type": kind,
-                "url": url,
-                "title": title,
-                "summary": summary,
-                "author": item.get("by") or "",
-                "points": int(item.get("score") or 0),
-                "comment_count": int(item.get("descendants") or 0),
-                "published": published,
-                "fetched_at": fetched_at,
-                "beat": beat.id,
-            }
-            fp.write(json.dumps(record, ensure_ascii=False) + "\n")
-            count += 1
+    for hn_id in ids:
+        item = _fetch_item(hn_id)
+        if not item:
+            continue
+        kind = _classify(item)
+        if kind is None:
+            continue
+        title = (item.get("title") or "").strip()
+        if not title:
+            continue
+        url = (item.get("url") or "").strip()
+        if not url:
+            url = f"https://news.ycombinator.com/item?id={hn_id}"
+        # hn 'text' field is HTML but short; we keep it as-is for summary
+        summary = (item.get("text") or "")[:1200]
+        if not url and not summary:
+            continue
+        item_id = content_id(url, title)
+        if item_id in seen:
+            deduped += 1
+            continue
+        if len(new_items) >= cap:
+            capped += 1
+            continue
+        seen.add(item_id)
+        published = ""
+        if item.get("time"):
+            try:
+                published = datetime.fromtimestamp(item["time"], tz=timezone.utc).isoformat(
+                    timespec="seconds"
+                ).replace("+00:00", "Z")
+            except Exception:
+                pass
+        new_items.append({
+            "id": item_id,
+            "source": "hackernews",
+            "hn_id": hn_id,
+            "hn_type": kind,
+            "url": url,
+            "title": title,
+            "summary": summary,
+            "author": item.get("by") or "",
+            "points": int(item.get("score") or 0),
+            "comment_count": int(item.get("descendants") or 0),
+            "published": published,
+            "fetched_at": fetched_at,
+            "beat": beat.id,
+        })
 
+    new_added, preserved, total = merge_jsonl_by_id(out, new_items)
     ref = str(out)
-    if count == 0:
-        emit_stuck("intake", "hackernews", "no hackernews items classified", ref)
+    if not new_items:
+        emit_stuck(
+            "intake", "hackernews",
+            f"no hackernews items classified (preserved {preserved} from prior runs)",
+            ref,
+        )
     else:
-        reason = f"{count} items, {deduped} deduped"
+        reason = f"{new_added} new, {preserved} preserved, {total} total"
+        if deduped:
+            reason += f", {deduped} within-run dedup"
         if capped:
             reason += f", {capped} dropped by daily cap ({cap})"
         emit_success("intake", "hackernews", reason, ref)
@@ -162,4 +170,7 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             f"daily cap hit: {capped} items dropped past {cap}-item cap",
             ref,
         )
-    return IngestResult(source="hackernews", count=count, deduped=deduped, out_path=ref)
+    return IngestResult(
+        source="hackernews", count=new_added, deduped=deduped,
+        out_path=ref, total=total, preserved=preserved,
+    )

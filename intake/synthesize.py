@@ -45,18 +45,33 @@ def _iso_week_for(d: _date) -> str:
 
 
 def _gather_week(beat_id: str, end_date: str) -> tuple[list[dict], list[str]]:
-    """Return (scored items across last 7 days, list of dates covered)."""
+    """Return (scored items across last 7 days, list of dates covered).
+
+    Dedupes by `content_id`: an article that appears in multiple days'
+    scored files (e.g., a long-tail RSS post that stayed in source's
+    recent window for several days, getting re-scored each day) is
+    represented exactly once. The highest-scoring instance wins on
+    collision so the synthesis never demotes a stronger reading of the
+    same item.
+    """
     end = datetime.strptime(end_date, "%Y-%m-%d").date()
-    items: list[dict] = []
+    by_id: dict[str, dict] = {}
     dates_covered: list[str] = []
     for i in range(7):
         d = end - timedelta(days=i)
         date_str = d.isoformat()
         day_items = _load_scored(beat_id, date_str)
-        if day_items:
-            dates_covered.append(date_str)
-            items.extend(day_items)
-    return items, sorted(set(dates_covered))
+        if not day_items:
+            continue
+        dates_covered.append(date_str)
+        for item in day_items:
+            iid = item.get("id")
+            if not iid:
+                continue
+            existing = by_id.get(iid)
+            if existing is None or item.get("score", 0) > existing.get("score", 0):
+                by_id[iid] = item
+    return list(by_id.values()), sorted(set(dates_covered))
 
 
 def _themed_heuristic(

@@ -26,7 +26,7 @@ from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
 from ..paths import raw_path
-from . import IngestResult
+from . import IngestResult, merge_jsonl_by_id
 
 API_BASE = "http://export.arxiv.org/api/query"
 USER_AGENT = "synaplex-intake/0.1 (+https://synaplex.ai/intake)"
@@ -87,76 +87,84 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     try:
         raw = _fetch(url)
     except Exception as exc:
-        emit_failure("intake", "arxiv", f"fetch failed: {type(exc).__name__}: {exc}", "")
-        out.write_text("", encoding="utf-8")
+        # No-clobber: a fetch error must NOT destroy the existing daily file.
+        # Just emit failure and return — the file (if any) is left intact.
+        emit_failure("intake", "arxiv", f"fetch failed: {type(exc).__name__}: {exc}", str(out))
         return IngestResult(source="arxiv", count=0, deduped=0, out_path=str(out))
 
     # arxiv rate-limits; respect the 3s guideline
     time.sleep(1.0)
 
     parsed = feedparser.parse(raw)
-    count = 0
     deduped = 0
     capped = 0
     cap = layer1_cap()
     seen: set[str] = set()
+    new_items: list[dict] = []
     fetched_at = now.isoformat(timespec="seconds").replace("+00:00", "Z")
 
-    with open(out, "w", encoding="utf-8") as fp:
-        for entry in parsed.entries:
-            if not _within_window(entry, window_start):
-                continue
-            link = (entry.get("link") or "").strip()
-            title = _normalize(entry.get("title") or "")
-            if not link or not title:
-                continue
-            item_id = content_id(link, title)
-            if item_id in seen:
-                deduped += 1
-                continue
-            if count >= cap:
-                capped += 1
-                continue
-            seen.add(item_id)
-            summary = _normalize(entry.get("summary") or "")[:1200]
-            authors = [
-                (a.get("name") if isinstance(a, dict) else str(a))
-                for a in entry.get("authors", [])
-            ]
-            categories = []
-            for tag in entry.get("tags", []) or []:
-                term = tag.get("term") if isinstance(tag, dict) else None
-                if term:
-                    categories.append(term)
-            published_parsed = entry.get("published_parsed") or entry.get("updated_parsed")
-            published = ""
-            if published_parsed:
-                try:
-                    published = datetime(*published_parsed[:6], tzinfo=timezone.utc).isoformat(
-                        timespec="seconds"
-                    ).replace("+00:00", "Z")
-                except Exception:
-                    pass
-            item = {
-                "id": item_id,
-                "source": "arxiv",
-                "url": link,
-                "title": title,
-                "summary": summary,
-                "authors": authors,
-                "categories": categories,
-                "published": published,
-                "fetched_at": fetched_at,
-                "beat": beat.id,
-            }
-            fp.write(json.dumps(item, ensure_ascii=False) + "\n")
-            count += 1
+    for entry in parsed.entries:
+        if not _within_window(entry, window_start):
+            continue
+        link = (entry.get("link") or "").strip()
+        title = _normalize(entry.get("title") or "")
+        if not link or not title:
+            continue
+        item_id = content_id(link, title)
+        if item_id in seen:
+            deduped += 1
+            continue
+        if len(new_items) >= cap:
+            capped += 1
+            continue
+        seen.add(item_id)
+        summary = _normalize(entry.get("summary") or "")[:1200]
+        authors = [
+            (a.get("name") if isinstance(a, dict) else str(a))
+            for a in entry.get("authors", [])
+        ]
+        categories = []
+        for tag in entry.get("tags", []) or []:
+            term = tag.get("term") if isinstance(tag, dict) else None
+            if term:
+                categories.append(term)
+        published_parsed = entry.get("published_parsed") or entry.get("updated_parsed")
+        published = ""
+        if published_parsed:
+            try:
+                published = datetime(*published_parsed[:6], tzinfo=timezone.utc).isoformat(
+                    timespec="seconds"
+                ).replace("+00:00", "Z")
+            except Exception:
+                pass
+        new_items.append({
+            "id": item_id,
+            "source": "arxiv",
+            "url": link,
+            "title": title,
+            "summary": summary,
+            "authors": authors,
+            "categories": categories,
+            "published": published,
+            "fetched_at": fetched_at,
+            "beat": beat.id,
+        })
 
+    new_added, preserved, total = merge_jsonl_by_id(out, new_items)
     ref = str(out)
-    if count == 0:
-        emit_stuck("intake", "arxiv", f"no arxiv items in {WINDOW_DAYS}d window", ref)
+    if not new_items:
+        # `stuck` is the right signal — fetch returned 0 — but the daily file
+        # is preserved (no clobber). emit_stuck still fires so meta-scan sees
+        # the upstream zero-result; ref points at the (preserved) file.
+        emit_stuck(
+            "intake", "arxiv",
+            f"no arxiv items in {WINDOW_DAYS}d window (preserved {preserved} from prior runs)",
+            ref,
+        )
     else:
-        reason = f"{count} items, {deduped} deduped"
+        reason = f"{new_added} new, {preserved} preserved, {total} total"
+        if deduped:
+            reason += f", {deduped} within-run dedup"
         if capped:
             reason += f", {capped} dropped by daily cap ({cap})"
         emit_success("intake", "arxiv", reason, ref)
@@ -166,4 +174,7 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             f"daily cap hit: {capped} items dropped past {cap}-item cap",
             ref,
         )
-    return IngestResult(source="arxiv", count=count, deduped=deduped, out_path=ref)
+    return IngestResult(
+        source="arxiv", count=new_added, deduped=deduped,
+        out_path=ref, total=total, preserved=preserved,
+    )

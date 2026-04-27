@@ -37,7 +37,7 @@ from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
 from ..paths import raw_path
-from . import IngestResult
+from . import IngestResult, merge_jsonl_by_id
 
 USER_AGENT = "synaplex-intake/0.1 (+https://synaplex.ai/intake)"
 TIMEOUT = 15.0
@@ -81,62 +81,67 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     out = raw_path("rss", date)
     out.parent.mkdir(parents=True, exist_ok=True)
 
-    count = 0
     deduped = 0
     capped = 0
     cap = layer1_cap()
     seen: set[str] = set()
+    new_items: list[dict] = []
     errored_feeds: list[str] = []
     fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
-    with open(out, "w", encoding="utf-8") as fp:
-        for feed_url in beat.rss_feeds:
-            try:
-                raw = _fetch(feed_url)
-            except Exception as exc:
-                errored_feeds.append(f"{feed_url} -> {type(exc).__name__}: {exc}")
+    for feed_url in beat.rss_feeds:
+        try:
+            raw = _fetch(feed_url)
+        except Exception as exc:
+            errored_feeds.append(f"{feed_url} -> {type(exc).__name__}: {exc}")
+            continue
+        parsed = feedparser.parse(raw)
+        if parsed.bozo and not parsed.entries:
+            errored_feeds.append(f"{feed_url} -> bozo_empty")
+            continue
+        for entry in parsed.entries:
+            url = (entry.get("link") or "").strip()
+            title = (entry.get("title") or "").strip()
+            if not url or not title:
                 continue
-            parsed = feedparser.parse(raw)
-            if parsed.bozo and not parsed.entries:
-                errored_feeds.append(f"{feed_url} -> bozo_empty")
+            item_id = content_id(url, title)
+            if item_id in seen:
+                deduped += 1
                 continue
-            for entry in parsed.entries:
-                url = (entry.get("link") or "").strip()
-                title = (entry.get("title") or "").strip()
-                if not url or not title:
-                    continue
-                item_id = content_id(url, title)
-                if item_id in seen:
-                    deduped += 1
-                    continue
-                if count >= cap:
-                    capped += 1
-                    continue
-                seen.add(item_id)
-                summary_html = entry.get("summary") or entry.get("description") or ""
-                item = {
-                    "id": item_id,
-                    "source": "rss",
-                    "feed": feed_url,
-                    "url": url,
-                    "title": title,
-                    "summary": _plain_text(summary_html),
-                    "author": entry.get("author") or "",
-                    "published": _entry_iso(entry),
-                    "fetched_at": fetched_at,
-                    "beat": beat.id,
-                }
-                fp.write(json.dumps(item, ensure_ascii=False) + "\n")
-                count += 1
+            if len(new_items) >= cap:
+                capped += 1
+                continue
+            seen.add(item_id)
+            summary_html = entry.get("summary") or entry.get("description") or ""
+            new_items.append({
+                "id": item_id,
+                "source": "rss",
+                "feed": feed_url,
+                "url": url,
+                "title": title,
+                "summary": _plain_text(summary_html),
+                "author": entry.get("author") or "",
+                "published": _entry_iso(entry),
+                "fetched_at": fetched_at,
+                "beat": beat.id,
+            })
 
+    new_added, preserved, total = merge_jsonl_by_id(out, new_items)
     ref = str(out)
-    if count == 0:
+    if not new_items:
+        # All feeds errored or returned nothing. Existing daily file is
+        # preserved (no clobber); we still emit `stuck` so meta-scan sees
+        # the upstream zero-result.
         reason = "no rss items"
         if errored_feeds:
             reason += f" ({len(errored_feeds)} feed errors; first: {errored_feeds[0]})"
+        if preserved:
+            reason += f"; preserved {preserved} from prior runs"
         emit_stuck("intake", "rss", reason, ref)
     else:
-        reason = f"{count} items, {deduped} deduped"
+        reason = f"{new_added} new, {preserved} preserved, {total} total"
+        if deduped:
+            reason += f", {deduped} within-run dedup"
         if capped:
             reason += f", {capped} dropped by daily cap ({cap})"
         if errored_feeds:
@@ -165,4 +170,7 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             ref=ref,
             extra={"failing_feeds": errored_feeds},
         )
-    return IngestResult(source="rss", count=count, deduped=deduped, out_path=ref)
+    return IngestResult(
+        source="rss", count=new_added, deduped=deduped,
+        out_path=ref, total=total, preserved=preserved,
+    )
