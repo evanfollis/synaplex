@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-27T05:05Z (post-reflection: no-clobber discipline + _gather_week dedup landed)
+updated: 2026-04-29T03:05Z (5-cycle handoff closed: /review of 5814658 done; S3-P2 escalation gate landed)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -170,7 +170,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-04-27T02:28:22Z — reflection pass)
+(updated 2026-04-29T02:29Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -204,11 +204,29 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   `total` and `preserved` fields; CLI + friction events report new/preserved/
   total. arxiv-2026-04-26.jsonl is permanently lost (collected destruction
   occurred before the fix).
+- ~~S3-P2 escalation gate missing~~ **FIXED** 2026-04-29T03:05Z — `intake/escalation.py`
+  ships per-source consecutive-stuck counters; arxiv/rss/hackernews emit
+  `eventType: escalated` after 3 consecutive stuck events (and every 3rd thereafter).
+  Reset on success. Smoke-tested. Counters at `runtime/intake/.state/`.
+- **RSS merged file exceeds 200-item cap** — rss-2026-04-28.jsonl holds 202 items against
+  declared 200-item cap. Root cause: `layer1_cap()` is applied to the incoming fetch, not to
+  the post-merge total. arxiv now likewise grows past 200 with the new union semantics
+  (200 in arxiv-2026-04-29 after two cron runs). Pending principal decision on truncation
+  policy (score vs. recency) before mechanical fix lands. See handoff
+  `runtime/.handoff/general-synaplex-cap-and-review-followups-2026-04-29T03-10Z.md`.
+- **HN daily file accumulates beyond 200-item cap** — reached 409 items by end-of-day Apr 28.
+  Same root cause and same pending principal decision as above.
+- **Adversarial review §4 §6 §7 carried forward** — review of commit 5814658 surfaced four
+  larger design issues beyond the §1+§2+§3 fixes that landed: §4 file lock for concurrent
+  writers, §6 day-boundary race on the 00:17 cron, §7 `_gather_week` rubric-drift tiebreak
+  (currently "highest-score wins" which can amplify scorer changes; should be
+  "newest-scored-at wins" once `scored_at` is plumbed). All low priority while
+  scoring is heuristic-only and there is one writer per source. See handoff above.
 
 ## What the next agent must read first
 
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-27T02-28-22Z.md` — **NEW**: arxiv data-destroying overwrite bug (CRITICAL P1); synthesis dedup still unaddressed (3rd cycle); pipeline day 7 of 10.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-29T02-29-54Z.md` — arxiv clean overnight (positive); RSS Apr 28 ended 204 items; HN reached 409; /review on 5814658 (fifth cycle, URGENT filed); S3-P2 escalation (fifth cycle, URGENT filed).
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
