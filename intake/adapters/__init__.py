@@ -104,9 +104,31 @@ def merge_jsonl_by_id(
 
     preserved = len(merged) - new_added
 
+    # Atomic write with durability barriers + tmp cleanup on failure
+    # (adversarial review of 5814658 §1 + §2: bare `os.replace` is atomic
+    # for visibility but not durability — power loss between rename and
+    # the next periodic flush can leave a 0-byte file at the target).
     tmp = p.with_suffix(p.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as fp:
-        for item in merged.values():
-            fp.write(json.dumps(item, ensure_ascii=False) + "\n")
-    os.replace(tmp, p)
+    try:
+        with open(tmp, "w", encoding="utf-8") as fp:
+            for item in merged.values():
+                fp.write(json.dumps(item, ensure_ascii=False) + "\n")
+            fp.flush()
+            os.fsync(fp.fileno())
+        os.replace(tmp, p)
+        # fsync the parent dir so the rename itself survives a host crash
+        dir_fd = os.open(str(p.parent), os.O_DIRECTORY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
+    except BaseException:
+        # On any failure, remove the orphan tmp; the existing daily file
+        # (if any) is untouched because os.replace either succeeded or
+        # never ran.
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
     return new_added, preserved, len(merged)

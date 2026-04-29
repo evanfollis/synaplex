@@ -31,6 +31,16 @@ def ensure_dirs() -> None:
 
 
 def raw_path(source: str, date: str) -> Path:
+    """Daily raw file for a source.
+
+    NOTE (adversarial review of 5814658 §3): keyed by (source, date) only,
+    NOT by (source, beat, date). All beats sharing a source today (single
+    beat: agent-platforms) write to the same file. With merge-by-id
+    semantics in `intake.adapters.merge_jsonl_by_id`, a second beat that
+    pulls the same source would silently overwrite this beat's items on
+    `content_id` collision. Re-key by (source, beat, date) before any
+    second beat is added.
+    """
     return RAW_ROOT / f"{source}-{date}.jsonl"
 
 

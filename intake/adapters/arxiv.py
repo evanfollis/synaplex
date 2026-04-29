@@ -22,7 +22,8 @@ from urllib.request import Request, urlopen
 import feedparser  # type: ignore[import-untyped]
 
 from ..beats import Beat
-from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
+from ..escalation import record_stuck, reset_stuck
+from ..friction import emit, emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
 from ..paths import raw_path
@@ -161,7 +162,23 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             f"no arxiv items in {WINDOW_DAYS}d window (preserved {preserved} from prior runs)",
             ref,
         )
+        # S3-P2 escalation gate (workspace rule, accepted in
+        # dispositions.jsonl 2026-04-16). On the 3rd consecutive stuck
+        # event (and every 3rd thereafter), emit `escalated` so the
+        # synthesis loop and meta-scan see it as a load-bearing failure
+        # class, not just a noise tick.
+        n, crossed = record_stuck("arxiv")
+        if crossed:
+            emit(
+                layer="intake",
+                source="arxiv",
+                eventType="escalated",
+                reason=f"consecutive stuck count {n} crossed S3-P2 threshold",
+                ref=ref,
+                extra={"consecutive_stuck": n, "threshold": 3},
+            )
     else:
+        reset_stuck("arxiv")
         reason = f"{new_added} new, {preserved} preserved, {total} total"
         if deduped:
             reason += f", {deduped} within-run dedup"

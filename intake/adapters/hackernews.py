@@ -33,7 +33,8 @@ from datetime import datetime, timezone
 from urllib.request import Request, urlopen
 
 from ..beats import Beat
-from ..friction import emit_failure, emit_stuck, emit_success, emit_throttled
+from ..escalation import record_stuck, reset_stuck
+from ..friction import emit, emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
 from ..paths import raw_path
@@ -157,7 +158,15 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             f"no hackernews items classified (preserved {preserved} from prior runs)",
             ref,
         )
+        n, crossed = record_stuck("hackernews")
+        if crossed:
+            emit(
+                layer="intake", source="hackernews", eventType="escalated",
+                reason=f"consecutive stuck count {n} crossed S3-P2 threshold",
+                ref=ref, extra={"consecutive_stuck": n, "threshold": 3},
+            )
     else:
+        reset_stuck("hackernews")
         reason = f"{new_added} new, {preserved} preserved, {total} total"
         if deduped:
             reason += f", {deduped} within-run dedup"
