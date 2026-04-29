@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-29T03:05Z (5-cycle handoff closed: /review of 5814658 done; S3-P2 escalation gate landed)
+updated: 2026-04-29T15:35Z (post-reflection: friction `timestamp` field + S3-P2 gate covers exceptions)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -170,7 +170,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-04-29T02:29Z — reflection pass)
+(updated 2026-04-29T14:30Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -222,11 +222,23 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   (currently "highest-score wins" which can amplify scorer changes; should be
   "newest-scored-at wins" once `scored_at` is plumbed). All low priority while
   scoring is heuristic-only and there is one writer per source. See handoff above.
+- ~~S3-P2 escalation gate does not cover network failures~~ **FIXED**
+  2026-04-29T15:35Z — arxiv + hackernews exception handlers now also call
+  `record_stuck()` and emit `escalated` if the threshold is crossed.
+  RSS's per-feed errors don't short-circuit the function; the all-feeds-
+  fail case still routes through the existing stuck path which already
+  counts. Semantic widened to "consecutive stuck OR exception".
+- ~~Friction log missing `timestamp` field (schema violation)~~ **FIXED**
+  2026-04-29T15:35Z — `intake/friction.py` now emits both `ts` (ISO,
+  human-readable) and `timestamp` (epoch-ms integer, workspace minimum
+  event shape per CLAUDE.md §Telemetry events). Additive change; existing
+  consumers continue working, time-windowed consumers now see the field.
+  Verified live: latest event carries `timestamp: 1777476699109`.
 
 ## What the next agent must read first
 
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-29T02-29-54Z.md` — arxiv clean overnight (positive); RSS Apr 28 ended 204 items; HN reached 409; /review on 5814658 (fifth cycle, URGENT filed); S3-P2 escalation (fifth cycle, URGENT filed).
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-29T14-30-01Z.md` — escalation gate gap (network failures not counted); friction `ts`/`timestamp` schema mismatch (time-windowed queries broken); cap policy still pending principal decision.
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
