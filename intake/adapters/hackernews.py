@@ -91,6 +91,15 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             "intake", "hackernews",
             f"stream fetch failed: {type(exc).__name__}: {exc}", str(out),
         )
+        # S3-P2: network-exception failures also count toward consecutive-
+        # stuck escalation (see arxiv.py for the rationale).
+        n, crossed = record_stuck("hackernews")
+        if crossed:
+            emit(
+                layer="intake", source="hackernews", eventType="escalated",
+                reason=f"consecutive stuck/failure count {n} crossed S3-P2 threshold",
+                ref=str(out), extra={"consecutive_stuck": n, "threshold": 3},
+            )
         return IngestResult(source="hackernews", count=0, deduped=0, out_path=str(out))
 
     ids = list(dict.fromkeys(list(top) + list(new)))  # preserve order, dedup

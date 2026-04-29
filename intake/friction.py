@@ -34,8 +34,25 @@ EventType = Literal["success", "failure", "stuck", "escalated", "throttled"]
 SourceType = Literal["user", "system", "smoke", "cron"]
 
 
+def _now_iso_and_epoch_ms() -> tuple[str, int]:
+    """Return (ISO-8601 string, epoch-ms int) for the current instant.
+
+    The workspace minimum event shape (CLAUDE.md §Telemetry events) requires
+    `timestamp` as an integer of epoch milliseconds. We emit BOTH `ts`
+    (ISO-8601, human-readable) and `timestamp` (epoch-ms, schema-compliant)
+    so meta-scan / synthesis time-windowed queries can filter, while humans
+    reading the JSONL still get a legible date.
+    """
+    now = datetime.now(timezone.utc)
+    return (
+        now.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        int(now.timestamp() * 1000),
+    )
+
+
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    """Backward-compat: ISO-only helper retained for any external caller."""
+    return _now_iso_and_epoch_ms()[0]
 
 
 def _default_source_type() -> SourceType:
@@ -65,8 +82,10 @@ def emit(
 ) -> dict:
     """Emit one friction event. Returns the dict that was written."""
     ensure_dirs()
+    ts_iso, ts_ms = _now_iso_and_epoch_ms()
     event = {
-        "ts": _now_iso(),
+        "ts": ts_iso,
+        "timestamp": ts_ms,
         "layer": layer,
         "source": source,
         "eventType": eventType,

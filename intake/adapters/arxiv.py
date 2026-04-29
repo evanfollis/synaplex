@@ -91,6 +91,17 @@ def ingest(beat: Beat, date: str) -> IngestResult:
         # No-clobber: a fetch error must NOT destroy the existing daily file.
         # Just emit failure and return — the file (if any) is left intact.
         emit_failure("intake", "arxiv", f"fetch failed: {type(exc).__name__}: {exc}", str(out))
+        # S3-P2: a network/exception failure is also a "stuck" condition for
+        # escalation purposes — the loop produced no progress this run. Counter
+        # increments alongside zero-fetch stuck so consecutive failures of any
+        # kind cross the threshold.
+        n, crossed = record_stuck("arxiv")
+        if crossed:
+            emit(
+                layer="intake", source="arxiv", eventType="escalated",
+                reason=f"consecutive stuck/failure count {n} crossed S3-P2 threshold",
+                ref=str(out), extra={"consecutive_stuck": n, "threshold": 3},
+            )
         return IngestResult(source="arxiv", count=0, deduped=0, out_path=str(out))
 
     # arxiv rate-limits; respect the 3s guideline
