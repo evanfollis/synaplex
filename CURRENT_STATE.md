@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-29T15:35Z (post-reflection: friction `timestamp` field + S3-P2 gate covers exceptions)
+updated: 2026-04-30T15:05Z (arxiv 429 → throttled fixed; cap policy doc-aligned + routed to executive)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -170,7 +170,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-04-29T14:30Z — reflection pass)
+(updated 2026-04-30T14:27Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -208,14 +208,22 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   ships per-source consecutive-stuck counters; arxiv/rss/hackernews emit
   `eventType: escalated` after 3 consecutive stuck events (and every 3rd thereafter).
   Reset on success. Smoke-tested. Counters at `runtime/intake/.state/`.
-- **RSS merged file exceeds 200-item cap** — rss-2026-04-28.jsonl holds 202 items against
-  declared 200-item cap. Root cause: `layer1_cap()` is applied to the incoming fetch, not to
-  the post-merge total. arxiv now likewise grows past 200 with the new union semantics
-  (200 in arxiv-2026-04-29 after two cron runs). Pending principal decision on truncation
-  policy (score vs. recency) before mechanical fix lands. See handoff
-  `runtime/.handoff/general-synaplex-cap-and-review-followups-2026-04-29T03-10Z.md`.
-- **HN daily file accumulates beyond 200-item cap** — reached 409 items by end-of-day Apr 28.
-  Same root cause and same pending principal decision as above.
+- **Cap policy decision pending (5th-cycle URGENT routed)** — code is per-fetch
+  cap (200/run); union merge accumulates so daily totals exceed 200 (HN ~450,
+  RSS ~203, arxiv ~200). **No data corruption.** This turn aligned the docs
+  (`intake/limits.py` module docstring + `intake/README.md` §6) with what the
+  code actually does and routed the A/B/C decision to the executive via
+  `runtime/.handoff/general-synaplex-cap-policy-decision-2026-04-30T15-00Z.md`.
+  Synaplex declines to pick between A/B/C unilaterally (product question).
+  My recommendation in the routed handoff: Option C — ratify per-fetch
+  semantic, reword ADR-0029 §6, defer truncation to Layer 2.
+- ~~arxiv HTTP 429 emits `failure` instead of `throttled`~~ **FIXED**
+  2026-04-30T15:05Z — arxiv adapter now catches `HTTPError code=429`
+  separately and routes to `emit_throttled()` per workspace S1-P2
+  addendum. Other exceptions (timeouts, DNS, 5xx) continue to emit
+  `failure` and increment the S3-P2 escalation counter; 429 does NOT
+  count toward escalation (a server saying "back off" is the loop
+  respecting a signal, not the loop being stuck).
 - **Adversarial review §4 §6 §7 carried forward** — review of commit 5814658 surfaced four
   larger design issues beyond the §1+§2+§3 fixes that landed: §4 file lock for concurrent
   writers, §6 day-boundary race on the 00:17 cron, §7 `_gather_week` rubric-drift tiebreak
@@ -240,5 +248,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-29T14-30-01Z.md` — escalation gate gap (network failures not counted); friction `ts`/`timestamp` schema mismatch (time-windowed queries broken); cap policy still pending principal decision.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-04-30T14-27-19Z.md` — cap policy 5th-cycle URGENT filed; arxiv 429 misclassifies as `failure` (fix needed); adversarial review §4 §6 §7 open but low priority; pipeline otherwise clean.
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
