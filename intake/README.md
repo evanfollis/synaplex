@@ -101,13 +101,19 @@ this package today, and which are deferred to Layer 2:
 
 **Live (Layer 1 scope):**
 
-- **§6 Layer 1 rate limit.** Each adapter caps at
-  `intake.limits.LAYER1_MAX_ITEMS_PER_SOURCE_PER_DAY` (200). The cap is
-  soft (truncate past-cap items + emit a `failure` friction event); it
-  protects against a runaway feed dumping its full archive into the
-  day's raw file. arxiv + hackernews naturally cap below 200; rss is
-  the one that actually hits the limit when a newly-discovered feed
-  has a deep archive.
+- **§6 Layer 1 rate limit (per-fetch, NOT per-day — see deviation
+  note below).** Each adapter caps at `intake.limits.layer1_cap()`
+  (200) per fetch — i.e., per cron firing. The cap is soft (truncate
+  past-cap items + emit `eventType: throttled`) and protects against
+  a runaway feed dumping its full archive into one run's output.
+  Because the no-clobber/union-merge in `merge_jsonl_by_id` adds new
+  items to the existing daily file, multiple cron firings per day can
+  push the daily file past 200. **This deviates from the literal
+  ADR-0029 §6 wording** ("max 200 raw items per source per day"),
+  which would require post-merge truncation. See `intake/limits.py`
+  module docstring for the three reconciliation options (A score-
+  truncate, B recency-truncate, C ratify per-fetch + reword ADR);
+  the choice is principal-only and routed via the cap-policy handoff.
 - **§7 Reasoning/Validation boundary semantics (documented below).**
 - **§8 Integrity job stub** lives at `projects/synaplex/integrity/` and
   runs via `synaplex-integrity.timer` (04:37 UTC daily). First pass

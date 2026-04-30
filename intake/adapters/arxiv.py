@@ -89,19 +89,37 @@ def ingest(beat: Beat, date: str) -> IngestResult:
         raw = _fetch(url)
     except Exception as exc:
         # No-clobber: a fetch error must NOT destroy the existing daily file.
-        # Just emit failure and return — the file (if any) is left intact.
-        emit_failure("intake", "arxiv", f"fetch failed: {type(exc).__name__}: {exc}", str(out))
-        # S3-P2: a network/exception failure is also a "stuck" condition for
-        # escalation purposes — the loop produced no progress this run. Counter
-        # increments alongside zero-fetch stuck so consecutive failures of any
-        # kind cross the threshold.
-        n, crossed = record_stuck("arxiv")
-        if crossed:
-            emit(
-                layer="intake", source="arxiv", eventType="escalated",
-                reason=f"consecutive stuck/failure count {n} crossed S3-P2 threshold",
-                ref=str(out), extra={"consecutive_stuck": n, "threshold": 3},
+        # Just emit and return — the file (if any) is left intact.
+        #
+        # Distinguish HTTP 429 (designed rate-limit by upstream) from other
+        # failures: 429 is `throttled` per workspace S1-P2 addendum
+        # ("designed rate-limiting must emit throttled"), and does NOT count
+        # toward the S3-P2 escalation gate (a server saying "back off" is
+        # not the same as the loop being stuck — it's the loop respecting a
+        # signal). Other exceptions (timeouts, DNS, 5xx) are real failures
+        # and DO increment the stuck counter.
+        from urllib.error import HTTPError
+        is_429 = isinstance(exc, HTTPError) and getattr(exc, "code", None) == 429
+        if is_429:
+            emit_throttled(
+                "intake", "arxiv",
+                f"upstream 429 rate-limit: {exc}",
+                str(out),
             )
+        else:
+            emit_failure(
+                "intake", "arxiv",
+                f"fetch failed: {type(exc).__name__}: {exc}",
+                str(out),
+            )
+            # S3-P2: non-429 failures count toward consecutive-stuck.
+            n, crossed = record_stuck("arxiv")
+            if crossed:
+                emit(
+                    layer="intake", source="arxiv", eventType="escalated",
+                    reason=f"consecutive stuck/failure count {n} crossed S3-P2 threshold",
+                    ref=str(out), extra={"consecutive_stuck": n, "threshold": 3},
+                )
         return IngestResult(source="arxiv", count=0, deduped=0, out_path=str(out))
 
     # arxiv rate-limits; respect the 3s guideline
