@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-04-30T15:05Z (arxiv 429 → throttled fixed; cap policy doc-aligned + routed to executive)
+updated: 2026-04-30T21:35Z (harness-engineering observation ingested; arxiv 429 fix + cap policy routed earlier today)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -66,6 +66,15 @@ synaplex has executed several evals.
   Week 6; eval-running code not yet written.
 - **Site deploy**: `site/dist/` builds locally; deploy to `synaplex.ai`
   (or staging subdomain) is a separate handoff.
+- **Pre-canon observation: harness engineering as platform knowledge** —
+  `lab/observations/harness-engineering-platform-knowledge-2026-04-30.md`
+  captures Lopopolo's six-claim framing (code-abundant/attention-scarce,
+  repo-as-system-of-record, runtime observability, custom checks,
+  ticket-level orchestration, GC-of-slop-into-harness-changes) as a
+  pre-candidate observation. Status: NOT promoted to canon — Layer 2
+  reasoning owns promotion via normal pipeline (pre-registration +
+  L3 validation). Adds three primary-source URLs that Layer 1 should
+  consider as feed candidates if the RSS list grows.
 
 ## What's next (deployable)
 
