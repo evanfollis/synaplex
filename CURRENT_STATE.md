@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-07T03:00Z (cap policy resolved: ADR-0029 §6 amended to per-fetch + assertion test landed)
+updated: 2026-05-10T03:30Z (score cron 3rd-cycle URGENT closed: timer aligned to intake cadence)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -138,7 +138,13 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 - **Silent layer rule (S3-P2)**: every layer must emit typed friction
   events for success + failure + stuck + escalated + throttled states. A
   layer that only emits on the happy path is indistinguishable from stuck.
-- **Scoring cron vs. API cost (P1 — 2nd reflection cycle)**: score runs hourly (12×/day) but intake runs 4-hourly (3×/day) — 9 of 12 score runs re-score unchanged data. Zero cost today (heuristic). When ANTHROPIC_API_KEY lands, Sonnet scoring at ~676 items × 12/day = ~8100 API calls/day. Fix: change `synaplex-score.timer` to `OnCalendar=*-*-* 04:25:00,08:25:00,12:25:00,16:25:00,20:25:00,00:25:00`. **Flagged in 2 consecutive reflections without action; will trigger carry-forward escalation at next reflection (3rd cycle) if unresolved.** Principal authorization required for systemd change.
+- ~~Scoring cron vs. API cost~~ **RESOLVED 2026-05-10T03:30Z** —
+  `synaplex-score.timer` shifted from `*-*-* *:20:00` (12×/day) to
+  `*-*-* 00,04,08,12,16,20:25:00` (6×/day, intake+8min). Cuts redundant
+  scoring runs in half; pre-empts the ~8100 Sonnet calls/day exposure
+  that would have appeared when ANTHROPIC_API_KEY lands. supervisor@60bc0b4;
+  daemon-reload + restart applied; next elapse 04:25 UTC. The score:stuck
+  midnight bug stays fixed (00:25 lags 00:17 by ~8 min vs prior :20 ~3 min).
 
 ## Truth sources (non-transcript)
 
@@ -266,5 +272,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-02T02-41-10Z.md` — pipeline clean; arxiv timeout noted (first occurrence, monitor); cap policy URGENT in INBOX with 24h dispatch deadline (2026-05-02T14:42Z); score cron redundancy (P1, 2nd cycle, escalates at next reflection); RSS double-emit (P2, close this loop).
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-10T02-38-58Z.md` — pipeline healthy (24 events, 0 failures); score cron URGENT filed (3rd cycle, awaits principal authorization); arxiv 429 recovered cleanly; RSS double-emit persists (5th+ cycle, one-line fix).
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
