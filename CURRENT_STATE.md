@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-10T03:30Z (score cron 3rd-cycle URGENT closed: timer aligned to intake cadence)
+updated: 2026-05-11T07:00Z (arxiv S3-P2 verified working; RSS double-emit 9th-cycle closed)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -186,7 +186,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-05-02T02:41Z — reflection pass)
+(updated 2026-05-11T02:38Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -237,17 +237,38 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   `failure` and increment the S3-P2 escalation counter; 429 does NOT
   count toward escalation (a server saying "back off" is the loop
   respecting a signal, not the loop being stuck).
-- **RSS double-emit on cap-hit** — on each cap-hit intake run, RSS emits
-  both a `success` and a `throttled` event with matching timestamps. Mechanically
-  correct but undocumented; inflates event counts in time-windowed monitors.
-  Low priority (4th+ window without action). Latest: 2026-05-02T00:19:42Z.
-  Options: suppress `success` when cap-hit in `rss.py`, or add one-line note
-  to `intake/README.md`. Either closes the loop in <5 min.
+- ~~RSS double-emit on cap-hit~~ **FIXED 2026-05-11T07:00Z** —
+  cap-hit runs now emit ONE `throttled` event (carrying
+  new/preserved/total in reason) instead of a `success` + `throttled`
+  pair. Applied symmetrically across rss + arxiv + hackernews
+  adapters; reason payload unchanged so downstream consumers see
+  the same info, just on one event. synaplex@d0220a9. Verified
+  live: rss capped run (1120 dropped) → 1 throttled event; hackernews
+  non-capped run (56 new) → 1 success event. 9-cycle loop closed.
 
-- **Arxiv timeout 2026-05-01T16:20:38Z** — single `TimeoutError` during
-  arxiv fetch. First occurrence. S3-P2 escalation counter incremented once
-  (fires at 3 consecutive). Monitor next two arxiv runs; if both fail,
-  escalation fires automatically. No action needed now.
+- **Arxiv S3-P2 escalated 2026-05-11T00:18Z** — three consecutive
+  failures correctly escalated, gate working as designed. **Root cause
+  is upstream**, not a synaplex bug:
+  - 16:19Z TimeoutError (urllib hit 25s timeout — likely arxiv-side
+    slow response under load)
+  - 20:19Z + 00:18Z stuck (arxiv API returning empty results)
+  - 04:18Z May 11 throttled (HTTP 429 — explicit rate-limit)
+  - 06:54Z manual probe via curl confirmed: arxiv still 429-ing
+    ("Rate exceeded", 10.4s response).
+  - Stuck counter currently at 4; will fire `escalated` again at 6
+    per the every-3rd-thereafter rule.
+  **Day-boundary race hypothesis is unsupported** — preserved=0 on
+  a new day's empty file is correct behavior (no prior fetch yet on
+  that date); not race-induced. No synaplex code change indicated;
+  arxiv resolves itself when their rate-limit clears. Pipeline is
+  doing exactly what it should: 429 → throttled (no count), timeout
+  → failure (count++), empty → stuck (count++, preserve existing),
+  3 consecutive → escalated. See completion report
+  `runtime/.handoff/general-synaplex-arxiv-s3p2-investigation-complete-...`.
+
+- ~~Arxiv timeout 2026-05-01T16:20:38Z~~ — single `TimeoutError`, S3-P2
+  counter was reset by the next successful fetch. No escalation fired.
+  No recurrence observed across subsequent windows. CLOSED.
 - **Adversarial review §4 §6 §7 carried forward** — review of commit 5814658 surfaced four
   larger design issues beyond the §1+§2+§3 fixes that landed: §4 file lock for concurrent
   writers, §6 day-boundary race on the 00:17 cron, §7 `_gather_week` rubric-drift tiebreak
@@ -272,5 +293,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-10T02-38-58Z.md` — pipeline healthy (24 events, 0 failures); score cron URGENT filed (3rd cycle, awaits principal authorization); arxiv 429 recovered cleanly; RSS double-emit persists (5th+ cycle, one-line fix).
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-11T02-38-13Z.md` — arxiv S3-P2 escalated (3 consecutive failures, day-boundary race hypothesis); RSS double-emit 9th+ cycle (next reflection escalates URGENT); pipeline otherwise healthy.
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
