@@ -155,17 +155,16 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             reason += f", {capped} dropped by daily cap ({cap})"
         if errored_feeds:
             reason += f", {len(errored_feeds)} feed errors"
-        emit_success("intake", "rss", reason, ref)
-    if capped:
-        # `throttled`, not `failure` — the cap is designed behavior, not an
-        # incident. meta-scan + adversarial review filter `failure`; marking
-        # this as `throttled` keeps the incident channel clean while
-        # preserving the signal.
-        emit_throttled(
-            "intake", "rss",
-            f"daily cap hit: {capped} items dropped past {cap}-item cap",
-            ref,
-        )
+        # Single event per run: throttled when cap-hit, success otherwise.
+        # The dual-emit (success + throttled) had been carry-forward-flagged
+        # for 9+ reflection cycles for inflating time-windowed event counts;
+        # throttled is the precise signal when the cap fires, and its reason
+        # field carries the same new/preserved/total counts that a non-capped
+        # success would.
+        if capped:
+            emit_throttled("intake", "rss", reason, ref)
+        else:
+            emit_success("intake", "rss", reason, ref)
     if errored_feeds:
         # Name the failing feed(s) inline so the friction log is actionable
         # without re-running the adapter with debug tracing. S3-P2

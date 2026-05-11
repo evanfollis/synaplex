@@ -181,13 +181,11 @@ def ingest(beat: Beat, date: str) -> IngestResult:
             reason += f", {deduped} within-run dedup"
         if capped:
             reason += f", {capped} dropped by daily cap ({cap})"
-        emit_success("intake", "hackernews", reason, ref)
-    if capped:
-        emit_throttled(
-            "intake", "hackernews",
-            f"daily cap hit: {capped} items dropped past {cap}-item cap",
-            ref,
-        )
+        # Single event per run: throttled when cap-hit, success otherwise.
+        if capped:
+            emit_throttled("intake", "hackernews", reason, ref)
+        else:
+            emit_success("intake", "hackernews", reason, ref)
     return IngestResult(
         source="hackernews", count=new_added, deduped=deduped,
         out_path=ref, total=total, preserved=preserved,
