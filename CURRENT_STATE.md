@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-13T14:33Z (reflection pass — no 429 recurrence; digest rendered; CURRENT_STATE commit-policy URGENT escalated to general)
+updated: 2026-05-13T14:45Z (commit-policy URGENT closed: session-startup hygiene rule landed in CLAUDE.md; 36h backlog committed)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -281,6 +281,19 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   event shape per CLAUDE.md §Telemetry events). Additive change; existing
   consumers continue working, time-windowed consumers now see the field.
   Verified live: latest event carries `timestamp: 1777476699109`.
+- ~~CURRENT_STATE.md commit-policy gap (4-cycle URGENT)~~ **FIXED**
+  2026-05-13T14:45Z — chose Option B (session-startup hygiene)
+  over Option A (reflect.sh committing). Project CLAUDE.md
+  §Operating Principles now carries a rule that every synaplex
+  session, as its first repo-touching action, commits any pending
+  CURRENT_STATE.md edits before proceeding. Rejected A because
+  reflect.sh's "read-only and propose-only" invariant is load-bearing
+  across every project the reflection loop touches, not just
+  synaplex; loosening it for one file invites scope creep. The
+  36h-accumulated reflection edits from May 12–13 were committed
+  in synaplex@808ee8c at the start of this turn (the rule formalizes
+  what the action-default already required). synaplex@44deac1
+  landed the rule; this entry crosses out the URGENT.
 
 ## What the next agent must read first
 
