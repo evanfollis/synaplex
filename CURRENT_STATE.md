@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-11T07:00Z (arxiv S3-P2 verified working; RSS double-emit 9th-cycle closed)
+updated: 2026-05-13T14:33Z (reflection pass — no 429 recurrence; digest rendered; CURRENT_STATE commit-policy URGENT escalated to general)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -186,7 +186,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-05-11T02:38Z — reflection pass)
+(updated 2026-05-13T14:33Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -246,35 +246,29 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   live: rss capped run (1120 dropped) → 1 throttled event; hackernews
   non-capped run (56 new) → 1 success event. 9-cycle loop closed.
 
-- **Arxiv S3-P2 escalated 2026-05-11T00:18Z** — three consecutive
-  failures correctly escalated, gate working as designed. **Root cause
-  is upstream**, not a synaplex bug:
-  - 16:19Z TimeoutError (urllib hit 25s timeout — likely arxiv-side
-    slow response under load)
-  - 20:19Z + 00:18Z stuck (arxiv API returning empty results)
-  - 04:18Z May 11 throttled (HTTP 429 — explicit rate-limit)
-  - 06:54Z manual probe via curl confirmed: arxiv still 429-ing
-    ("Rate exceeded", 10.4s response).
-  - Stuck counter currently at 4; will fire `escalated` again at 6
-    per the every-3rd-thereafter rule.
-  **Day-boundary race hypothesis is unsupported** — preserved=0 on
-  a new day's empty file is correct behavior (no prior fetch yet on
-  that date); not race-induced. No synaplex code change indicated;
-  arxiv resolves itself when their rate-limit clears. Pipeline is
-  doing exactly what it should: 429 → throttled (no count), timeout
-  → failure (count++), empty → stuck (count++, preserve existing),
-  3 consecutive → escalated. See completion report
-  `runtime/.handoff/general-synaplex-arxiv-s3p2-investigation-complete-...`.
+- ~~Arxiv S3-P2 escalated 2026-05-11T00:18Z~~ **SELF-RESOLVED 2026-05-12T04:18Z** —
+  upstream rate-limit cleared; 100 new items fetched; stuck counter reset.
+  Total degradation: ~52h (May 10 00:18Z → May 12 04:18Z). Gate behaved correctly
+  throughout: 429 → throttled (no count), timeout → failure (count++),
+  3 consecutive → escalated. arxiv-2026-05-11.jsonl has 0 items (permanent).
+  No synaplex code change was needed or made. Friction events: 04:18Z success.
+- ~~Arxiv 429 recurrence 2026-05-12T16:19Z~~ **WATCH: no third episode as of 2026-05-13T14:33Z** —
+  429-throttled at 16:19Z, self-recovered 20:17Z (~4h). Second 429 in 72h. In the
+  subsequent 12h window (04:18Z–12:19Z cycles), arxiv had zero 429 events. Pattern
+  appears self-healing. Third episode would be structural signal (reduce fetch interval
+  or add exponential backoff). Ongoing watch.
 
 - ~~Arxiv timeout 2026-05-01T16:20:38Z~~ — single `TimeoutError`, S3-P2
   counter was reset by the next successful fetch. No escalation fired.
   No recurrence observed across subsequent windows. CLOSED.
-- **Adversarial review §4 §6 §7 carried forward** — review of commit 5814658 surfaced four
-  larger design issues beyond the §1+§2+§3 fixes that landed: §4 file lock for concurrent
-  writers, §6 day-boundary race on the 00:17 cron, §7 `_gather_week` rubric-drift tiebreak
-  (currently "highest-score wins" which can amplify scorer changes; should be
-  "newest-scored-at wins" once `scored_at` is plumbed). All low priority while
-  scoring is heuristic-only and there is one writer per source. See handoff above.
+- **Adversarial review §4 §7 carried forward** (§6 closed below): §4 file lock for
+  concurrent writers, §7 `_gather_week` rubric-drift tiebreak ("highest-score wins"
+  should be "newest-scored-at wins" once `scored_at` is plumbed). Low priority while
+  scoring is heuristic-only and there is one writer per source.
+- ~~Adversarial review §6: day-boundary race on the 00:17 cron~~ **CLOSED
+  2026-05-12T14:31Z** — arxiv degraded 52h and recovered via upstream rate-limit
+  clearing; no timezone/boundary fix applied or needed. `date.today()` 17 minutes
+  into the new day is unambiguous. 5+ reflection cycles with zero empirical evidence.
 - ~~S3-P2 escalation gate does not cover network failures~~ **FIXED**
   2026-04-29T15:35Z — arxiv + hackernews exception handlers now also call
   `record_stuck()` and emit `escalated` if the threshold is crossed.
@@ -293,5 +287,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-11T02-38-13Z.md` — arxiv S3-P2 escalated (3 consecutive failures, day-boundary race hypothesis); RSS double-emit 9th+ cycle (next reflection escalates URGENT); pipeline otherwise healthy.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-13T14-33-20Z.md` — no 429 recurrence this window; digest rendered (16 items); pipeline autonomous; CURRENT_STATE commit-policy escalated to general (URGENT handoff filed, 4th cycle).
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
