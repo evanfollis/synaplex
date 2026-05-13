@@ -80,6 +80,26 @@ Five layers, one circulatory system:
   queries (workspace rule S1-P3).
 - **Every layer emits typed friction events.** A silent layer is
   indistinguishable from a stuck one (S3-P2, generalized by ADR-0029).
+- **Session-startup CURRENT_STATE commit hygiene.** Every synaplex
+  session, as its first repo-touching action of the turn, commits any
+  pending `CURRENT_STATE.md` edits before proceeding to other work.
+  Reason: the 12h reflection job writes load-bearing updates to
+  `CURRENT_STATE.md` between sessions but is propose-only by design
+  (workspace CLAUDE.md §"Automated Self-Reflection Loop": "Read-only
+  and propose-only — never commits project code"). If no session
+  runs for 24h+, the reflection edits accumulate uncommitted and
+  agents opening new sessions read stale state from git HEAD. Closes
+  the carry-forward escalation pattern that produced
+  `URGENT-synaplex-current-state-commit-policy.md` at 4 cycles. The
+  alternative (Option A — letting reflect.sh commit `CURRENT_STATE.md`)
+  was rejected because the read-only invariant is load-bearing across
+  every project the reflection loop touches, not just synaplex;
+  loosening it for one file invites scope creep, and the existing
+  `URGENT-supervisor-reflection-dirty-tree.md` safety-net handoff
+  already exists for the case where reflect.sh exceeds its scope.
+  The hygiene rule lives here (project-local) rather than in
+  workspace CLAUDE.md because the discipline is the session's, not
+  the framework's.
 
 ## Structure
 
