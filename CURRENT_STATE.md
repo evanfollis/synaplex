@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-13T14:45Z (commit-policy URGENT closed: session-startup hygiene rule landed in CLAUDE.md; 36h backlog committed)
+updated: 2026-05-14T14:34:41Z (reflection pass — arxiv 429 fourth episode + TimeoutError in window; CURRENT_STATE.md pending commit by next session)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -186,7 +186,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-05-13T14:33Z — reflection pass)
+(updated 2026-05-14T14:34:41Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -252,15 +252,19 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   throughout: 429 → throttled (no count), timeout → failure (count++),
   3 consecutive → escalated. arxiv-2026-05-11.jsonl has 0 items (permanent).
   No synaplex code change was needed or made. Friction events: 04:18Z success.
-- ~~Arxiv 429 recurrence 2026-05-12T16:19Z~~ **WATCH: no third episode as of 2026-05-13T14:33Z** —
-  429-throttled at 16:19Z, self-recovered 20:17Z (~4h). Second 429 in 72h. In the
-  subsequent 12h window (04:18Z–12:19Z cycles), arxiv had zero 429 events. Pattern
-  appears self-healing. Third episode would be structural signal (reduce fetch interval
-  or add exponential backoff). Ongoing watch.
+- **Arxiv 429 recurrence — WATCH: fourth episode 2026-05-14T12:19Z** —
+  Episode 1: 2026-05-10; Episode 2: 2026-05-12T16:19Z (self-healed ~4h); Episode 3: cleared
+  after prior reflection declared "third clean window" but that declaration was premature.
+  Episode 4: 429-throttled at 12:19Z (2026-05-14), same window as a TimeoutError at 08:18Z.
+  Two distinct failure modes in one 12h window = structural signal. Prior reflection asked
+  whether to close; this window answers: do not close. P1 proposal: add `skip_next_run`
+  backoff on 429 in `intake/escalation.py`. Ongoing watch.
 
-- ~~Arxiv timeout 2026-05-01T16:20:38Z~~ — single `TimeoutError`, S3-P2
-  counter was reset by the next successful fetch. No escalation fired.
-  No recurrence observed across subsequent windows. CLOSED.
+- **Arxiv TimeoutError recurrence 2026-05-14T08:18Z** — `TimeoutError: The read operation
+  timed out`. Prior occurrence 2026-05-01T16:20:38Z was declared CLOSED after no
+  recurrence. This is a second occurrence. S3-P2 counter incremented to 1 (reset by
+  04:19Z success). No escalation. Counts alongside the 429 pattern as concurrent
+  failure mode. Watch open alongside OBS-1.
 - **Adversarial review §4 §7 carried forward** (§6 closed below): §4 file lock for
   concurrent writers, §7 `_gather_week` rubric-drift tiebreak ("highest-score wins"
   should be "newest-scored-at wins" once `scored_at` is plumbed). Low priority while
@@ -300,5 +304,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-13T14-33-20Z.md` — no 429 recurrence this window; digest rendered (16 items); pipeline autonomous; CURRENT_STATE commit-policy escalated to general (URGENT handoff filed, 4th cycle).
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-14T14-34-41Z.md` — arxiv 429 fourth episode + TimeoutError in same window; "third clean window" declaration from prior reflection is now false; CURRENT_STATE.md pending commit (first test of hygiene rule); RSS cap OBS-6 ongoing.
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
