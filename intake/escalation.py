@@ -78,3 +78,56 @@ def current_stuck(source: str) -> int:
         return int(p.read_text().strip())
     except (ValueError, OSError):
         return 0
+
+
+# --------------------------------------------------------------------------
+# skip_next_run — one-shot backoff after a designed-degraded upstream signal
+# --------------------------------------------------------------------------
+#
+# Per the 2026-05-14 arxiv backoff handoff (Pattern 5 from cycle-36 synthesis):
+# when arxiv returns 429 or times out, the adapter sets `skip_next_run` so the
+# next scheduled fetch for that source is skipped, then the flag clears
+# unconditionally regardless of whether the subsequent run would have succeeded.
+# This prevents hammering a degraded upstream within the 4-hour cron interval
+# without escalating to a full exponential backoff (overkill for this failure
+# rate).
+#
+# Flag presence is an empty marker file; absence means no skip pending. The
+# consume-side deletes the file atomically (unlink) so two consume calls in
+# the same cron cycle don't both fire.
+
+
+def _skip_path(source: str) -> Path:
+    return STATE_DIR / f"{source}-skip-next-run"
+
+
+def set_skip_next_run(source: str) -> None:
+    """Mark `source` to skip its next scheduled fetch."""
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        _skip_path(source).write_text("")
+    except OSError:
+        pass  # best-effort, like record_stuck — telemetry not load-bearing
+
+
+def consume_skip_next_run(source: str) -> bool:
+    """Return True iff a skip-next-run flag was pending for `source`.
+
+    The flag is consumed (file deleted) on read regardless of caller's
+    response, so calling this in the adapter's preamble is the contract:
+    the call site MUST honor the True return by skipping its fetch.
+    """
+    p = _skip_path(source)
+    if not p.exists():
+        return False
+    try:
+        p.unlink()
+    except OSError:
+        # Another caller may have just consumed it; treat as already consumed.
+        return False
+    return True
+
+
+def skip_pending(source: str) -> bool:
+    """Read-only inspection: is a skip-next-run flag set for `source`?"""
+    return _skip_path(source).exists()

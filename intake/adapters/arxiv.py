@@ -22,7 +22,12 @@ from urllib.request import Request, urlopen
 import feedparser  # type: ignore[import-untyped]
 
 from ..beats import Beat
-from ..escalation import record_stuck, reset_stuck
+from ..escalation import (
+    consume_skip_next_run,
+    record_stuck,
+    reset_stuck,
+    set_skip_next_run,
+)
 from ..friction import emit, emit_failure, emit_stuck, emit_success, emit_throttled
 from ..hashing import content_id
 from ..limits import layer1_cap
@@ -68,6 +73,27 @@ def ingest(beat: Beat, date: str) -> IngestResult:
     out = raw_path("arxiv", date)
     out.parent.mkdir(parents=True, exist_ok=True)
 
+    # One-shot backoff: if the previous run set `skip_next_run` after a
+    # 429 or TimeoutError, honor it now. Flag clears unconditionally on
+    # consume — the skip is always exactly one-run-deep. (See
+    # `runtime/.handoff/synaplex-arxiv-backoff-2026-05-14T16-47Z.md` /
+    # cycle-36 synthesis Pattern 5.)
+    if consume_skip_next_run("arxiv"):
+        emit_throttled(
+            "intake", "arxiv",
+            "skipped per backoff after prior 429/timeout (one-shot, cleared)",
+            str(out),
+        )
+        # Preserve count semantics: returning 0 new / 0 preserved when
+        # the daily file is new; otherwise pre-existing items remain
+        # untouched on disk.
+        from . import read_existing_items
+        existing = read_existing_items(out)
+        return IngestResult(
+            source="arxiv", count=0, deduped=0, out_path=str(out),
+            total=len(existing), preserved=len(existing),
+        )
+
     now = datetime.now(timezone.utc)
     window_start = now - timedelta(days=WINDOW_DAYS)
 
@@ -100,18 +126,27 @@ def ingest(beat: Beat, date: str) -> IngestResult:
         # and DO increment the stuck counter.
         from urllib.error import HTTPError
         is_429 = isinstance(exc, HTTPError) and getattr(exc, "code", None) == 429
+        is_timeout = isinstance(exc, TimeoutError)
         if is_429:
             emit_throttled(
                 "intake", "arxiv",
                 f"upstream 429 rate-limit: {exc}",
                 str(out),
             )
+            # 429 → arm one-shot backoff so the next 4h cron doesn't
+            # hammer a known-degraded upstream.
+            set_skip_next_run("arxiv")
         else:
             emit_failure(
                 "intake", "arxiv",
                 f"fetch failed: {type(exc).__name__}: {exc}",
                 str(out),
             )
+            # Timeout → also arm one-shot backoff (a slow/unreachable
+            # upstream behaves similarly to a rate-limited one for our
+            # purposes; the next 4h run probes whether it recovered).
+            if is_timeout:
+                set_skip_next_run("arxiv")
             # S3-P2: non-429 failures count toward consecutive-stuck.
             n, crossed = record_stuck("arxiv")
             if crossed:
