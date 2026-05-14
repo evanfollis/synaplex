@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-14T14:34:41Z (reflection pass — arxiv 429 fourth episode + TimeoutError in window; CURRENT_STATE.md pending commit by next session)
+updated: 2026-05-14T17:00Z (arxiv backoff handoff closed: skip_next_run primitive landed + test)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -252,19 +252,22 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   throughout: 429 → throttled (no count), timeout → failure (count++),
   3 consecutive → escalated. arxiv-2026-05-11.jsonl has 0 items (permanent).
   No synaplex code change was needed or made. Friction events: 04:18Z success.
-- **Arxiv 429 recurrence — WATCH: fourth episode 2026-05-14T12:19Z** —
-  Episode 1: 2026-05-10; Episode 2: 2026-05-12T16:19Z (self-healed ~4h); Episode 3: cleared
-  after prior reflection declared "third clean window" but that declaration was premature.
-  Episode 4: 429-throttled at 12:19Z (2026-05-14), same window as a TimeoutError at 08:18Z.
-  Two distinct failure modes in one 12h window = structural signal. Prior reflection asked
-  whether to close; this window answers: do not close. P1 proposal: add `skip_next_run`
-  backoff on 429 in `intake/escalation.py`. Ongoing watch.
-
-- **Arxiv TimeoutError recurrence 2026-05-14T08:18Z** — `TimeoutError: The read operation
-  timed out`. Prior occurrence 2026-05-01T16:20:38Z was declared CLOSED after no
-  recurrence. This is a second occurrence. S3-P2 counter incremented to 1 (reset by
-  04:19Z success). No escalation. Counts alongside the 429 pattern as concurrent
-  failure mode. Watch open alongside OBS-1.
+- ~~Arxiv 429 + TimeoutError recurrence — backoff handoff~~ **FIXED
+  2026-05-14T17:00Z** — synaplex@6bba7dd adds a `skip_next_run`
+  primitive to `intake/escalation.py`. arxiv's exception handler now
+  arms a one-shot backoff on HTTP 429 or TimeoutError; the next 4h
+  cron consumes the flag, emits `throttled` ("skipped per backoff
+  after prior 429/timeout, one-shot, cleared"), and returns without
+  fetching. Preserves no-clobber semantics; the daily file is left
+  intact. RSS/HN unchanged per handoff scope. Verification:
+  `intake/test_skip_next_run.py` (3 assertions, all pass); E2E
+  smoke confirmed adapter skips when flag is armed (count=0
+  preserved=200 total=200, no fetch executed). Episode timeline:
+  Ep1 2026-05-10, Ep2 2026-05-12T16:19Z (~4h self-heal),
+  Ep3 cleared (prior reflection's premature "clean" declaration),
+  Ep4 2026-05-14T12:19Z + paired TimeoutError 08:18Z (the structural
+  signal that justified the backoff). atlas Bitstamp can plug the
+  same primitive when atlas resumes; module is source-keyed.
 - **Adversarial review §4 §7 carried forward** (§6 closed below): §4 file lock for
   concurrent writers, §7 `_gather_week` rubric-drift tiebreak ("highest-score wins"
   should be "newest-scored-at wins" once `scored_at` is plumbed). Low priority while
