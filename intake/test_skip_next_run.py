@@ -71,12 +71,73 @@ def assert_per_source_independence() -> None:
     print("  [3/3] per-source independence — OK")
 
 
+def assert_set_failure_emits_friction() -> None:
+    """Review-6bba7dd §1 fix: marker write failure must surface, not be swallowed.
+
+    Patches `_skip_path` to point at a path under a non-existent and
+    un-creatable parent so `write_text` raises OSError. The function
+    must emit a `failure` friction event and NOT silently return.
+    """
+    import json
+    import tempfile
+    from pathlib import Path
+    from unittest import mock
+
+    from intake import escalation
+    from intake.paths import FRICTION_LOG
+
+    # Read pre-event count (only ones tagged with our test source)
+    pre_count = 0
+    if FRICTION_LOG.exists():
+        with open(FRICTION_LOG, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    if json.loads(line).get("source") == "__test_writefail":
+                        pre_count += 1
+                except json.JSONDecodeError:
+                    continue
+
+    # Force write to fail by routing the marker into a path whose
+    # parent is a regular file (a file can't have children → write
+    # to a path under it raises NotADirectoryError, an OSError subclass).
+    # `STATE_DIR.mkdir(exist_ok=True)` still runs against the real
+    # STATE_DIR and succeeds (it already exists); the OSError fires
+    # on the subsequent `write_text` against the bad path.
+    with tempfile.NamedTemporaryFile(suffix=".file") as nf:
+        bad_parent = Path(nf.name)
+        unwritable_target = bad_parent / "child" / "marker"
+        with mock.patch.object(escalation, "_skip_path", return_value=unwritable_target):
+            escalation.set_skip_next_run("__test_writefail")
+
+    # Verify a `failure` event was emitted naming the test source
+    post_count = 0
+    found_failure = False
+    if FRICTION_LOG.exists():
+        with open(FRICTION_LOG, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    ev = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if ev.get("source") == "__test_writefail":
+                    post_count += 1
+                    if ev.get("eventType") == "failure" and "backoff arming failed" in ev.get("reason", ""):
+                        found_failure = True
+    assert post_count > pre_count, "no friction event was emitted on write failure"
+    assert found_failure, (
+        "write failure must emit eventType=failure with 'backoff arming failed' in reason; "
+        "the marker file IS the backoff mechanism — silent failure here defeats the backoff"
+    )
+    print("  [4/4] set_skip_next_run write-failure surfaces as friction event — OK")
+
+
 def main() -> int:
     print("skip_next_run primitive assertions (arxiv backoff handoff 2026-05-14):")
     try:
         assert_set_and_consume_round_trip()
         assert_set_is_idempotent()
         assert_per_source_independence()
+        assert_set_failure_emits_friction()
     except AssertionError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1

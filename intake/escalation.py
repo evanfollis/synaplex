@@ -102,28 +102,57 @@ def _skip_path(source: str) -> Path:
 
 
 def set_skip_next_run(source: str) -> None:
-    """Mark `source` to skip its next scheduled fetch."""
+    """Mark `source` to skip its next scheduled fetch.
+
+    The marker file IS the backoff mechanism — not optional telemetry.
+    If the write fails, the next 4h cron will hammer a known-degraded
+    upstream. So a write failure is itself a friction event (`failure`
+    eventType) so meta-scan can see the backoff failed and the loop
+    is unprotected.
+
+    Note (review 6bba7dd §5): arxiv's call site relies on
+    `socket.timeout == TimeoutError`, true since Python 3.10. The venv
+    is currently 3.12.3; if it ever regresses below 3.10, the
+    `isinstance(exc, TimeoutError)` check in adapters/arxiv.py
+    silently stops arming the timeout-side backoff.
+    """
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     try:
         _skip_path(source).write_text("")
-    except OSError:
-        pass  # best-effort, like record_stuck — telemetry not load-bearing
+    except OSError as exc:
+        # Lazy import to avoid circular: friction.py is fine to import
+        # here, but keeping it lazy mirrors how the adapters use the
+        # module and avoids any future import-cycle hazard.
+        from .friction import emit_failure
+        emit_failure(
+            "intake", source,
+            f"backoff arming failed (set_skip_next_run write): "
+            f"{type(exc).__name__}: {exc} — next cron will fetch despite the prior 429/timeout",
+            str(_skip_path(source)),
+        )
 
 
 def consume_skip_next_run(source: str) -> bool:
     """Return True iff a skip-next-run flag was pending for `source`.
 
-    The flag is consumed (file deleted) on read regardless of caller's
-    response, so calling this in the adapter's preamble is the contract:
-    the call site MUST honor the True return by skipping its fetch.
+    The flag is consumed (file deleted) by this call. Calling this in
+    the adapter's preamble is the contract: the call site MUST honor
+    the True return by skipping its fetch.
+
+    Atomicity: a single `unlink()` is the consume operation; if the
+    file disappeared between callers (concurrent consumers, race), one
+    wins and the other gets `FileNotFoundError`. No exists() check
+    avoids the TOCTOU window the prior implementation had.
     """
-    p = _skip_path(source)
-    if not p.exists():
-        return False
     try:
-        p.unlink()
+        _skip_path(source).unlink()
+    except FileNotFoundError:
+        return False
     except OSError:
-        # Another caller may have just consumed it; treat as already consumed.
+        # Permission denied or similar — treat as "could not consume",
+        # same as already-consumed from the caller's perspective. Adapter
+        # will not skip; that's safer than asserting a skip the file
+        # system can't promise.
         return False
     return True
 
