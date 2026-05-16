@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-14T17:00Z (arxiv backoff handoff closed: skip_next_run primitive landed + test)
+updated: 2026-05-16T02:30:40Z (reflection pass: Episode 5 CLOSED — backoff worked; adversarial review on 6bba7dd now 4 cycles URGENT)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -186,7 +186,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-05-14T14:34:41Z — reflection pass)
+(updated 2026-05-15T14:30:28Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -268,10 +268,21 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   Ep4 2026-05-14T12:19Z + paired TimeoutError 08:18Z (the structural
   signal that justified the backoff). atlas Bitstamp can plug the
   same primitive when atlas resumes; module is source-keyed.
+  **Live-verified 2026-05-15T02:31Z**: backoff fired at 16:53Z
+  (2026-05-14); arxiv resumed clean at 20:19Z + 00:20Z (100 new items,
+  upstream fully recovered). Semantics confirmed in production.
+  **Episode 5 CLOSED 2026-05-16T00:20Z**: 12:18Z TimeoutError armed
+  backoff; 16:18Z skip (one-shot cleared); 20:20Z + 00:20Z both clean
+  (100 new each). Two consecutive clean runs confirm upstream recovery.
 - **Adversarial review §4 §7 carried forward** (§6 closed below): §4 file lock for
   concurrent writers, §7 `_gather_week` rubric-drift tiebreak ("highest-score wins"
   should be "newest-scored-at wins" once `scored_at` is plumbed). Low priority while
   scoring is heuristic-only and there is one writer per source.
+- **`6bba7dd` (skip_next_run) not adversarially reviewed — URGENT (4 cycles)** — URGENT
+  handoff written: `runtime/.handoff/URGENT-synaplex-adversarial-review-6bba7dd.md`.
+  File-lock race (§4) on `.state/` files is the primary concern. Episode 5 resolved;
+  code path proven in production twice. **Run `/review` as the first action of the
+  next session.** CANNOT defer further.
 - ~~Adversarial review §6: day-boundary race on the 00:17 cron~~ **CLOSED
   2026-05-12T14:31Z** — arxiv degraded 52h and recovered via upstream rate-limit
   clearing; no timezone/boundary fix applied or needed. `date.today()` 17 minutes
@@ -307,5 +318,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-14T14-34-41Z.md` — arxiv 429 fourth episode + TimeoutError in same window; "third clean window" declaration from prior reflection is now false; CURRENT_STATE.md pending commit (first test of hygiene rule); RSS cap OBS-6 ongoing.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-16T02-30-40Z.md` — **Episode 5 CLOSED** (20:20Z + 00:20Z clean); URGENT handoff for adversarial review on 6bba7dd (4 cycles); digest yield trending low (2.2% on May 15); no commits in window.
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
