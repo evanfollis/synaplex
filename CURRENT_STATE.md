@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-16T02:30:40Z (reflection pass: Episode 5 CLOSED — backoff worked; adversarial review on 6bba7dd now 4 cycles URGENT)
+updated: 2026-05-16T03:10Z (6bba7dd reviewed — BLOCK fix landed; Episode 5 closed)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -278,11 +278,18 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   concurrent writers, §7 `_gather_week` rubric-drift tiebreak ("highest-score wins"
   should be "newest-scored-at wins" once `scored_at` is plumbed). Low priority while
   scoring is heuristic-only and there is one writer per source.
-- **`6bba7dd` (skip_next_run) not adversarially reviewed — URGENT (4 cycles)** — URGENT
-  handoff written: `runtime/.handoff/URGENT-synaplex-adversarial-review-6bba7dd.md`.
-  File-lock race (§4) on `.state/` files is the primary concern. Episode 5 resolved;
-  code path proven in production twice. **Run `/review` as the first action of the
-  next session.** CANNOT defer further.
+- ~~`6bba7dd` (skip_next_run) not adversarially reviewed~~ **REVIEWED
+  2026-05-16T03:00Z** — /review run via Claude-fallback path (codex
+  not installed). Verdict at `supervisor/.reviews/synaplex-6bba7dd-
+  skip-next-run-2026-05-16T03-00Z.md`. One BLOCK landed in
+  synaplex@7237449 (silent OSError swallow in `set_skip_next_run`
+  defeated the backoff itself if marker write failed; now emits
+  `failure` event with diagnostic; corresponding test added). §3
+  TOCTOU cleanup + §5 Py3.10 assumption documented. §4 file-lock
+  race for manual-invocation interleave remains explicitly OPEN per
+  reviewer verdict (manual `python -m intake ingest` bypasses
+  systemd's job-merge serialization that protects the timer-driven
+  path). §2 mkdir-per-call + §6 integration-test gap deferred.
 - ~~Adversarial review §6: day-boundary race on the 00:17 cron~~ **CLOSED
   2026-05-12T14:31Z** — arxiv degraded 52h and recovered via upstream rate-limit
   clearing; no timezone/boundary fix applied or needed. `date.today()` 17 minutes
