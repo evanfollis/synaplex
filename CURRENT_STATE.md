@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-05-16T03:10Z (6bba7dd reviewed — BLOCK fix landed; Episode 5 closed)
+updated: 2026-06-10T02:37:04Z (reflection pass — 25-day pause; pipeline autonomous; ANTHROPIC_API_KEY still missing; CURRENT_STATE.md diff uncommitted)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -186,7 +186,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-05-15T14:30:28Z — reflection pass)
+(updated 2026-06-10T02:37:04Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -274,6 +274,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   **Episode 5 CLOSED 2026-05-16T00:20Z**: 12:18Z TimeoutError armed
   backoff; 16:18Z skip (one-shot cleared); 20:20Z + 00:20Z both clean
   (100 new each). Two consecutive clean runs confirm upstream recovery.
+- ~~arxiv Episode 6~~ **SELF-RESOLVED 2026-05-16T16:17Z** — 429 at 08:20Z, backoff consumed at 12:18Z, success at 16:17Z (0 new, 100 preserved). Identical pattern to Episodes 4+5. Backoff primitive working. Hardened `set_skip_next_run` (synaplex@7237449) confirmed in production.
 - **Adversarial review §4 §7 carried forward** (§6 closed below): §4 file lock for
   concurrent writers, §7 `_gather_week` rubric-drift tiebreak ("highest-score wins"
   should be "newest-scored-at wins" once `scored_at` is plumbed). Low priority while
@@ -325,5 +326,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-05-16T02-30-40Z.md` — **Episode 5 CLOSED** (20:20Z + 00:20Z clean); URGENT handoff for adversarial review on 6bba7dd (4 cycles); digest yield trending low (2.2% on May 15); no commits in window.
+4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-06-10T02-37-04Z.md` — **25-day pause** (no code changes since May 16); Episode 6 CLOSED; pipeline autonomous and healthy (W24 synthesis landed); ANTHROPIC_API_KEY still missing (highest-leverage unblock); CURRENT_STATE.md diff uncommitted 24 days (next session must commit first); M5 handoff is a false positive (delete it).
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
