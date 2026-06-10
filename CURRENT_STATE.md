@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-06-10T02:37:04Z (reflection pass — 25-day pause; pipeline autonomous; ANTHROPIC_API_KEY still missing; CURRENT_STATE.md diff uncommitted)
+updated: 2026-06-10T14:40:31Z (reflection pass — pipeline healthy; CURRENT_STATE.md hygiene resolved; ANTHROPIC_API_KEY still missing; M5 handoff false positive pending delete)
 owner: executive (principal: evan)
 phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
 ---
@@ -186,7 +186,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-06-10T02:37:04Z — reflection pass)
+(updated 2026-06-10T14:40:31Z — reflection pass)
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
@@ -326,5 +326,5 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflection at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-06-10T02-37-04Z.md` — **25-day pause** (no code changes since May 16); Episode 6 CLOSED; pipeline autonomous and healthy (W24 synthesis landed); ANTHROPIC_API_KEY still missing (highest-leverage unblock); CURRENT_STATE.md diff uncommitted 24 days (next session must commit first); M5 handoff is a false positive (delete it).
+4. Latest reflections at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-06-10T14-40-31Z.md` (and `...02-37-04Z.md` for fuller context) — pipeline healthy (daily digests running, W24 synthesis landed); CURRENT_STATE.md hygiene resolved (`0fa80cc`); ANTHROPIC_API_KEY still missing (highest-leverage unblock); M5 handoff (`general-m5-current-state-untouched-synaplex-2026-06-09T16-02-42Z.md`) is a false positive — delete it; §4 file-lock race is explicitly accepted risk (timer-path serialization protects production).
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
