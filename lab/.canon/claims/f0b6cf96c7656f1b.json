@@ -1,0 +1,43 @@
+{
+  "id": "f0b6cf96c7656f1b",
+  "spec_version": "0.1.0",
+  "object_type": "Claim",
+  "emitted_at": "2026-07-11T23:45:21Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Claim"
+  ],
+  "role_declared_at": "2026-07-11T23:45:21Z",
+  "binding": "binding",
+  "sources": [],
+  "statement": "Memory-system recall at 1 degrades monotonically with session depth rather than failing categorically, such that at least one subject exceeds 0.80 mean recall at 1 at depth 4 while falling below it at depth 10, making the choice of 10-session depth rather than memory capability the load-bearing assumption in the primary claim",
+  "falsification_criteria": [
+    "If no subject exceeds mean recall@1 >= 0.80 at depth d=4 (N>=10 runs), this claim is falsified: the failure is present even at shallow depth and is not a depth artifact."
+  ],
+  "exposure": {
+    "capital_at_risk": 0,
+    "reversibility": "reversible",
+    "correlation_tags": [
+      "agent-platform-evaluation",
+      "memory-systems"
+    ],
+    "time_to_realization": "P21D",
+    "blast_radius": "local"
+  },
+  "instance_id": "synaplex",
+  "thresholds": {
+    "alpha": 0.05,
+    "bootstrap_iterations": 1000,
+    "runs_per_cell": 10,
+    "recall_at_1": 0.8,
+    "depth_probe": 4,
+    "depth_primary": 10
+  },
+  "artifact": {
+    "uri": "file://lab/evals/memory-systems-v1/alternatives.md",
+    "content_hash": "sha256:a9da533e92745fa698d742e16d8cab5e39f3161e7bc19409265d76d61a957a33",
+    "version": "1",
+    "media_type": "text/markdown"
+  }
+}

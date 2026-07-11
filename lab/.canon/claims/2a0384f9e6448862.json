@@ -1,0 +1,43 @@
+{
+  "id": "2a0384f9e6448862",
+  "spec_version": "0.1.0",
+  "object_type": "Claim",
+  "emitted_at": "2026-07-11T23:45:21Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Claim"
+  ],
+  "role_declared_at": "2026-07-11T23:45:21Z",
+  "binding": "binding",
+  "sources": [],
+  "statement": "The sub-0.80 recall at 1 result for memory systems reflects default out-of-the-box configuration rather than capability ceilings: at least one subject reaches mean recall at 1 >= 0.80 at 10-session depth when configured per its vendor's published best-practice guide",
+  "falsification_criteria": [
+    "If every subject, configured per its vendor's published best-practice guide, still scores mean recall@1 < 0.80 (N>=10 runs) at 10-session depth, this claim is falsified: the default configuration was not what produced the result."
+  ],
+  "exposure": {
+    "capital_at_risk": 0,
+    "reversibility": "reversible",
+    "correlation_tags": [
+      "agent-platform-evaluation",
+      "memory-systems"
+    ],
+    "time_to_realization": "P21D",
+    "blast_radius": "local"
+  },
+  "instance_id": "synaplex",
+  "thresholds": {
+    "alpha": 0.05,
+    "bootstrap_iterations": 1000,
+    "runs_per_cell": 10,
+    "recall_at_1": 0.8,
+    "session_depth": 10,
+    "config": "vendor_best_practice"
+  },
+  "artifact": {
+    "uri": "file://lab/evals/memory-systems-v1/alternatives.md",
+    "content_hash": "sha256:a9da533e92745fa698d742e16d8cab5e39f3161e7bc19409265d76d61a957a33",
+    "version": "1",
+    "media_type": "text/markdown"
+  }
+}
