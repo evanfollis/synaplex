@@ -1,12 +1,37 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-06-11T14:32:34Z (reflection pass — pipeline healthy; arxiv Episode 7 closed (backoff resolved); ANTHROPIC_API_KEY still missing; M5 handoff still open; reflection commit ambiguity still unresolved; 26+ days no ANTHROPIC key)
+updated: 2026-07-12T01:45Z (ADR-0038 Programme substrate landed; Stage 2 review refused D2 graduation; agent-initiated lab/campaign kernel reverted as premature)
 owner: executive (principal: evan)
-phase: rebrand landed; Layer 1 intake running autonomously on systemd timers
+phase: Layer 1 intake autonomous; Layer 2 discovery plane (Programmes) live; canon still holds 1 unexecuted pre-registration
 ---
 
 # synaplex — current state
+
+## Read this first (2026-07-12)
+
+**ADR-0038 — Programmes are the discovery plane.** `reasoning/programmes/` is
+now the durable substrate for theory construction: leads, signals, mechanisms,
+tensions, draft claims, graduation ledger. Programmes own conjectural state and
+have **zero epistemic authority** — they cannot support, validate, decide,
+publish, or elevate anything. Canon remains the only verification layer. Canon
+and reader-facing writeups must never cite a Programme path; a guard
+(`reasoning/check_programmes.py`, wired into nightly `integrity`) enforces the
+path and vocabulary contracts.
+
+**A premature agent-initiated kernel was reverted.** `synaplex@15edd38`
+(`lab/campaign/` — campaign projection, rival Claims in canon, outcome map,
+pressure scheduler) was written from a handoff while the design was still under
+discussion, and was **not principal-authorized**. Reverted in `ab6a1de`. It put
+conjectural rival explanations directly into canon as binding Claims, which is
+exactly the laundering ADR-0038 exists to prevent. **Do not restore it**, and do
+not treat its existence in git history as authorization. If a downstream
+pressure kernel is ever rebuilt, ADR-0038 §Cleanup lists the minimum safety
+requirements it must meet (frozen manifest hash at probe entry, append-only
+verifier plan, supersede-never-edit).
+
+**Stage 2 Programme review is done** (`synaplex@29ee5fd`): D2 tightened,
+graduation **refused** on the detector confound. See below.
 
 ## One-line status
 
@@ -54,6 +79,32 @@ Cross-repo work preserved:
 
 Extraction of L2 `discovery-runtime` remains correctly deferred until
 synaplex has executed several evals.
+
+## Layer 2 discovery plane — current Programme state
+
+One Programme: `reasoning/programmes/harness-engineering-platform-knowledge.md`.
+
+Stage 2 review (2026-07-12) selected **D2** — "runtime observability reduces
+false completion reports on deploy-shaped tasks" — as the strongest of its three
+draft claims, tightened it, and then **refused graduation**:
+
+> The treatment is also the detector. Runtime observability is what makes a false
+> completion *visible*, so a build-test-only harness looks better for a reason
+> that has nothing to do with agent behaviour — it cannot see the failures it is
+> being scored on. A naive measurement returns the predicted result whichever way
+> reality falls. Emitting it as a canon Claim would pre-register a measurement
+> that cannot fail.
+
+**Unblock path**: (1) specify an independent oracle that can count a false
+completion without being the same instrument as the treatment; (2) cost a
+three-arm design (build-test-only / +verify-deployment-rule / +runtime
+observability) to separate rival R1, which says the effect comes from the
+*instruction* rather than the *information*. Until both exist, no canon for D2.
+
+D1 and D3 remain `sketching` and were not selected. Refusals are recorded in the
+Programme's graduation ledger, which is the point: a Programme that emits many
+weak drafts that never graduate is degenerating, and the ledger is how that
+becomes visible.
 
 ## What's in flight
 
@@ -186,7 +237,45 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    synthesizer activate automatically at the next cron firing.
 
 ## Known broken or degraded
-(updated 2026-06-11T14:32:34Z — reflection pass)
+(updated 2026-07-12T01:45Z)
+
+**Open, unfixed:**
+
+- **`intake/friction.py` sourceType precedence is inverted.** `_default_source_type()`
+  checks the ambient systemd env (`INVOCATION_ID` / `SYSTEMD_EXEC_PID`) *before* the
+  explicit `SYNAPLEX_SOURCE_TYPE` declaration. Every tmux session on this host is
+  supervised by `workspace-session@*.service`, so those vars are inherited by every
+  agent shell: any hand-run adapter command emits `sourceType: "cron"`,
+  indistinguishable in meta-scan from the real 4-hourly timer, and
+  `SYNAPLEX_SOURCE_TYPE=smoke` cannot take effect in the one context it exists for.
+  This is ADR-0019's failure class reproduced *inside* the telemetry built to detect
+  it. Fix is a one-line precedence swap (explicit declaration wins). It was included
+  in the reverted `15edd38` and went back with it — **still unfixed**. Consequence:
+  historical `cron`-tagged intake events cannot be trusted to be cron; treat them as
+  "cron or agent-run."
+- **The 12h reflection loop is short-circuiting.** Every reflection since
+  2026-06-11 reads `Reflection skipped — no activity in window`; `reflect.sh`
+  short-circuits on repo inactivity and there were no commits for ~30 days. A quiet
+  repo therefore produces a *confidently stale* front door rather than a loud one.
+  The 2026-07-12 commits re-arm it.
+- **`memory-systems-v1` has four subjects and zero controls.** A universal sub-0.80
+  result — exactly what the pre-registered claim predicts — cannot distinguish "memory
+  systems are weak" from "our harness cannot detect success at all." Structurally the
+  same detector/measurement trap named in the Programme's D2 refusal. It has been
+  pre-registered and unexecuted since 2026-04-19 (~12 weeks). Any execution plan must
+  address the missing control before it runs, and doing so likely needs a successor
+  Claim (adding a control arm changes the design; `methodology.md` is hash-bound and
+  immutable).
+- **Doc drift in `CLAUDE.md` §Structure**: it lists `lab/canon_emit.py` and "a small
+  in-repo validator". Neither exists. There is currently **no code that writes to
+  `lab/.canon/`** — the one Claim there was hand-authored. Do not read §Structure as
+  an inventory.
+- **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
+  that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
+  is documented, not repaired — the file is hash-bound and repairing it would break
+  pre-registration.
+
+**Historical (resolved) — see git history:**
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
