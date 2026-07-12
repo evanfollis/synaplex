@@ -25,6 +25,7 @@ from pathlib import Path
 
 from intake.friction import emit_failure, emit_stuck, emit_success
 from intake.paths import INTAKE_ROOT, RUNTIME_ROOT
+from lab.canon.guard import run_checks as run_canon_guards
 from reasoning.check_programmes import run_checks as run_programme_checks
 
 LAB_CANON_CANDIDATES = (
@@ -121,11 +122,33 @@ def main() -> int:
         cand = _walk_candidates()
         activity = _today_activity()
         programme_findings, programme_vocab_source = run_programme_checks()
+        canon_findings = run_canon_guards()
     except Exception as exc:
         emit_failure(
             "validation", "integrity",
             f"integrity run failed: {type(exc).__name__}: {exc}", "",
         )
+        return 1
+
+    # ADR-0042 AC9: the Layer 4 publication guard is fail-closed. Phase 1 can write
+    # Claims and Evidence but no Decision, so nothing else stops a session from
+    # publishing "Letta scores 0.62" off a raw Evidence envelope — publishing exactly
+    # the finding a Decision exists to override. This is an epistemic authority
+    # boundary, so it fails the run rather than warning.
+    if canon_findings:
+        reason = (
+            f"ADR-0042 canon guard found {len(canon_findings)} violation(s); "
+            f"first={canon_findings[0].render()}"
+        )
+        emit_failure("validation", "canon_guard", reason, "lab/.canon")
+        print(json.dumps({
+            "candidates": cand,
+            "activity": activity,
+            "canon_guard": {
+                "status": "failed",
+                "findings": [f.render() for f in canon_findings],
+            },
+        }, indent=2))
         return 1
 
     if programme_findings:
@@ -157,6 +180,7 @@ def main() -> int:
         f"expired_this_run={cand['expired_moved_this_run']}",
         f"today_raw_sources={len(activity['raw_by_source'])}",
         "programme_guard=clean",
+        "canon_guard=clean",
     ]
     reason = " ".join(reason_parts)
     emit_success(
@@ -178,6 +202,7 @@ def main() -> int:
             "status": "clean",
             "vocabulary_source": programme_vocab_source,
         },
+        "canon_guard": {"status": "clean"},
     }, indent=2))
     return 0
 

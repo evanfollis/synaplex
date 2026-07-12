@@ -1,4 +1,17 @@
 ---
+// canon:publishes-results = false
+//
+// This page is the pre-registration and publishes NO results, findings, or
+// conclusions — only the Claim, criteria, thresholds, and methodology that were
+// hash-bound before any run. That is what makes it publishable while Phase 2 of
+// ADR-0042 is blocked.
+//
+// Do NOT "update this page with early numbers." memory-systems-v1 is `incomplete`,
+// not `concluded`, and stays that way until a validator-passing Decision exists. The
+// Claim's own second falsification criterion pre-registers that the held-out suite may
+// reverse the ordering and that the Decision MUST record that as an override —
+// publishing Evidence before the Decision publishes precisely the finding the Decision
+// exists to override. Enforced by lab/canon/guard.py via `python -m integrity`.
 import Layout from '../../layouts/Layout.astro';
 ---
 
