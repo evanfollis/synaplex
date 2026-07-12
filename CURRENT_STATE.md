@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T20:49Z
+updated: 2026-07-12T21:04Z
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (fresh prompt-eval release failed 14/14; opposing review forbidden and not run); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
 ---
@@ -45,12 +45,12 @@ deployment is live at `https://synaplex.pages.dev/` from Pages project
 `sha256:7c0ba7a7131637a7b6cfc33c98eee8d46c4bf2032eca8d3ce86d995eccdcad5a`
 and still reports zero findings. The sanctioned token at
 `runtime/.secrets/cloudflare_api_token` is present and valid; the earlier
-tool-environment absence was not credential absence. The apex custom domain is
-registered on the Pages project but remains pending with `CNAME record not set`.
-Cloudflare reports the token permissions as Worker edit/read plus Zone read; a
-DNS-record request returns HTTP 403 because DNS edit is not granted. Therefore
-`https://synaplex.ai` does not yet resolve. The remaining boundary is precisely
-DNS mutation authority, not Pages access, token presence, build, or deploy.
+tool-environment absence was not credential absence. The apex is operational.
+Public DNS resolves `synaplex.ai` through Cloudflare, HTTPS GETs to `/` and
+`/knowledge/public-projection.json` return 200, and the apex JSON reproduces
+projection v1.0.0, the same digest, and counts 4 research / 0 findings / 3
+mechanisms. Cloudflare Pages now reports overall domain status, verification,
+and HTTP validation all `active`. The former principal DNS action is closed.
 
 ## Controlled three-arm instrument v2 — blocked before entry (2026-07-12)
 
@@ -307,7 +307,7 @@ large class of the failures it exists to find. This alone required a new pre-reg
 answering the defect above — and it should be executed by an agent that has **not** seen the
 subject's current state, which this session and anything inheriting its transcript no longer is.
 
-## 🚧 Blocked: the public knowledge surface — and the loop is now explicitly INCOMPLETE
+## Historical public-surface block resolved; knowledge loop remains incomplete
 
 `synaplex-public-live-knowledge-surface` remains blocked by its own dependency: "complete the
 first full knowledge loop before making its projection the site source of truth." **The loop did
@@ -319,9 +319,9 @@ not close, and no invariant is justified.** The chain, with the break marked:
 Per ADR-0049: *"A full loop may remain incomplete after this study if the evidence does not justify
 a reusable invariant. That limitation is reported, not papered over."* This is that case. The
 `Decision(kill)` is a **disposal, not a finding** — it cites zero Evidence and therefore supports
-**no** knowledge invariant and **no** public projection. `knowledge/` is deliberately **not**
-created: ADR-0044's acceptance test must not be satisfied by manufacturing an invariant to fit its
-shape. DNS/deploy stays off.
+**no** knowledge invariant. This historical deployment block was superseded by ADR-0046's
+authorization for a truthful zero-findings projection: `knowledge/` now exposes research state and
+methodological artifacts without manufacturing an invariant. Apex DNS and deployment are live.
 
 The executor exists, is hardened (see below), and is unused. That is the honest state.
 
@@ -406,8 +406,8 @@ becomes visible.
 - **artifact-coherence-transfer-v1**: prospective Claim and gate are live, but no
   observation has run. The old memory-systems Claims remain immutable and canonically
   withdrawn, not measured; they are not queued for execution.
-- **Site deploy**: `site/dist/` builds locally; deploy to `synaplex.ai`
-  (or staging subdomain) is a separate handoff.
+- **Site deploy**: production is live at `https://synaplex.ai`; the public JSON
+  projection is independently reachable at the apex.
 - **Pre-canon observation: harness engineering as platform knowledge** —
   `lab/observations/harness-engineering-platform-knowledge-2026-04-30.md`
   captures Lopopolo's six-claim framing (code-abundant/attention-scarce,
@@ -420,14 +420,11 @@ becomes visible.
 
 ## What's next (deployable)
 
-1. **Site deploy handoff**: per ADR-0027 deploy target is `synaplex.ai`
-   (apex or `www.synaplex.ai`); CF zone already provisioned. Principal
-   confirmation before final DNS cut-over.
-2. **Layer 2 reasoning (subsequent handoff)**: per-beat daily job that
+1. **Layer 2 reasoning (subsequent handoff)**: per-beat daily job that
    loads pod canon state + intake synthesis and writes candidate
    envelopes to pod `.canon/candidates/`.
-3. **Podcast + Reddit + GitHub + Substack intake** (wave 2).
-4. **First eval execution** (memory-systems-v1, Week 6 per plan).
+2. **Podcast + Reddit + GitHub + Substack intake** (wave 2).
+3. **First eval execution** (memory-systems-v1, Week 6 per plan).
 
 Resolved this turn (three <30min fixes from reflection's P1–P3):
 - ✓ RSS feed URL now named inline in friction event `extra.failing_feeds`.
@@ -442,8 +439,9 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 - **Node.js is v20.20.2; Astro 6 requires 22.12+.** Site pinned to Astro
   5 / Tailwind 3 / `@astrojs/tailwind` 6 for Node-20 compatibility.
   Upgrade path: install Node 22 via nvm before bumping Astro.
-- **Cloudflare Pages deploy** still requires principal authorization for
-  the CF API call (same blocker as the original agentstack handoff).
+- ~~**Cloudflare Pages/DNS authorization**~~ **RESOLVED 2026-07-12** — principal
+  authorized the existing path, deployed Pages, and added the apex CNAME;
+  external DNS, HTTPS, projection, and Pages validation are active.
 - **Canon envelope rebrand**: the memory-systems-v1 Claim retains
   `emitter: "L3:synaplex"` and `instance_id: "synaplex"` after edit;
   id `b7ff216f4eec6e58` preserved (id hashes the statement, not
@@ -517,7 +515,8 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 2. **GitHub remote name confirmation** — handoff suggests
    `evanfollis/synaplex`; repo creation is irreversible external action
    so awaits explicit confirmation.
-3. **Cloudflare Pages deploy authorization** (carries over).
+3. ~~**Cloudflare Pages deploy/DNS authorization**~~ — **RESOLVED**: apex live,
+   projection verified, Pages domain fully active.
 4. **Kernel reboot** — 6.8.0-110 installed, still running 6.8.0-107.
 5. ~~Layer 1 systemd timer enable~~ — **RESOLVED**: timers were
    enabled after the original handoff; `systemctl list-timers`
