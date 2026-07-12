@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T19:55Z
+updated: 2026-07-12T19:58Z
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (Claude subscription CLI ConnectionRefused; no opposing verdict); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
 ---
@@ -40,9 +40,17 @@ Local acceptance is complete: all canon, conformance, runner, executor, intake,
 Programme, integrity, projection, and site-build checks pass; desktop and mobile
 Chromium checks found no console errors or horizontal overflow, keyboard focus
 starts at the skip link, and all built internal links resolve. Cloudflare direct
-deployment is the only unresolved delivery boundary: Wrangler 4.110.0 reached
-Cloudflare but refused non-interactive access because this host has no
-`CLOUDFLARE_API_TOKEN`. No new vendor, service, or credential was requested.
+deployment is live at `https://synaplex.pages.dev/` from Pages project
+`synaplex`; the externally fetched JSON matches projection digest
+`sha256:8586d517eab50220ce3f8121aaa033beeff8f8196b64ef4a93bd6e0a4faeaaf7`
+and still reports zero findings. The sanctioned token at
+`runtime/.secrets/cloudflare_api_token` is present and valid; the earlier
+tool-environment absence was not credential absence. The apex custom domain is
+registered on the Pages project but remains pending with `CNAME record not set`.
+Cloudflare reports the token permissions as Worker edit/read plus Zone read; a
+DNS-record request returns HTTP 403 because DNS edit is not granted. Therefore
+`https://synaplex.ai` does not yet resolve. The remaining boundary is precisely
+DNS mutation authority, not Pages access, token presence, build, or deploy.
 
 ## Controlled three-arm instrument v2 — blocked before entry (2026-07-12)
 
