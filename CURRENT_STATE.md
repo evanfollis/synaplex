@@ -102,6 +102,43 @@ has not run, that results will never be appended to it, and that **the pre-regis
 design has four subjects and no control** — recorded in public rather than discovered in
 public.
 
+**Phase B + C landed** (`synaplex@fbe7409`). The **control-arm rival Claim**
+(`bb7cee596f94289b`) and its frozen gate (`e5542d0abd982b43`) are registered — while the
+window was provably open (zero Evidence). It asks whether the harness can detect success
+*at all*: a no-memory control pasting transcripts into the same 30k budget. Without it, a
+universal sub-0.80 result could never distinguish "memory systems are weak" from "our
+harness is blind." **The first Evidence envelope closes both pre-registration windows
+forever** — no further control, rival, or gate can ever be registered for this eval.
+
+The **runner** (`lab/runner/`) executes the pre-registered methodology and emits **raw
+artifacts only**. It cannot emit Evidence (asserted against the source). Live mode with no
+credential **refuses** rather than falling back to fixtures — a silent fallback would emit a
+complete synthetic result set nothing downstream could tell from a real one. An
+`AbortedCell` carries **no score**, so coding "we stopped paying" as "it got it wrong" is
+structurally unavailable. The scoring oracle is deterministic, not an LLM: an LLM judge here
+would be the detector confound wearing a lab coat.
+
+## 🔴 Blocked: the eval cannot run — credentials
+
+`ANTHROPIC_API_KEY` absent **~56 days**. `LETTA_API_KEY`, `MEM0_API_KEY` absent. No code
+change fixes this. Escalated:
+`runtime/.handoff/URGENT-general-memory-systems-v1-credential-blocked-2026-07-12.md`.
+Two-minute action; also unblocks the intake Sonnet scorer, which has been on the heuristic
+fallback this entire time.
+
+## 🔴 Defect in the pre-registration — needs a principal decision
+
+**`methodology.md` names four subjects. Two are the same system.** Subject 3 ("MemGPT,
+reference implementation at `github.com/letta-ai/letta`") points at *Letta's own repo* —
+MemGPT was renamed Letta. Subjects 1 and 3 are one system in two deployment modes. **Four
+subjects on paper, three systems in fact.**
+
+Recorded in `lab/runner/run.py::INCOMPATIBILITIES` and stamped into every run manifest, per
+the handoff's instruction — **not improvised around.** The Claim is hash-bound and cannot be
+patched; the fix is a successor Claim (three options in the escalation handoff). **Decide
+this before anyone runs `--mode live`**, because the first Evidence closes the window on
+ever fixing it.
+
 ## 🚧 Blocked: the public knowledge surface
 
 `synaplex-public-live-knowledge-surface` is **blocked by its own dependency** — its
