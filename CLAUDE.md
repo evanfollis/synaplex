@@ -157,18 +157,17 @@ synaplex/
 ├── editorial/           Layer 4: draft synthesis surface
 ├── scan/                legacy surface; collapsing into intake/
 └── lab/
-    ├── evals/memory-systems-v1/   first eval: memory systems comparison
+    ├── evals/artifact-coherence-transfer-v1/  active prospective transfer pre-registration
+    ├── evals/memory-systems-v1/   withdrawn vendor route; immutable lineage only
     ├── observations/              pre-canon notes (not authoritative)
     └── .canon/                    canon envelope store (append-only, hash-pinned)
 ```
 
-**There is currently no code that writes to `lab/.canon/`.** Earlier revisions of
-this block listed a `lab/canon_emit.py` and "a small in-repo validator"; neither
-has ever existed. The single Claim in the store was hand-authored, and its id
-contract (`sha256(statement.lower())[:16]`) is reverse-engineered, not enforced by
-anything. Treat any emission path as new code requiring review — and note that
-ADR-0038 §Cleanup is explicit that the reverted `lab/campaign` kernel is not
-authorization for building one.
+`lab/canon/` is the reviewed, validating, append-only write path for `lab/.canon/`.
+It serializes caller-selected envelopes and may not select Claims, gates, or outcomes.
+The original hand-authored Claim id contract (`sha256(statement.lower())[:16]`) is
+now enforced and regression-tested. ADR-0038 §Cleanup remains explicit that the
+reverted `lab/campaign` kernel is not authorization for a selection kernel.
 
 ## Truth Sources (in descending authority)
 
@@ -228,8 +227,8 @@ A meaningful change is incomplete if it cannot answer:
 - Intake + lab: Python 3.12, src layout. Intake depends on `feedparser`,
   `httpx`, `anthropic`. Lab depends on atlas's `StateStore` (local-editable
   install) pending L2 `discovery-runtime` extraction.
-- Scoring: Claude Sonnet API with prompt caching on the system prompt and
-  beat definitions (per the `claude-api` skill).
+- Scoring: deterministic heuristic by default; any authorized model-assisted lab work
+  uses Claude/Codex subscription CLIs with capacity-only failover (ADR-0036).
 - Transcription (future): Groq `whisper-large-v3` for podcast ingestion.
 - Newsletter: Buttondown (API-driven).
 - Canon validation: `jsonschema` + a small in-repo validator enforcing the
