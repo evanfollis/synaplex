@@ -186,6 +186,132 @@ def test_refuses_stale_artifact_hash() -> None:
     _ok("AC2  a content_hash that does not reproduce is refused (canon rule 7)")
 
 
+# --- adversarial review findings (Codex, 2026-07-12) — regressions ---------
+
+
+def test_nested_artifact_pointer_is_hash_checked() -> None:
+    """REVIEW FINDING 1. Canon rule 7 was enforced only on the top-level `artifact` key.
+
+    `EventLogEntry(methodology_log).artifact` is nested, *required* by the schema, and is
+    the pointer written at probe entry — the single most important artifact binding Phase 1
+    makes. Codex got this envelope past the validator with `content_hash: sha256:deadbeef`
+    pointing at a file that does not exist.
+    """
+    from lab.canon.emit import _base, _now
+    from lab.canon.validate import CanonRefusal, validate
+
+    envelope = _base("EventLogEntry", "x", _now())
+    envelope.update(
+        event_kind="methodology_log",
+        subject_id="c",
+        methodology_log={
+            "artifact": {
+                "uri": "file://does/not/exist",
+                "content_hash": "sha256:deadbeef",
+                "version": "1",
+                "media_type": "text/markdown",
+            }
+        },
+    )
+    try:
+        validate(envelope)
+    except CanonRefusal as r:
+        assert "does not exist" in r.rationale
+    else:
+        raise AssertionError(
+            "a nested methodology_log.artifact with a bogus hash validated clean — "
+            "canon rule 7 is defeated on the exact envelope probe entry depends on"
+        )
+    _ok("REV1 nested ArtifactPointers are hash-checked (canon rule 7 at every depth)")
+
+
+def test_nested_phase2_field_is_refused() -> None:
+    """REVIEW FINDING 2. The Phase-2 field check scanned only top-level keys.
+
+    Codex nested `chosen_claim_id` inside `methodology_log` — a subtree the canon schema
+    does not close with `additionalProperties: false` — and it validated clean.
+    """
+    from lab.canon.emit import _base, _now
+    from lab.canon.validate import CanonRefusal, validate
+
+    envelope = _base("EventLogEntry", "x", _now())
+    envelope.update(
+        event_kind="methodology_log",
+        subject_id="c",
+        methodology_log={
+            "artifact": {
+                "uri": f"file://{METHODOLOGY}",
+                "content_hash": PREREGISTERED_HASH,
+                "version": "1",
+                "media_type": "text/markdown",
+            },
+            "chosen_claim_id": "smuggled",
+        },
+    )
+    try:
+        validate(envelope)
+    except CanonRefusal as r:
+        assert "chosen_claim_id" in r.rationale and "Nesting is not an exemption" in r.rationale
+    else:
+        raise AssertionError("a Decision field nested inside methodology_log validated clean")
+    _ok("REV2 Decision/Policy fields are refused at any depth, not just top level")
+
+
+def test_programme_path_refusal_is_case_insensitive() -> None:
+    """REVIEW FINDING 3. The refusal was a case-sensitive substring test.
+
+    `Reasoning/Programmes/secret.md` walked straight past it. A case-sensitive guard on a
+    case-insensitive-ish filesystem is a speed bump, not a guard.
+    """
+    from lab.canon.validate import CanonRefusal, check_programme_isolation
+
+    for path in (
+        "Reasoning/Programmes/secret.md",
+        "REASONING/PROGRAMMES/secret.md",
+        "reasoning\\programmes\\secret.md",
+    ):
+        try:
+            check_programme_isolation({"statement": f"see {path}"})
+        except CanonRefusal as r:
+            assert r.violation_kind == "advisory_leak"
+        else:
+            raise AssertionError(f"Programme path bypassed the refusal via {path!r}")
+    _ok("REV3 Programme-path refusal is case- and separator-insensitive")
+
+
+def test_artifact_pointer_cannot_escape_the_repo() -> None:
+    """Hardening prompted by review: a pointer must not hash-bind a file outside the repo,
+    or canon binds itself to something it cannot replay."""
+    from lab.canon.emit import _base, _now
+    from lab.canon.validate import CanonRefusal, validate
+
+    envelope = _base("Claim", "x", _now())
+    envelope.update(
+        statement="s",
+        falsification_criteria=["f"],
+        exposure={
+            "capital_at_risk": 0,
+            "reversibility": "reversible",
+            "correlation_tags": [],
+            "time_to_realization": "P1D",
+            "blast_radius": "local",
+        },
+        artifact={
+            "uri": "file://../../../etc/hostname",
+            "content_hash": "sha256:x",
+            "version": "1",
+            "media_type": "text/plain",
+        },
+    )
+    try:
+        validate(envelope)
+    except CanonRefusal as r:
+        assert "outside the repo" in r.rationale
+    else:
+        raise AssertionError("an ArtifactPointer escaped the repo via ../")
+    _ok("REV4 an ArtifactPointer cannot traverse outside the repo")
+
+
 # --- AC3/AC4: append-only and collisions -----------------------------------
 
 
@@ -454,6 +580,10 @@ TESTS = [
     test_refuses_phase2_fields_on_a_phase1_envelope,
     test_refuses_backdated_role_declaration,
     test_refuses_stale_artifact_hash,
+    test_nested_artifact_pointer_is_hash_checked,
+    test_nested_phase2_field_is_refused,
+    test_programme_path_refusal_is_case_insensitive,
+    test_artifact_pointer_cannot_escape_the_repo,
     test_append_only_leaves_the_envelope_byte_unmodified,
     test_case_only_collision_is_refused_loudly,
     test_refuses_any_programme_reference,

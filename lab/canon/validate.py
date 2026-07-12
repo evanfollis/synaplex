@@ -165,8 +165,46 @@ def _walk_strings(value: Any) -> list[str]:
     return []
 
 
+def _walk_keys(value: Any) -> list[str]:
+    """Every dict key at every depth.
+
+    Top-level-only key checks are why adversarial review got `chosen_claim_id` past this
+    validator by nesting it inside `methodology_log` — a subtree the canon schema does not
+    close with `additionalProperties: false`. Depth is not a hiding place.
+    """
+    if isinstance(value, dict):
+        return list(value) + [k for v in value.values() for k in _walk_keys(v)]
+    if isinstance(value, list):
+        return [k for v in value for k in _walk_keys(v)]
+    return []
+
+
+def _walk_artifact_pointers(value: Any) -> list[dict]:
+    """Every ArtifactPointer at every depth — anything carrying `uri` + `content_hash`.
+
+    The top-level `artifact` key is not the only pointer in an envelope.
+    `EventLogEntry(methodology_log).artifact` is *required* by the schema and is the
+    pointer used at probe entry; a top-level-only rule 7 check left it unverified, so a
+    methodology_log could hash-bind a file that did not exist. Found by adversarial review,
+    which is exactly what it is for.
+    """
+    found: list[dict] = []
+    if isinstance(value, dict):
+        if "uri" in value and "content_hash" in value:
+            found.append(value)
+        for v in value.values():
+            found.extend(_walk_artifact_pointers(v))
+    elif isinstance(value, list):
+        for v in value:
+            found.extend(_walk_artifact_pointers(v))
+    return found
+
+
 def check_phase_1_scope(envelope: dict) -> None:
-    """Refuse anything that is not a Phase-1 envelope, or that carries Phase-2 fields."""
+    """Refuse anything that is not a Phase-1 envelope, or that carries Phase-2 fields.
+
+    Checks keys at **every depth**, not just the top level.
+    """
     object_type = envelope.get("object_type")
     if object_type not in PHASE_1_TYPES:
         raise CanonRefusal(
@@ -176,13 +214,14 @@ def check_phase_1_scope(envelope: dict) -> None:
             f"gap (canon v0.1.0 cannot express a frozen, pre-registered, eval-local promotion "
             f"gate). If you need one, stop and escalate — do not construct a Policy.",
         )
-    intruders = sorted(PHASE_2_FIELDS & set(envelope))
+    intruders = sorted(PHASE_2_FIELDS.intersection(_walk_keys(envelope)))
     if intruders:
         raise CanonRefusal(
             "schema_validation_failure",
-            f"{object_type} carries Decision/Policy-only field(s): {', '.join(intruders)}. "
-            f"Canon rules 2-6 and 8 govern these and Phase 1 does not check them; passing them "
-            f"through unvalidated is how a Phase-2 semantic lands in canon by the back door.",
+            f"{object_type} carries Decision/Policy-only field(s) at some depth: "
+            f"{', '.join(intruders)}. Canon rules 2-6 and 8 govern these and Phase 1 does not "
+            f"check them; passing them through unvalidated is how a Phase-2 semantic lands in "
+            f"canon by the back door. Nesting is not an exemption.",
         )
 
 
@@ -199,9 +238,14 @@ def check_programme_isolation(envelope: dict) -> None:
     verbatim, with no `reasoning/programmes/` path anywhere in it, will hash-pin cleanly
     and pass this check. That hole is real, it is closed by reflection review rather than
     by code, and saying so is the difference between a guard and a reassurance.
+
+    Matching is **case-insensitive and separator-normalized**. Adversarial review walked
+    straight past the first version of this check with `Reasoning/Programmes/secret.md` —
+    a case-sensitive substring test is not a guard, it is a speed bump.
     """
     for s in _walk_strings(envelope):
-        if PROGRAMME_REL in s or "programmes/" in s:
+        probe = s.lower().replace("\\", "/")
+        if PROGRAMME_REL in probe or "programmes/" in probe:
             raise CanonRefusal(
                 "advisory_leak",
                 f"envelope references the Programme plane ({s!r}). Programmes have zero "
@@ -223,28 +267,40 @@ def check_role_timestamps(envelope: dict) -> None:
 
 
 def check_artifact_hash(envelope: dict) -> None:
-    """Canon validator rule 7: `content_hash` must reproduce from the artifact at `uri`."""
-    ptr = envelope.get("artifact")
-    if not ptr:
-        return
-    uri = ptr.get("uri", "")
-    if not uri.startswith("file://"):
-        return
-    rel = uri[len("file://") :]
-    path = REPO_ROOT / rel
-    if not path.is_file():
-        raise CanonRefusal(
-            "schema_validation_failure",
-            f"ArtifactPointer points at {rel}, which does not exist — canon validator rule 7.",
-        )
-    actual = hash_file(path)
-    if actual != ptr.get("content_hash"):
-        raise CanonRefusal(
-            "schema_validation_failure",
-            f"content_hash does not reproduce for {rel} — canon validator rule 7. "
-            f"envelope={ptr.get('content_hash')} actual={actual}. The artifact changed after "
-            f"the hash was taken; emit a new envelope, never edit the hash to match.",
-        )
+    """Canon validator rule 7, applied to EVERY ArtifactPointer in the envelope.
+
+    Not just the top-level `artifact` key —
+    `EventLogEntry(methodology_log).artifact` is nested, required, and is the pointer
+    written at probe entry.
+    """
+    for ptr in _walk_artifact_pointers(envelope):
+        uri = ptr.get("uri", "")
+        if not uri.startswith("file://"):
+            continue
+        rel = uri[len("file://") :]
+        path = REPO_ROOT / rel
+        # `resolve()` collapses `..` and follows symlinks, so a pointer cannot escape the
+        # repo and hash-bind something outside it.
+        resolved = path.resolve()
+        if not str(resolved).startswith(str(REPO_ROOT.resolve())):
+            raise CanonRefusal(
+                "schema_validation_failure",
+                f"ArtifactPointer {uri!r} resolves to {resolved}, outside the repo. An "
+                f"envelope may only hash-bind an artifact this repo can replay.",
+            )
+        if not resolved.is_file():
+            raise CanonRefusal(
+                "schema_validation_failure",
+                f"ArtifactPointer points at {rel}, which does not exist — canon validator rule 7.",
+            )
+        actual = hash_file(resolved)
+        if actual != ptr.get("content_hash"):
+            raise CanonRefusal(
+                "schema_validation_failure",
+                f"content_hash does not reproduce for {rel} — canon validator rule 7. "
+                f"envelope={ptr.get('content_hash')} actual={actual}. The artifact changed after "
+                f"the hash was taken; emit a new envelope, never edit the hash to match.",
+            )
 
 
 def check_schema(envelope: dict) -> None:

@@ -54,6 +54,8 @@ EMITTER = "L3:synaplex"
 LAYER = "L3"
 INSTANCE_ID = "synaplex"
 
+_MAX_VIOLATION_ID_ATTEMPTS = 100
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -100,10 +102,16 @@ def _base(object_type: str, envelope_id: str, emitted_at: str) -> dict[str, Any]
 
 
 def _write(envelope: dict) -> Path:
-    """Low-level write. Assumes validation already passed. Creates the directory."""
+    """Low-level write. Exclusive create — the filesystem enforces append-only, not a check.
+
+    `open(..., "x")` fails if the path exists. The `exists()` test in `_emit` produces the
+    good error message; *this* is what makes the guarantee, because a check-then-write is a
+    race and canon has no undo. Two concurrent emitters cannot both win.
+    """
     path = path_for(envelope["object_type"], envelope["id"])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(to_disk(envelope), encoding="utf-8")
+    with open(path, "x", encoding="utf-8") as f:  # FileExistsError if it already exists
+        f.write(to_disk(envelope))
     return path
 
 
@@ -121,8 +129,7 @@ def record_violation(
     raises into the caller's path.
     """
     ts = _now()
-    eid = derived_id("canon_violation", violation_kind, attempted_type, attempted_id, _now_precise())
-    envelope = _base("EventLogEntry", eid, ts)
+    envelope = _base("EventLogEntry", "", ts)
     envelope["event_kind"] = "canon_violation"
     envelope["canon_violation"] = {
         "violation_kind": violation_kind,
@@ -135,11 +142,26 @@ def record_violation(
     }
     if attempted_id:
         envelope["subject_id"] = attempted_id
-    try:
-        _write(envelope)
-    except OSError:
-        pass
-    return eid
+
+    # Two refusals in the same microsecond would derive the same id, and the loser would be
+    # dropped by the exclusive create in `_write`. The violation record we lose is exactly
+    # the one worth keeping, so disambiguate until it lands.
+    for attempt in range(_MAX_VIOLATION_ID_ATTEMPTS):
+        eid = derived_id(
+            "canon_violation", violation_kind, attempted_type, attempted_id,
+            _now_precise(), str(attempt),
+        )
+        envelope["id"] = eid
+        try:
+            _write(envelope)
+            return eid
+        except FileExistsError:
+            continue
+        except OSError:
+            # Recording the refusal failed. The refusal itself must still propagate — a
+            # failed audit write may not become a successful emission.
+            return eid
+    return envelope["id"]
 
 
 def _emit(envelope: dict) -> tuple[str, Path]:
