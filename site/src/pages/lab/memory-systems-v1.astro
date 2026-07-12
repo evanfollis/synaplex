@@ -1,41 +1,62 @@
 ---
 // canon:publishes-results = false
 //
-// This page is the pre-registration and publishes NO results, findings, or
-// conclusions — only the Claim, criteria, thresholds, and methodology that were
-// hash-bound before any run. That is what makes it publishable while Phase 2 of
-// ADR-0042 is blocked.
+// WITHDRAWN 2026-07-12. Never executed, zero Evidence, disposed by Decision(kill)
+// 8c589b2448a76a6b and e29e6d9cc80c8b72. Kept up deliberately — a lab that deletes its
+// retractions has no standing to demand rigour from anyone else.
 //
-// Do NOT "update this page with early numbers." memory-systems-v1 is `incomplete`,
-// not `concluded`, and stays that way until a validator-passing Decision exists. The
-// Claim's own second falsification criterion pre-registers that the held-out suite may
-// reverse the ordering and that the Decision MUST record that as an override —
-// publishing Evidence before the Decision publishes precisely the finding the Decision
-// exists to override. Enforced by lab/canon/guard.py via `python -m integrity`.
+// This page publishes NO results, findings, or conclusions, and never will. It is an
+// archived pre-registration plus its retraction. Do not add numbers to it: there are none,
+// the evaluation was never run, and the canon Decisions disposing it cite zero Evidence.
+// Enforced by lab/canon/guard.py via `python -m integrity` and `npm run build`.
 import Layout from '../../layouts/Layout.astro';
 ---
 
 <Layout
-  title="Memory systems comparison v1 — pre-registration"
-  description="Pre-registered evaluation of Letta, mem0, MemGPT, and Claude built-in memory on five task suites. Results publish at eval completion."
+  title="Memory systems comparison v1 — WITHDRAWN"
+  description="A pre-registered memory-systems evaluation, withdrawn without ever being run. No Evidence, no result, no finding. Kept public as the record of a retraction."
 >
   <p class="text-sm uppercase tracking-wider mb-3" style="color: var(--color-ink-dim);">
-    Lab · pre-registration · 2026-04-19
+    Lab · pre-registered 2026-04-19 · WITHDRAWN 2026-07-12
   </p>
   <h1 class="text-3xl font-bold mb-6 tracking-tight">
     Memory systems comparison v1
   </h1>
 
   <div class="prose max-w-2xl">
+    <div class="border-l-4 pl-4 py-2 mb-6" style="border-color: var(--color-ink-dim);">
+      <p class="text-lg" style="margin-top:0;">
+        <strong>WITHDRAWN — 2026-07-12. Never executed. No Evidence. No finding.</strong>
+      </p>
+      <p style="margin-bottom:0;">
+        This evaluation was pre-registered and then withdrawn <em>without ever being run</em>.
+        Nothing on this page says anything about Letta, mem0, MemGPT, or Claude's memory. No
+        measurement was taken, and none is implied.
+      </p>
+    </div>
+
     <p class="text-lg">
-      We intend to evaluate four agent memory systems on five task suites.
-      <strong>This page is the pre-registration, and only that.</strong> The Claim,
-      falsification criteria, thresholds, and methodology were hash-bound into canon
-      <em>before</em> any evaluation could run, and the promotion gate is frozen against
-      amendment by anyone. The evaluation has <strong>not been executed</strong>; no
-      results appear below because none exist, and none will appear on this page at all —
-      a finding publishes behind a canon <code>Decision</code>, not by editing a
-      pre-registration in place.
+      <strong>Why it was withdrawn.</strong> The vendor comparison was never the question this
+      system exists to answer. Letta was an imperfect illustrative example of a broader idea
+      about context repositories, and we mistook the example for the subject. Two design
+      defects surfaced while preparing the run and are recorded here rather than buried: the
+      methodology named four subjects but two of them (Letta and "MemGPT") are the same system
+      under different deployment modes, and the design had four subjects and no control — so a
+      universal failure could not have distinguished weak memory systems from a harness unable
+      to detect success at all.
+    </p>
+
+    <p>
+      <strong>This page stays up on purpose.</strong> Deleting a withdrawn pre-registration
+      would leave a cleaner site and a dishonest record. Publishing only the studies that
+      worked is the exact failure mode pre-registration exists to prevent, and a lab that
+      quietly removes its retractions has no standing to demand rigour from anyone else. The
+      canon lineage below is intact and unedited, including the parts that reflect badly on the
+      route.
+    </p>
+
+    <p class="text-lg">
+      What follows is the original pre-registration, preserved as written.
     </p>
 
     <h2>Claim (pre-registered)</h2>
@@ -85,15 +106,9 @@ import Layout from '../../layouts/Layout.astro';
       <li>Claude built-in memory (Anthropic native memory tool on Sonnet 4.6 / Opus 4.7)</li>
     </ol>
 
-    <h2>Status: pre-registered, not executed</h2>
+    <h2>The design defect, recorded rather than deleted</h2>
     <p>
-      The Claim was pre-registered on 2026-04-19 and <strong>the evaluation has not been
-      run.</strong> No Evidence exists; no Decision exists. This eval is
-      <strong>incomplete</strong>, not inconclusive — there is nothing to be inconclusive
-      about yet.
-    </p>
-    <p>
-      Two things are true and worth stating plainly rather than burying:
+      Two things are worth stating plainly rather than burying:
     </p>
     <ul>
       <li>
@@ -101,16 +116,17 @@ import Layout from '../../layouts/Layout.astro';
         system scores below 0.80 — the outcome the Claim predicts — that result cannot
         distinguish "memory systems are weak" from "this task is too hard for anything,
         including a naive baseline that just pastes the prior transcripts into context."
-        We found this by applying a falsification lens to our own pre-registration, and we
-        are recording it here rather than discovering it in public after the fact. A
-        separately pre-registered control arm is the remedy, and it must be registered
-        before any Evidence exists or it is not a pre-registration at all.
+        We found it by turning a falsification lens on our own pre-registration, and
+        pre-registered a control arm to fix it while zero Evidence existed — then withdrew the
+        whole route when it became clear the subject itself was never authorized. The control
+        arm is disposed alongside the primary. A defect found and published is worth more than
+        one quietly deleted along with the study that carried it.
       </li>
       <li>
-        <strong>Results will not be appended to this page.</strong> An earlier version of
-        this page promised exactly that, and it was wrong. A finding publishes only behind a
-        terminal canon <code>Decision</code> that cites every frozen gate bound to the Claim
-        and only Evidence gathered about the Claim it is deciding. Publishing numbers off a
+        <strong>Results were never appended to this page, and never will be.</strong> An
+        earlier version promised exactly that, and it was wrong. A finding publishes only
+        behind a terminal canon <code>Decision</code> that cites every frozen gate bound to the
+        Claim and only Evidence gathered about the Claim it is deciding. Publishing numbers off a
         raw Evidence envelope is how you publish the very finding a Decision exists to
         override — this Claim's own second falsification criterion pre-registers that the
         held-out suite may <em>reverse the ordering</em>. A build-time guard enforces this;
@@ -136,8 +152,15 @@ import Layout from '../../layouts/Layout.astro';
 
     <h2>Audit trail</h2>
     <p>
-      Canon Claim: <code>b7ff216f4eec6e58</code><br/>
-      Frozen promotion gate: <code>3e500cb2aec93dfc</code> (<code>amendment_authority: []</code>)<br/>
+      Canon Claim: <code>b7ff216f4eec6e58</code> — <strong>disposed by
+      <code>Decision(kill) 8c589b2448a76a6b</code></strong><br/>
+      Control-arm rival Claim: <code>bb7cee596f94289b</code> — <strong>disposed by
+      <code>Decision(kill) e29e6d9cc80c8b72</code></strong><br/>
+      Frozen promotion gate: <code>3e500cb2aec93dfc</code> (<code>amendment_authority: []</code>)
+      — never met, never missed, never tested<br/>
+      Both kill Decisions cite <strong>zero Evidence</strong>, because nothing was ever
+      measured. Their rationale opens "WITHDRAWN, NOT MEASURED" so no future reader can cite
+      them as evidence that these systems were evaluated.<br/>
       Methodology: SHA-256 hash-bound in the Claim's ArtifactPointer<br/>
       Pre-registration integrity: any change to the methodology invalidates this Claim; a
       new Claim with a new id must be emitted. The methodology is therefore
