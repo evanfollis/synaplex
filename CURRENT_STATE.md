@@ -55,18 +55,38 @@ emit.**
   declaring `true` needs a Decision that cannot currently exist. **No results page can
   ship.** Intended, not a limitation.
 
-**🔴 The L1 canon spec is not under version control.** `spec/` is in
-context-repository's `.gitignore` (line 11). The highest truth source in this system —
-the contract all 275 envelopes across three repos bind to — cannot be diffed, reviewed,
-attributed, or reverted. It changed **0.1.0 → 0.2.0 in place on 2026-07-12** with no
-CHANGELOG entry, no ADR, no review artifact; the "frozen" 0.1.0 spec is unrecoverable.
-All 275 envelopes still validate (the bump is additive) so nothing is corrupt — *that
-was luck, not process*. `lab/canon/validate.py` now pins the schema set by digest
-(`bcc6d01315fed7f9`) so the next silent change fails a test loudly. Escalated:
-`runtime/.handoff/URGENT-context-repository-canon-spec-is-not-under-version-control.md`.
-**Synaplex will not adopt 0.2.0 semantics or treat that file edit as the canon-gap
-resolution** — inferring authorization from an untracked artifact is how the reverted
-`lab/campaign` kernel happened.
+**The canon spec is now tracked, and v0.2.0 is real** (`context-repository@d93d4e5`,
+`@42907eb`). `spec/` had been gitignored since April — the L1 canon, the contract every
+envelope in three repos binds to, was never under version control, and it changed
+0.1.0 → 0.2.0 in place on 2026-07-12 with nothing detecting it. Our schema-digest pin
+caught it; context-repository fixed the root cause, recorded the bump properly, and
+resolved the ADR-0042 canon gap with a **`frozen` Policy class**. Caveat worth knowing:
+the committed v0.1.0 is a *reconstruction*, verified by revalidating live envelopes, not
+a git-recovered original — no copy survived.
+
+**Phase 2 landed: the lab can conclude** (`synaplex@9639d8a`). `Decision` and `Policy`
+emitters, implementing canon validator rules 2–5 and 9–17. Verified against
+context-repository's **19 reference conformance fixtures — 19/19, each refusing for the
+right `violation_kind`.** That is the only test that can catch us conforming to our own
+bugs.
+
+- **`memory-systems-v1` now has a frozen promotion gate** (Policy `3e500cb2aec93dfc`,
+  `amendment_authority: []` — nobody, not us, not Evan). Emitted while its window was
+  open (zero Evidence, zero phase-transitions, verified). **That window closes forever on
+  the first Evidence**, so the gate had to be issued before the runner exists or never.
+  `derived_from: /thresholds` makes canon rule 14 *prove* it carries no information the
+  hash-bound Claim doesn't already contain.
+- **`Evidence.observed_at` is required and comes from the run, never the clock.** Canon
+  rule 10 anchors the pre-registration window on it because `emitted_at` is entirely under
+  the emitter's control. Stamping it at emission time silently reopens the
+  evidence-laundering attack. See `CLAUDE.md` §Operating Principles.
+- **The store holds one `EventLogEntry(canon_violation)`** — a real refusal, when the
+  validator rejected our own first gate emission. It stays. Deleting an inconvenient canon
+  record because it came from our own bug is the exact behaviour this apparatus forbids.
+
+**`memory-systems-v1` is still `incomplete`, not `concluded`.** It has a gate it cannot
+move and no Evidence to judge against it. The remaining blocker is the **runner** — it
+does not exist (Phase C of the knowledge-loop handoff).
 
 ## One-line status
 
