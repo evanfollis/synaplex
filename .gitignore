@@ -34,3 +34,9 @@ secrets/
 # Transcripts / ephemeral
 .cache/
 *.log
+
+# Eval run artifacts. Generated, not source. Fixture runs produce recall numbers that are
+# NOT results — keeping them in git is how a synthetic 0.61 gets cited as a finding a month
+# later. A real run's artifacts are committed deliberately, as part of Evidence emission,
+# where canon rule 7 will hash-bind them.
+lab/evals/*/runs/

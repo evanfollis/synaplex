@@ -634,14 +634,19 @@ def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
     from lab.canon import store
 
     counts = store.counts()
-    assert counts["Claim"] == 1, f"real store has {counts['Claim']} Claims, expected 1"
-    assert counts["Policy"] == 1, "the frozen promotion gate should be the only Policy"
+    assert counts["Claim"] == 2, (
+        f"expected 2 Claims — the primary and its pre-registered control-arm rival — "
+        f"found {counts['Claim']}"
+    )
+    assert counts["Policy"] == 2, "each Claim carries exactly one frozen promotion gate"
     assert counts["Decision"] == 0, "nothing has concluded; memory-systems-v1 is incomplete"
     assert counts["Evidence"] == 0, (
-        "Evidence exists in the real store. Either a run happened (good — but the "
-        "pre-registration window is now closed), or a test wrote into canon (bad)."
+        "EVIDENCE EXISTS. If a real run produced it, good — but note that the "
+        "pre-registration window on both frozen gates is now closed forever, and no further "
+        "control, rival, or gate can ever be registered for this eval. If a test wrote it, "
+        "that is corruption of an append-only store and there is no undo."
     )
-    _ok("SAFE real store: 1 Claim, 1 frozen gate, 0 Evidence, 0 Decisions — as intended")
+    _ok("SAFE real store: 2 Claims, 2 frozen gates, 0 Evidence, 0 Decisions — as intended")
 
 
 TESTS = [

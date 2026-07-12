@@ -1,0 +1,46 @@
+{
+  "id": "bb7cee596f94289b",
+  "spec_version": "0.2.0",
+  "object_type": "Claim",
+  "emitted_at": "2026-07-12T12:40:20Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Claim"
+  ],
+  "role_declared_at": "2026-07-12T12:40:20Z",
+  "binding": "binding",
+  "sources": [],
+  "instance_id": "synaplex",
+  "statement": "Sub-0.80 recall at 1 at 10-session depth on the multi_session_coherence suite is a property of the task harness rather than of memory systems: a no-memory control that pastes the full prior-session transcript into context within the same 30000-token input budget also scores below 0.80 mean recall at 1",
+  "falsification_criteria": [
+    "If the no-memory full-context control achieves mean recall@1 >= 0.80 (N>=10 runs, 95% bootstrap CI lower bound >= 0.80) on multi_session_coherence at 10-session depth, this claim is falsified: the harness can discriminate, and a universal memory-system failure is a finding about the systems rather than about the task.",
+    "If the control and every subject both score >= 0.80, the corpus discriminates nothing at the ceiling; this claim is falsified and the task is uninformative."
+  ],
+  "exposure": {
+    "capital_at_risk": 0,
+    "reversibility": "reversible",
+    "correlation_tags": [
+      "agent-platform-evaluation",
+      "memory-systems",
+      "control-arm"
+    ],
+    "time_to_realization": "P21D",
+    "blast_radius": "local"
+  },
+  "thresholds": {
+    "recall_at_1": 0.8,
+    "alpha": 0.05,
+    "bootstrap_iterations": 1000,
+    "runs_per_cell": 10,
+    "session_depth": 10,
+    "max_tokens_per_run_input": 30000,
+    "max_tokens_per_run_output": 3000
+  },
+  "artifact": {
+    "uri": "file://lab/evals/memory-systems-v1/control-arm.md",
+    "content_hash": "sha256:c0ebf012232ac6914765068a5984bddbbf07faeded1ad5f3340e23926b4d1634",
+    "version": "1",
+    "media_type": "text/markdown"
+  }
+}
