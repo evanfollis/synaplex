@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T19:50Z
+updated: 2026-07-12T19:55Z
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (Claude subscription CLI ConnectionRefused; no opposing verdict); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
 ---
@@ -25,6 +25,16 @@ were removed. Build-time generation fails closed on canon/metadata drift, privat
 paths or fields, unstable identity, and any purported finding without a valid
 Decision-to-Evidence chain. The existing canon and publication guards still run
 before generation.
+
+Projection status semantics are typed rather than inferred from prose. Existing
+withdrawn and invalidated dispositions resolve from structured Decision
+correlation tags, never rationale prefixes. The blocked pre-entry state lives in
+the separately schema-validated `knowledge/public-status.json` and is hash-bound
+to its reviewed lab artifact; the build refuses authority-hash drift, unknown
+Claims, extra block fields, or a block that survives a terminal Decision. Only a
+canon `Decision(kind=promote)` may create a finding, and every cited Evidence id
+must exist and belong to the promoted Claim. Generated output is validated
+against `public-projection.schema.json` during tests and every build.
 
 Local acceptance is complete: all canon, conformance, runner, executor, intake,
 Programme, integrity, projection, and site-build checks pass; desktop and mobile

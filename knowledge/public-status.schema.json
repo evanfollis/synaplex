@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "blocks"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "blocks": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/block"}
+    }
+  },
+  "$defs": {
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "since", "summary", "authority"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "since": {"type": "string", "format": "date-time"},
+        "summary": {"type": "string", "minLength": 1},
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "path", "content_hash"],
+          "properties": {
+            "kind": {"const": "review_artifact"},
+            "path": {"type": "string", "pattern": "^lab/"},
+            "content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "blocks": {
+    "e1c51ab0d83be772": {
+      "code": "opposing-review-unavailable",
+      "since": "2026-07-12T19:18:00Z",
+      "summary": "Required opposing methodological review unavailable; no probe entry and no Evidence.",
+      "authority": {
+        "kind": "review_artifact",
+        "path": "lab/evals/artifact-delivery-instrument-v2/reviews/claude-methodological-review-blocked-2026-07-12.md",
+        "content_hash": "sha256:37f5ed92c486b95520fb4b008388a2965cd62ae423752bd88121c9407ce8e321"
+      }
+    }
+  }
+}

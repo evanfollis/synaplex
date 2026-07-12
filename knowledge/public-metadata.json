@@ -23,12 +23,7 @@
       "slug": "artifact-delivery-instrument-v2",
       "title": "Artifact delivery instrument v2",
       "summary": "A controlled instrument-validation study preregistered but blocked before probe entry because the required opposing review produced no verdict.",
-      "public_artifact": "/artifacts/artifact-delivery-instrument-v2/",
-      "blocked": {
-        "code": "opposing-review-unavailable",
-        "since": "2026-07-12T19:18:00Z",
-        "summary": "Required opposing methodological review unavailable; no probe entry and no Evidence."
-      }
+      "public_artifact": "/artifacts/artifact-delivery-instrument-v2/"
     }
   },
   "mechanisms": [
