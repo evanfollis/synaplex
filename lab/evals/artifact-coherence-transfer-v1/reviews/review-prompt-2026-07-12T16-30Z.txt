@@ -1,0 +1,74 @@
+You are an opposing methodological reviewer for a pre-registered scientific study. You are NOT a code-style reviewer. Your job is to dispose of a protocol deviation and decide whether a pre-registered observation may still legitimately run. Be adversarial. Default to refusing.
+
+Repo root: /opt/workspace/projects/synaplex
+
+Read these files completely before answering:
+1. lab/evals/artifact-coherence-transfer-v1/methodology.md          (the FROZEN, hash-bound pre-registration)
+2. lab/evals/artifact-coherence-transfer-v1/PROTOCOL-DEVIATION-2026-07-12-preprobe-target-consultation.md
+3. lab/evals/artifact-coherence-transfer-v1/executor.py             (the executor, not yet run)
+4. lab/evals/artifact-coherence-transfer-v1/test_executor.py        (its fail-injection suite)
+5. lab/.canon/claims/bda4396c7638e63f.json                          (the Claim)
+6. lab/.canon/policies/5273e9a31e92f6c3.json                        (the frozen gate, amendment_authority: [])
+7. /opt/workspace/supervisor/decisions/0049-complete-one-instrumented-cycle-before-orchestration.md
+
+BACKGROUND. The study pre-registers a prospective prediction about ONE subject (launchpad-lint,
+N=1): that its browser-visible behavior stays coherent across three samples, because a static
+predicate (request-time resolution of mutable build artifacts) is FALSE for it. The Claim and its
+frozen gate were emitted to canon at 2026-07-12T13:40:27Z and are immutable. Zero Evidence exists;
+the pre-registration window is still open.
+
+THE DEVIATION. Roughly two hours AFTER the Claim and gate were frozen, but BEFORE the executor
+existed and BEFORE the required canon probe-entry events (methodology_log + phase_transition) were
+emitted, the agent ran `systemctl status launchpad-lint.service` and two read-only `curl` GETs
+against the declared public route. Both returned output: the service is up, HTTP 200, body
+"Launchpad Lint MCP product is running." No browser sample was taken. The subject was not mutated.
+ADR-0049 step 2 requires probe-entry events "before observing the subject." That was violated.
+
+The agent's own disposition (written by the contaminated party, which is why you are here) is:
+the out-of-band B0 diagnostic is VOID and discarded, but the prospective run is NOT invalidated,
+because (i) the Claim and gate predate the read and are unamendable, (ii) the leaked content is a
+subset of what the hash-bound methodology already asserts — the expected identity string and the
+P=false basis are both written verbatim in methodology.md — and (iii) the only genuinely new
+information is a directional hint that the service is currently healthy, whose hazard is
+executor-construction bias, mitigated mechanically by fail-injection tests that prove the detector
+can fire.
+
+ANSWER THESE, IN ORDER, CONCRETELY, CITING FILE LINES:
+
+Q1. DISPOSITION (binding). Does the pre-probe consultation invalidate the prospective run, or only
+the B0 diagnostic? Attack the agent's reasoning. Specifically: is claim (ii) — "the leak is a
+subset of the pre-registration" — actually true when checked against methodology.md, or is it
+self-serving? Is there any channel by which this access could have contaminated the Claim, the
+gate, the population, or the outcome, that the agent has not named?
+
+Q2. BIAS CONTROL. The executor was written by an author who already knew the subject was serving
+healthy. Are the fail-injection tests an adequate control, or is a contaminated author simply
+unable to author this detector? Is there a failure mode the detector still cannot see? Note the
+executor watches: console errors, uncaught JS exceptions, Playwright requestfailed, and error
+statuses on behavior-critical responses (document/script/stylesheet/fetch/xhr). What artifact-
+incoherence symptom would still slip through all four?
+
+Q3. BARRIER SEMANTICS. methodology.md is ambiguous. The frozen gate fixes
+browser_barriers_seconds [1,30,120] but not their meaning. Reading (a): those are post-load dwell
+times per sample. Reading (b): those are elapsed-from-run-start times at which each sample is
+taken, each with the fixed 1s post-load dwell that B2 names. The executor implements (b). Which
+reading is faithful to the frozen text? Does implementing the wrong one invalidate the run, or is
+either defensible? This must be settled BEFORE the run, not after.
+
+Q4. EXECUTOR INTEGRITY. Can the executor, as written, (a) mutate the subject, (b) emit Evidence,
+(c) silently shrink the 3-sample denominator, (d) let an aborted sample become a result, or
+(e) let a fast fixture run be filed as the real pre-registered run? Cite lines. Also: does
+`mechanical_outcome()` cross the line from measurement into selection/adjudication, which ADR-0042
+and ADR-0049 forbid the executor to do?
+
+Q5. VERDICT. Exactly one token, on its own line, prefixed "VERDICT: "
+   - PROCEED                — run as-is; the deviation voids only the B0 diagnostic
+   - PROCEED_WITH_CHANGES   — run only after specific named changes (list them, numbered)
+   - STOP_RUN_INVALID       — the deviation or the executor invalidates the prospective run
+   - AMBIGUOUS              — validity cannot be determined
+
+Be aware: the operator has committed that AMBIGUOUS or STOP_RUN_INVALID means the run stays
+UNEXECUTED and the study is reported incomplete. Do not soften your verdict to be helpful. A
+negative or inconclusive research outcome is a successful outcome here.
+
+Do not edit any files. Under 900 words.

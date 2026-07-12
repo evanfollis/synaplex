@@ -1,0 +1,40 @@
+{
+  "id": "c40c91e1d1b56853",
+  "spec_version": "0.2.0",
+  "object_type": "Decision",
+  "emitted_at": "2026-07-12T16:33:51Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Decision"
+  ],
+  "role_declared_at": "2026-07-12T16:33:51Z",
+  "binding": "binding",
+  "sources": [],
+  "instance_id": "synaplex",
+  "kind": "kill",
+  "candidate_claims": [
+    "bda4396c7638e63f"
+  ],
+  "chosen_claim_id": "bda4396c7638e63f",
+  "cited_evidence": [],
+  "rationale": "INVALIDATED, NOT MEASURED. This Decision disposes a pre-registration that was never executed. The canon store holds zero Evidence envelopes for this Claim, the Claim never entered probe, and no browser sample was ever taken. It is NOT an empirical finding. Nothing here says anything about whether launchpad-lint's build artifacts are coherent or incoherent; that question is untouched and remains open.\n\nGrounds for invalidation. Roughly two hours after this Claim and its frozen gate were emitted, and before the study executor existed or any probe-entry event reached canon, an agent consulted the subject out-of-band: `systemctl status launchpad-lint.service` and two read-only curl GETs against the declared public route. Both returned output. ADR-0049 makes probe entry an ordering precondition that must precede ANY observation of the subject, not merely a browser sample, so the consultation violated it. The access is recorded verbatim in lab/evals/artifact-coherence-transfer-v1/PROTOCOL-DEVIATION-2026-07-12-preprobe-target-consultation.md.\n\nThe agent that caused the deviation disposed of it in its own favour, arguing that the leaked information was a subset of what the hash-bound methodology already asserted and that the prospective run therefore survived. An opposing model (codex CLI, gpt-5.6-sol, read-only, transcript sha256 53fd9cd09416748e688a362a9d41b70be24a41feaba145f0f6a73b7c37b836c4) was given four permitted verdicts and returned STOP_RUN_INVALID. It refuted the subset argument on the facts: the methodology predeclares the expected identity string and the P=false basis, but predeclares nothing about HTTP 200, absence of redirect, latency, uptime, PID, the exact executable, restart history, or evidence of earlier successful requests. All of that was disclosed. It granted that the immutable Claim, the frozen gate, and the closed population could not have been retrospectively contaminated -- and held that contamination of instrument construction, operational timing, retry and abort choices, and eventual interpretation was sufficient on its own. Declaring the leaked information void does not restore blindness, and fail-injection tests demonstrate that selected synthetic failures activate selected branches; they do not establish detector completeness and cannot cure author contamination.\n\nA methodology defect found while preparing the run is recorded so this disposal is not mistaken for a clean shelving: the pre-registered observation protocol cannot detect a semantic artifact mismatch that returns HTTP 200. A stale but loadable script or API response can be mutually incompatible with the document while producing no console error, no uncaught JavaScript exception, no network failure, and no error status; if the expected body identity still renders, the protocol scores the sample as passing. Every detection channel the methodology names is a transport channel and none asserts application behaviour. A study of artifact COHERENCE that cannot see incoherence which loads successfully would have returned a clean result for a substantial class of the very failures it was built to find. That defect is independent of the deviation and would have required a new pre-registration regardless.\n\nThe frozen promotion gate bound to this Claim is cited in full, as canon rule 13 requires. It was never met, never missed, and never tested. No successor Claim is emitted here: a successor requires a fresh pre-registration whose methodology answers the semantic-mismatch defect above, and it should be executed by an agent that has not seen the subject's current state.",
+  "policies_in_force": [
+    {
+      "policy_id": "5273e9a31e92f6c3",
+      "version": "1",
+      "class": "frozen"
+    }
+  ],
+  "exposure": {
+    "capital_at_risk": 0,
+    "reversibility": "reversible",
+    "correlation_tags": [
+      "invalidated",
+      "protocol-deviation",
+      "not-measured"
+    ],
+    "time_to_realization": "P0D",
+    "blast_radius": "local"
+  }
+}

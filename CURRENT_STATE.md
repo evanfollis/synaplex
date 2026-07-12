@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T15:44Z
+updated: 2026-07-12T16:45Z
 owner: executive (principal: evan)
-phase: PROTOCOL DEVIATION recorded; prospective run STOPPED unexecuted pending opposing disposition
+phase: artifact-coherence-transfer-v1 INVALIDATED (protocol deviation; opposing verdict STOP_RUN_INVALID); Claim killed with zero Evidence; knowledge loop reported INCOMPLETE
 ---
 
 # synaplex — current state
@@ -179,41 +179,70 @@ and the P=false basis are both written verbatim into the hash-bound `methodology
 directional hint cannot be un-known. Mitigation is mechanical, not a promise: the executor must
 ship with **fail-injection tests proving it can produce a failing sample**.
 
-**The run is STOPPED, unexecuted.** This session's disposition — that the deviation voids the
-B0 diagnostic but not the prospective run — is written by the contaminated party and is
-therefore **not final**. Sequence from here, per principal instruction:
+**The run was STOPPED, and the Claim is now canonically disposed.** See
+`lab/evals/artifact-coherence-transfer-v1/DISPOSITION-2026-07-12-run-stopped-invalid.md`.
 
-1. Complete + commit Phase 1 substrate, executor, and tests. **Do not observe the target again.**
-2. Obtain an **opposing-model methodological disposition** of this deviation.
-3. Probe entry only if that disposition holds the run valid. **If validity is ambiguous, the
-   run stays unexecuted and the study is reported incomplete** rather than forced forward.
+## ⛔ artifact-coherence-transfer-v1 is INVALIDATED, NOT MEASURED
 
-## ▶ Current phase: prospective transfer Claim pre-registered, not executed
+An opposing model (codex CLI, `gpt-5.6-sol`, read-only, four permitted verdicts, told not to
+soften) returned **`VERDICT: STOP_RUN_INVALID`**. Review:
+`lab/evals/artifact-coherence-transfer-v1/reviews/codex-methodological-review-2026-07-12.md`;
+provenance receipt beside it; the 251KB raw transcript is retained at mode 0600 in the
+operator-only workspace review archive and is deliberately **not** in this repo.
 
-Claim `bda4396c7638e63f` and frozen gate `5273e9a31e92f6c3` bind the next honest
-phase. The named prospective population is exactly `launchpad-lint` (N=1), selected from
-the 2026-07-12T11:27:24Z verified service snapshot after excluding Command because its
-outcome is already known. The static predicate is pre-scored false. Three browser samples
-are fixed at 1s, 30s, and 120s barriers; browser-visible behavior is primary and liveness is
-separate. **No browser observation has run and Evidence remains zero.**
+**It refuted this project's own disposition, and it was right.** The contaminated session had
+argued the leak was "a subset of what the pre-registration already asserts." False:
+`methodology.md` predeclares the expected identity string and the P=false basis, but predeclares
+**nothing** about HTTP 200, absence of redirect, latency, uptime, PID, the exact executable,
+restart history, or evidence of prior successful requests. All of it was disclosed. The reviewer
+granted that the immutable Claim, frozen gate, and closed population were uncontaminated — and
+held that contamination of **instrument construction, timing, retry/abort choices, and eventual
+interpretation** was sufficient by itself. *Declaring the information void does not restore
+blindness*, and fail-injection proves selected branches fire; it cannot prove detector
+completeness or cure author contamination.
 
-The Command incident is labeled only as retrospective Evidence and a deterministic
-regression fixture. It is excluded from the transfer denominator. The rejected two-arm
-test will not run. No mechanism fixture is needed for this phase; any later causality probe
-must be separately pre-registered with the three ADR-0047 arms.
+Disposed canonically, following the reviewed vendor-withdrawal precedent:
 
-## 🚧 Blocked: the public knowledge surface
+| | |
+|---|---|
+| `Decision(kill)` `c40c91e1d1b56853` | disposes Claim `bda4396c7638e63f` |
 
-`synaplex-public-live-knowledge-surface` is **blocked by its own dependency** — its
-contract says "complete the first full knowledge loop before making its projection the site
-source of truth", and the loop is not closed. The chain:
+Cites **zero Evidence**, opens **"INVALIDATED, NOT MEASURED"**, and cites the frozen gate
+`5273e9a31e92f6c3` in full (canon rule 13) — never met, never missed, never tested. A regression
+now asserts that *any* zero-Evidence kill must declare itself a non-finding, so no reader or
+projection can cite it as an experiment that ran and came back negative. **Evidence in the store
+remains 0.** Nothing is concluded about launchpad-lint; that question is untouched and open.
 
-> public projection ← knowledge invariant ← **Decision** ← **Evidence** ← **prospective
-> browser observation (not yet run)**
+**A methodology defect independent of the deviation, and the one that binds any successor:** the
+pre-registered protocol **cannot detect a semantic artifact mismatch that returns HTTP 200.** A
+stale-but-loadable script or API response can be incompatible with the document while producing no
+console error, no uncaught exception, no network failure, and no error status — and if the expected
+body identity still renders, the protocol scores it as **passing**. Every channel the methodology
+names is a *transport* channel; none asserts application behavior. A study of artifact *coherence*
+that cannot see incoherence which loads successfully would have returned a clean result for a
+large class of the failures it exists to find. This alone required a new pre-registration.
 
-The generic raw-artifact runner exists, but the browser observation adapter and its run
-artifacts do not. DNS/deploy stays off per the handoff's own instruction ("restore
-DNS/deployment only after the projection is truthful enough to publish").
+**A successor is a new scientific act, not a repair.** New Claim, new frozen gate, new methodology
+answering the defect above — and it should be executed by an agent that has **not** seen the
+subject's current state, which this session and anything inheriting its transcript no longer is.
+
+## 🚧 Blocked: the public knowledge surface — and the loop is now explicitly INCOMPLETE
+
+`synaplex-public-live-knowledge-surface` remains blocked by its own dependency: "complete the
+first full knowledge loop before making its projection the site source of truth." **The loop did
+not close, and no invariant is justified.** The chain, with the break marked:
+
+> public projection ← knowledge invariant ← Decision ← **Evidence (NONE — and none is coming
+> under this Claim)** ← **prospective browser observation (INVALIDATED, never run)**
+
+Per ADR-0049: *"A full loop may remain incomplete after this study if the evidence does not justify
+a reusable invariant. That limitation is reported, not papered over."* This is that case. The
+`Decision(kill)` is a **disposal, not a finding** — it cites zero Evidence and therefore supports
+**no** knowledge invariant and **no** public projection. `knowledge/` is deliberately **not**
+created: ADR-0044's acceptance test must not be satisfied by manufacturing an invariant to fit its
+shape. DNS/deploy stays off.
+
+The executor exists, is hardened (see below), and is unused. That is the honest state.
 
 ## One-line status
 

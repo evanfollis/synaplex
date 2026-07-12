@@ -668,6 +668,20 @@ def test_the_real_store_holds_its_semantic_invariants() -> None:
             "a result for an evaluation that was withdrawn."
         )
 
+    # (1b) ANY kill citing zero Evidence must say plainly that it is not a finding.
+    #
+    # A kill with no Evidence behind it is a disposal, not a result — the route was withdrawn, or
+    # the protocol was invalidated, and nothing was measured either way. The danger is uniform: a
+    # later reader (or a projection) cites the Decision as though the experiment ran and came back
+    # negative. Scoped to zero-Evidence kills rather than to a hard-coded list of Claim ids, so it
+    # binds every future disposal too and not just the ones that existed when it was written.
+    for d in store.load_all("Decision"):
+        if d["kind"] == "kill" and not d["cited_evidence"]:
+            assert "NOT MEASURED" in d["rationale"], (
+                f"Decision(kill) {d['id']} cites zero Evidence but never says it is a non-finding. "
+                "A disposal that does not declare itself a disposal will be read as a result."
+            )
+
     # (2) Every envelope still validates — schema, canon rules, artifact hashes. This is the
     # check that catches the world moving underneath an append-only store.
     integrity = check_canon_integrity()
