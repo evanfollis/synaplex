@@ -16,8 +16,10 @@ layer; that was the mistake, and the reason a bad subject choice took the machin
   as "it failed" is structurally unavailable rather than merely discouraged.
 - **Resume is idempotent.** A cell whose artifact exists is skipped, never re-run and never
   double-counted — a duplicate would silently reweight any aggregate taken over the cells.
-- **Subscription billing only.** The model seam is `providers.SubscriptionPool`; there is no
-  metered-API code path to re-enable (ADR-0036).
+- **Subscription billing only.** The model seam is `providers.SubscriptionPool`, which strips
+  every metered credential from the child CLI's environment so the CLI *cannot* reach metered
+  billing even if a key exists on the host. Enforcement is unreachability, not refusal: the
+  pipeline never blocks on the mere presence of an unrelated env var (ADR-0036).
 """
 
 from __future__ import annotations
@@ -32,7 +34,6 @@ from typing import Callable
 from lab.canon.ids import hash_file
 from lab.canon.store import REPO_ROOT
 
-from .providers import assert_no_metered_keys
 
 RUNS_ROOT = REPO_ROOT / "lab" / "runs"
 
@@ -87,8 +88,6 @@ class Run:
         return f"sha256:{h.hexdigest()}"
 
     def execute(self) -> Path:
-        assert_no_metered_keys()  # ADR-0036, enforced not remembered
-
         (self.dir / "cells").mkdir(parents=True, exist_ok=True)
         completed = resumed = aborted = 0
 

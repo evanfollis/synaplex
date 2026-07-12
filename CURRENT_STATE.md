@@ -309,7 +309,9 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   `synaplex-score.timer` shifted from `*-*-* *:20:00` (12×/day) to
   `*-*-* 00,04,08,12,16,20:25:00` (6×/day, intake+8min). Cuts redundant
   scoring runs in half; pre-empts the ~8100 Sonnet calls/day exposure
-  that would have appeared when ANTHROPIC_API_KEY lands. supervisor@60bc0b4;
+  that a metered API key would have created. **SUPERSEDED BY ADR-0036** — no metered key is
+  coming, so there is no future exposure to pre-empt and no reentry here. The timer change
+  stands on its own merits. supervisor@60bc0b4;
   daemon-reload + restart applied; next elapse 04:25 UTC. The score:stuck
   midnight bug stays fixed (00:25 lags 00:17 by ~8 min vs prior :20 ~3 min).
 
@@ -525,5 +527,9 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflections at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-06-11T14-32-34Z.md` — pipeline healthy; arxiv Episode 7 closed (TimeoutError 04:18Z → backoff 08:18Z → recovery 12:19Z); ANTHROPIC_API_KEY still missing (26+ days, highest-leverage unblock); M5 handoff (`general-m5-current-state-untouched-synaplex-2026-06-09T16-02-42Z.md`) still open (delete in next general session); reflection commit constraint ambiguity O1 unresolved (5 cycles); §4 file-lock race explicitly accepted risk.
+4. Latest reflections at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-06-11T14-32-34Z.md` — pipeline healthy; arxiv Episode 7 closed (TimeoutError 04:18Z → backoff 08:18Z → recovery 12:19Z); **[SUPERSEDED 2026-07-12 — that reflection's "ANTHROPIC_API_KEY is the highest-leverage
+   unblock" line is WRONG and must not be revived. ADR-0036 (2026-06-11) closed it: the
+   heuristic scorer is the intended path, not a degraded one, and this is "a deliberate cost
+   decision, not a credential blocker." Any reflection or synthesis output still carrying it
+   is stale. Do not act on it; do not escalate it.]** M5 handoff (`general-m5-current-state-untouched-synaplex-2026-06-09T16-02-42Z.md`) still open (delete in next general session); reflection commit constraint ambiguity O1 unresolved (5 cycles); §4 file-lock race explicitly accepted risk.
 5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.

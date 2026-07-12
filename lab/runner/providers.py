@@ -46,6 +46,44 @@ _CAPACITY_PATTERNS = re.compile(
 
 CHARS_PER_TOKEN = 4  # estimate; the CLIs do not expose exact counts
 
+# Credentials that would route a subscription CLI onto metered billing if it found them.
+#
+# `claude` bills against the subscription plan when it authenticates from its own config, and
+# against METERED API credit the moment it sees ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN in
+# its environment. `codex` behaves the same way with OPENAI_API_KEY. So the enforcement point
+# is not "does this variable exist somewhere on the host" — it is "can the child process see
+# it". We strip them from the child env and let the CLI fall through to subscription auth.
+#
+# The vendor keys are here for one reason only: if one is ever set for some unrelated purpose,
+# a child must still not inherit it. Their presence in this tuple is a deletion list, not a
+# dependency.
+METERED_CREDENTIAL_VARS = (
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "OPENAI_API_KEY",
+    "LETTA_API_KEY",
+    "MEM0_API_KEY",
+)
+
+
+def child_env(base: dict[str, str] | None = None) -> dict[str, str]:
+    """The environment a subscription CLI child is allowed to see.
+
+    Every metered credential is removed. Nothing else is touched — PATH, HOME, and the CLI's
+    own config location must survive or the child cannot authenticate at all.
+
+    This replaces an earlier `assert_no_metered_keys()` that *refused to run* whenever a
+    metered key existed anywhere in the parent environment. That was the wrong control in two
+    ways. It blocked the entire pipeline over a variable it never used — a clog, not a
+    safeguard — and it made the lab's liveness depend on unrelated host state. Prohibiting
+    spend does not require refusing to work; it requires making the spend unreachable. So we
+    make it unreachable and keep running.
+    """
+    env = dict(base if base is not None else os.environ)
+    for var in METERED_CREDENTIAL_VARS:
+        env.pop(var, None)
+    return env
+
 
 class CapacityExhausted(RuntimeError):
     """This provider cannot serve right now. Try the other subscription."""
@@ -80,6 +118,7 @@ class CliProvider:
             proc = subprocess.run(
                 list(self.argv), input=prompt, capture_output=True,
                 text=True, timeout=timeout_s,
+                env=child_env(),  # metered credentials stripped; CLI falls through to subscription auth
             )
         except subprocess.TimeoutExpired as e:
             raise ProviderFailed(f"{self.name} timed out after {timeout_s}s") from e
@@ -180,22 +219,3 @@ class SubscriptionPool:
 def default_pool(role: str = "lab-runner") -> SubscriptionPool:
     """Claude first, Codex on capacity exhaustion. Both are subscription-billed."""
     return SubscriptionPool(providers=(claude_cli(), codex_cli()), role=role)
-
-
-def assert_no_metered_keys() -> None:
-    """Refuse to run if a metered API key is present in the environment.
-
-    ADR-0036 forbids metered spend. A key sitting in the environment is a loaded gun: some
-    library picks it up, spend happens, and nobody notices until the invoice. This makes the
-    prohibition enforced rather than remembered.
-    """
-    metered = [
-        k for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "LETTA_API_KEY", "MEM0_API_KEY")
-        if os.environ.get(k)
-    ]
-    if metered:
-        raise RuntimeError(
-            f"metered API key(s) present in the environment: {', '.join(metered)}. ADR-0036 "
-            f"caps AI spend at the two subscription plans and forbids metered keys without a "
-            f"new explicit principal authorization. Unset them, or get that authorization."
-        )

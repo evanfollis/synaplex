@@ -39,22 +39,78 @@ def test_no_metered_api_path_exists() -> None:
     _ok("no metered-API code path exists; the model seam is the subscription CLIs")
 
 
-def test_metered_keys_in_the_environment_are_refused() -> None:
-    """A key sitting in the environment is a loaded gun: some library picks it up, spend
-    happens, nobody notices until the invoice."""
-    from lab.runner.providers import assert_no_metered_keys
+def test_child_cli_cannot_see_a_metered_credential() -> None:
+    """The real proof, end to end: spawn an actual child through the provider's own code path
+    with every metered credential set in the PARENT, and assert the child sees none of them.
 
-    os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test"
+    This replaces an earlier `assert_no_metered_keys()` that refused to run whenever a metered
+    key existed anywhere on the host. That was the wrong control: it clogged the entire
+    pipeline over a variable it never used, and made the lab's liveness depend on unrelated
+    host state. Prohibiting metered spend does not require refusing to work — it requires
+    making the spend *unreachable*. So the credential is stripped from the child's environment
+    and the run proceeds.
+
+    Asserting on the dict `child_env()` returns would prove nothing about what the CLI
+    actually inherits. This spawns a real process and asks it.
+    """
+    import subprocess
+
+    from lab.runner.providers import METERED_CREDENTIAL_VARS, child_env
+
+    poison = {v: f"POISON-{v}" for v in METERED_CREDENTIAL_VARS}
+    saved = {k: os.environ.get(k) for k in poison}
+    os.environ.update(poison)
     try:
-        assert_no_metered_keys()
-    except RuntimeError as e:
-        assert "ADR-0036" in str(e)
-    else:
-        raise AssertionError("a metered API key in the environment was not refused")
+        probe = (
+            "import os,json;"
+            f"print(json.dumps({{v: os.environ.get(v) for v in {list(METERED_CREDENTIAL_VARS)!r}}}))"
+        )
+        # 1) The child spawned through the sanitized env sees NONE of them.
+        seen = json.loads(subprocess.run(
+            [sys.executable, "-c", probe], capture_output=True, text=True,
+            env=child_env(),
+        ).stdout)
+        leaked = sorted(k for k, v in seen.items() if v is not None)
+        assert not leaked, (
+            f"child process inherited metered credential(s): {leaked}. The subscription CLI "
+            f"would authenticate against METERED billing instead of the plan."
+        )
+
+        # 2) Control: without sanitisation the child WOULD see them. If this fails, the test
+        #    above is passing for the wrong reason and proves nothing.
+        unsanitized = json.loads(subprocess.run(
+            [sys.executable, "-c", probe], capture_output=True, text=True,
+        ).stdout)
+        assert all(unsanitized[v] == poison[v] for v in poison), (
+            "the control leg did not inherit the poison values, so the sanitised leg proves "
+            "nothing — the test would pass even if child_env() did nothing at all"
+        )
+
+        # 3) The run must NOT be blocked merely because the parent holds a key.
+        from lab.runner import execution
+        from lab.runner.execution import Cell, CellResult, Run, now
+
+        with tempfile.TemporaryDirectory() as td:
+            original = execution.RUNS_ROOT
+            execution.RUNS_ROOT = Path(td)
+            try:
+                d = Run(
+                    eval_id="t", run_id="poisoned",
+                    cells=[Cell(key="c0", payload={})],
+                    execute_cell=lambda c: CellResult(c.key, {"ok": True}, now()),
+                    code_files=("lab/runner/execution.py",),
+                ).execute()
+                m = json.loads((d / "manifest.json").read_text())
+                assert m["cells_completed"] == 1, "the pipeline clogged on an ambient env var"
+            finally:
+                execution.RUNS_ROOT = original
     finally:
-        os.environ.pop("ANTHROPIC_API_KEY", None)
-    assert_no_metered_keys()  # clean env passes
-    _ok("a metered API key present in the environment is refused (ADR-0036)")
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    _ok("child CLI cannot see any metered credential; the run proceeds and does not clog")
 
 
 def test_failover_is_capacity_only() -> None:
@@ -202,7 +258,7 @@ def test_vendor_route_is_gone() -> None:
 
 TESTS = [
     test_no_metered_api_path_exists,
-    test_metered_keys_in_the_environment_are_refused,
+    test_child_cli_cannot_see_a_metered_credential,
     test_failover_is_capacity_only,
     test_aborted_cell_has_no_result,
     test_runner_cannot_emit_evidence,
