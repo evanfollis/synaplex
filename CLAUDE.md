@@ -132,9 +132,17 @@ synaplex/
 ├── scan/                legacy surface; collapsing into intake/
 └── lab/
     ├── evals/memory-systems-v1/   first eval: memory systems comparison
-    ├── canon_emit.py              emits claim/evidence/decision envelopes
+    ├── observations/              pre-canon notes (not authoritative)
     └── .canon/                    canon envelope store (append-only, hash-pinned)
 ```
+
+**There is currently no code that writes to `lab/.canon/`.** Earlier revisions of
+this block listed a `lab/canon_emit.py` and "a small in-repo validator"; neither
+has ever existed. The single Claim in the store was hand-authored, and its id
+contract (`sha256(statement.lower())[:16]`) is reverse-engineered, not enforced by
+anything. Treat any emission path as new code requiring review — and note that
+ADR-0038 §Cleanup is explicit that the reverted `lab/campaign` kernel is not
+authorization for building one.
 
 ## Truth Sources (in descending authority)
 
