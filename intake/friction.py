@@ -59,14 +59,26 @@ def _default_source_type() -> SourceType:
     """Best-effort source-type detection for automated paths.
 
     Workspace rule: every event carries a sourceType field so meta-scan can
-    distinguish real traffic from self-generated noise. When running under
-    systemd (SYSTEMD_EXEC_PID set, or INVOCATION_ID present), we tag `cron`.
-    Otherwise default to `system` (internal automation).
+    distinguish real traffic from self-generated noise.
+
+    Precedence is load-bearing, not stylistic: an **explicit declaration wins over
+    ambient inference**. Every persistent tmux session on this host is supervised by
+    `workspace-session@<name>.service`, so INVOCATION_ID and SYSTEMD_EXEC_PID are
+    inherited by *every* agent shell. With the checks in the other order, an agent
+    hand-running an adapter emitted `cron` — indistinguishable in meta-scan from the
+    real 4-hourly timer — and `SYNAPLEX_SOURCE_TYPE=smoke` could never take effect in
+    the one context where smoke runs actually happen. That is ADR-0019's failure class
+    (a measurement system co-located with its subject must discriminate self-generated
+    traffic) reproduced inside the telemetry that exists to detect it.
+
+    The systemd units set no SYNAPLEX_SOURCE_TYPE, so real timer runs still fall
+    through to inference and are still tagged `cron`.
     """
+    declared = os.environ.get("SYNAPLEX_SOURCE_TYPE")
+    if declared in {"user", "system", "smoke", "cron"}:
+        return declared  # type: ignore[return-value]
     if os.environ.get("INVOCATION_ID") or os.environ.get("SYSTEMD_EXEC_PID"):
         return "cron"
-    if os.environ.get("SYNAPLEX_SOURCE_TYPE") in {"user", "system", "smoke", "cron"}:
-        return os.environ["SYNAPLEX_SOURCE_TYPE"]  # type: ignore[return-value]
     return "system"
 
 
