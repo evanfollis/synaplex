@@ -78,9 +78,10 @@ def evidence_for(claim_id: str) -> list[dict]:
 def decisions_for(claim_id: str) -> list[dict]:
     """Decisions that arbitrated over this Claim.
 
-    Phase 1 emits no Decisions, so this returns [] today. It is not dead code: the
-    Layer 4 publication guard asks this question, and the answer being empty is exactly
-    why the guard currently forbids every results page.
+    The Layer 4 publication guard asks this question, and an empty answer is what forbids a
+    results page. Non-empty is not a blanket licence: the two withdrawn vendor Claims resolve
+    here to a `Decision(kill)`, which backs a page reporting the *withdrawal* and nothing
+    more. The active transfer Claim resolves to [] and stays unpublishable until it does not.
     """
     return [
         d

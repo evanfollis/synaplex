@@ -24,9 +24,13 @@ Every file under a reader-facing lab surface must carry it. **Missing is a viola
 fail-closed, so a new page added by someone who never read this file is refused by default
 rather than published by default.
 
-Since Phase 2 is blocked, no Decision can exist, so `publishes-results = true` currently
-fails for *every* page. That is the intended behavior, not a limitation: the guard needs no
-judgment call precisely because the object it demands cannot yet be built.
+Decisions now exist (canon v0.2.0 shipped the `frozen` class and unblocked the Phase 2
+emitters), so the guard no longer refuses every page by default — it refuses the ones whose
+cited Claim has nothing terminal behind it. Concretely: the two withdrawn vendor Claims each
+carry a `Decision(kill)`, so a page publishing *"this route was withdrawn, not measured"* is
+backed and passes. The active transfer Claim has no Decision, so any page publishing a result
+for it is refused. That distinction is the guard working, not a gap in it: a kill is a
+conclusion, and a page is entitled to report one.
 
 **Limit, stated plainly:** a page declaring `false` that hand-types numbers with no Evidence
 id in sight will pass. The declaration is a contract with a human, and the guard enforces

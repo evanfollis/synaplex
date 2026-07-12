@@ -493,8 +493,8 @@ def test_publication_guard_is_fail_closed() -> None:
 
 
 def test_publication_guard_blocks_results_without_a_decision() -> None:
-    """AC9. Phase 2 is blocked, so no Decision can exist, so no results page can ship.
-    Intended behavior, not a limitation."""
+    """AC9. A page publishing a result for a Claim with no Decision behind it is refused.
+    Evidence alone is not a finding — the Decision is the only envelope that concludes."""
     from lab.canon.guard import check_publication
 
     with tempfile.TemporaryDirectory() as td, relocated_store():
@@ -617,51 +617,119 @@ def test_probe_entry_emits_cleanly() -> None:
     _ok("PH1  probe entry (phase_transition + methodology_log) emits cleanly")
 
 
-def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
-    """The suite must not have written into the real store, and the real store must hold
-    exactly what was emitted on purpose.
+def test_the_real_store_holds_its_semantic_invariants() -> None:
+    """The real store's invariants, asserted **semantically** rather than as global counts.
 
-    As of 2026-07-12 that is: two withdrawn vendor-route Claims, the prospective
-    artifact-coherence transfer Claim, their frozen gates, and one
-    EventLogEntry(canon_violation) — a real refusal, recorded when the first frozen-gate
-    emission was rejected for carrying `instance_id`, which the Policy schema forbids. That
-    record stays. Canon is append-only, and deleting an inconvenient record because it came
-    from our own bug is precisely the behaviour this whole apparatus exists to forbid.
+    The counts this test used to pin (`Claim == 3`, `Evidence == 0`, `Decision == 2`) were a
+    trap, and ADR-0049 named it: a *legitimate* observation of the active Claim would have
+    tripped `Evidence == 0` and failed CI before a human could review it. A test that cannot
+    tell a successful run from a corruption is not protecting the store — it is freezing the
+    project. The store is append-only and is *supposed* to grow.
 
-    **Evidence must stay at 0 until a real run produces some.** The moment the first
-    Evidence lands, the frozen gate's pre-registration window closes forever — which is the
-    point, and is why the gate was emitted before the runner exists rather than after.
+    So: pin what must never change, and let what must be allowed to change, change.
+
+    1. The withdrawn vendor Claims stay withdrawn — killed, with **zero Evidence each**.
+    2. Every envelope in the store still validates.
+    3. The active Claim **may advance legally** — Evidence for it is permitted (0..N).
+    4. Publication stays Decision-gated.
+
+    Invariant 1 is now scoped *per Claim* instead of globally, which is what makes 3
+    expressible at all. It is also the stronger assertion: a global `Evidence == 0` never
+    actually said "the withdrawn route was never measured" — it only said "nothing measured
+    anything." The thing worth forbidding is Evidence attaching to a Claim that was disposed
+    without measurement, and that is now stated directly.
     """
     from lab.canon import store
+    from lab.canon.guard import check_canon_integrity
 
-    counts = store.counts()
-    assert counts["Claim"] == 3, (
-        f"expected 3 Claims — two withdrawn vendor-route Claims and one prospective "
-        f"artifact-coherence transfer Claim — "
-        f"found {counts['Claim']}"
-    )
-    assert counts["Policy"] == 3, "each Claim carries exactly one frozen promotion gate"
-    assert counts["Decision"] == 2, (
-        "expected 2 Decision(kill) envelopes — the vendor-comparison route was WITHDRAWN, "
-        "not measured (principal, 2026-07-12)"
-    )
-    assert counts["Evidence"] == 0, (
-        "EVIDENCE EXISTS, and it should not. The vendor route was retired without ever "
-        "running: both Claims were disposed by Decision(kill) citing zero Evidence, because "
-        "nothing was ever measured. Evidence in this store would mean something emitted a "
-        "result for an evaluation that was withdrawn."
-    )
-    for d in store.load_all("Decision"):
-        assert d["kind"] == "kill" and not d["cited_evidence"]
-        assert "WITHDRAWN, NOT MEASURED" in d["rationale"], (
-            "a kill Decision must say plainly that it is a withdrawal and not a finding, or a "
-            "later reader will cite it as evidence that memory systems were evaluated"
+    WITHDRAWN = {"b7ff216f4eec6e58", "bb7cee596f94289b"}
+    ACTIVE = "bda4396c7638e63f"
+
+    claims = store.claims()
+    for cid in WITHDRAWN | {ACTIVE}:
+        assert cid in claims, f"pre-registered Claim {cid} is missing from the real store"
+
+    # (1) The withdrawn route stays withdrawn, and stays *unmeasured*.
+    for cid in WITHDRAWN:
+        kills = [d for d in store.decisions_for(cid) if d["kind"] == "kill"]
+        assert kills, f"withdrawn Claim {cid} has no Decision(kill) disposing it"
+        for d in kills:
+            assert not d["cited_evidence"], (
+                f"Decision(kill) {d['id']} cites Evidence. The vendor route was WITHDRAWN, "
+                "not measured — a kill that cites evidence is a finding, and this one is not."
+            )
+            assert "WITHDRAWN, NOT MEASURED" in d["rationale"], (
+                "a kill Decision must say plainly that it is a withdrawal and not a finding, "
+                "or a later reader will cite it as evidence that memory systems were evaluated"
+            )
+        assert not store.evidence_for(cid), (
+            f"EVIDENCE EXISTS for withdrawn Claim {cid}, and it must not. That route was "
+            "disposed without ever running. Evidence against it would mean something emitted "
+            "a result for an evaluation that was withdrawn."
         )
-    transfer = store.claims()["bda4396c7638e63f"]
+
+    # (2) Every envelope still validates — schema, canon rules, artifact hashes. This is the
+    # check that catches the world moving underneath an append-only store.
+    integrity = check_canon_integrity()
+    assert not integrity, "real store fails canon integrity:\n" + "\n".join(
+        v.render() for v in integrity
+    )
+
+    # (3) The active Claim may advance. Evidence for it is ALLOWED — that is the whole point
+    # of the study — but each piece must be anchored to an observation, not to the clock.
+    for e in store.evidence_for(ACTIVE):
+        assert e.get("observed_at"), (
+            f"Evidence {e['id']} carries no observed_at. Canon rule 10 anchors the frozen "
+            "gate's pre-registration window on it; without it the window is unanchored."
+        )
+
+    # No Evidence may float free of a Claim, whatever else the store grows.
+    for e in store.load_all("Evidence"):
+        assert e["claim_id"] in claims, (
+            f"Evidence {e['id']} attaches to unknown Claim {e['claim_id']}"
+        )
+
+    # The frozen pre-registration is intact and each Claim still carries exactly one gate.
+    for cid in WITHDRAWN | {ACTIVE}:
+        gates = [p for p in store.load_all("Policy") if p.get("bound_to_claim_id") == cid]
+        assert len(gates) == 1, f"Claim {cid} carries {len(gates)} frozen gates, expected 1"
+        assert gates[0]["class"] == "frozen" and gates[0]["amendment_authority"] == []
+
+    transfer = claims[ACTIVE]
     assert transfer["thresholds"]["population"] == ["launchpad-lint"]
     assert transfer["thresholds"]["command_incident_role"] == "retrospective_regression_only"
     assert transfer["thresholds"]["two_arm_test"] == "rejected_not_run"
-    _ok("SAFE real store: 3 Claims, 3 frozen gates, 0 Evidence, 2 vendor kills")
+    assert transfer["thresholds"]["required_completed_samples"] == 3
+
+    # (4) Publication stays Decision-gated. Asserted by actually running the Layer 4 guard
+    # against the LIVE store, so it tracks reality as the study advances instead of restating
+    # a constant. Today the active Claim has no Decision and the page must be refused; the day
+    # a Decision lands, the same assertion flips and demands the page be *allowed*. Either way
+    # the coupling — page publishable iff a Decision backs the Claim — is what is pinned.
+    from lab.canon.guard import check_publication
+
+    with tempfile.TemporaryDirectory() as td:
+        pages = Path(td) / "site" / "src" / "pages" / "lab"
+        pages.mkdir(parents=True)
+        (pages / "transfer.astro").write_text(
+            f"// canon:publishes-results = true\n<p>result for {ACTIVE}</p>", encoding="utf-8"
+        )
+        refused = check_publication(Path(td))
+        if store.decisions_for(ACTIVE):
+            assert not refused, (
+                f"a Decision exists for {ACTIVE}, yet the guard still refuses to publish its "
+                f"result: {[v.render() for v in refused]}"
+            )
+        else:
+            assert refused, (
+                f"the active Claim {ACTIVE} has no Decision, yet a page publishing its result "
+                "was NOT refused. The Layer 4 gate is open when it must be closed."
+            )
+
+    _ok(
+        "SAFE real store: withdrawn Claims killed + unmeasured; all envelopes validate; "
+        "active Claim free to advance; publication Decision-gated"
+    )
 
 
 TESTS = [
@@ -692,7 +760,7 @@ TESTS = [
     test_build_gate_refuses_an_unbacked_results_page,
     test_live_site_passes_the_publication_guard,
     test_probe_entry_emits_cleanly,
-    test_the_real_store_matches_what_we_deliberately_emitted,
+    test_the_real_store_holds_its_semantic_invariants,
 ]
 
 
