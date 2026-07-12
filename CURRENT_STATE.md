@@ -45,11 +45,6 @@ three real validator holes (all fixed, all with regression tests). The rule the 
 turns on: **the emitter serializes, validates, and writes — it never selects what to
 emit.**
 
-- **No `Decision`, no `Policy`** — refused *in code*, not in prose. Canon cannot express
-  a frozen, pre-registered, eval-local promotion gate; the gap belongs to
-  context-repository. So **`memory-systems-v1` can now enter probe and produce Evidence,
-  and still cannot conclude.** It is **`incomplete`, not `concluded`**, and no surface may
-  say otherwise.
 - **Layer 4 publication guard is fail-closed**, enforced in `python -m integrity`. A
   reader-facing lab page must declare `canon:publishes-results`; undeclared is refused;
   declaring `true` needs a Decision that cannot currently exist. **No results page can
@@ -70,12 +65,6 @@ context-repository's **19 reference conformance fixtures — 19/19, each refusin
 right `violation_kind`.** That is the only test that can catch us conforming to our own
 bugs.
 
-- **`memory-systems-v1` now has a frozen promotion gate** (Policy `3e500cb2aec93dfc`,
-  `amendment_authority: []` — nobody, not us, not Evan). Emitted while its window was
-  open (zero Evidence, zero phase-transitions, verified). **That window closes forever on
-  the first Evidence**, so the gate had to be issued before the runner exists or never.
-  `derived_from: /thresholds` makes canon rule 14 *prove* it carries no information the
-  hash-bound Claim doesn't already contain.
 - **`Evidence.observed_at` is required and comes from the run, never the clock.** Canon
   rule 10 anchors the pre-registration window on it because `emitted_at` is entirely under
   the emitter's control. Stamping it at emission time silently reopens the
@@ -83,10 +72,6 @@ bugs.
 - **The store holds one `EventLogEntry(canon_violation)`** — a real refusal, when the
   validator rejected our own first gate emission. It stays. Deleting an inconvenient canon
   record because it came from our own bug is the exact behaviour this apparatus forbids.
-
-**`memory-systems-v1` is still `incomplete`, not `concluded`.** It has a gate it cannot
-move and no Evidence to judge against it. The remaining blocker is the **runner** — it
-does not exist (Phase C of the knowledge-loop handoff).
 
 **Publication is fail-closed at the BUILD, not just in cron** (`synaplex@54dca82`).
 `npm run build` runs `lab.canon.guard` as a prebuild step: no-selection + publication +
@@ -96,48 +81,59 @@ yesterday.
 
 **The site no longer states falsehoods.** The lab page had said "Week 5 (now)" — an April
 timeline, 12 weeks stale, in present tense — and promised results would be "appended here",
-which the guard forbids and which would publish the exact finding a Decision exists to
-override. Both pages cited canon v0.1.0. All corrected; the page now states that the eval
-has not run, that results will never be appended to it, and that **the pre-registered
-design has four subjects and no control** — recorded in public rather than discovered in
-public.
+which the guard forbids. Both pages cited canon v0.1.0. All corrected.
 
-**Phase B + C landed** (`synaplex@fbe7409`). The **control-arm rival Claim**
-(`bb7cee596f94289b`) and its frozen gate (`e5542d0abd982b43`) are registered — while the
-window was provably open (zero Evidence). It asks whether the harness can detect success
-*at all*: a no-memory control pasting transcripts into the same 30k budget. Without it, a
-universal sub-0.80 result could never distinguish "memory systems are weak" from "our
-harness is blind." **The first Evidence envelope closes both pre-registration windows
-forever** — no further control, rival, or gate can ever be registered for this eval.
+**The runner is generic and subscription-only** (`lab/runner/`). It executes a
+pre-registered methodology and emits **raw artifacts only** — it cannot emit Evidence
+(asserted against the source), and it selects no Claims, thresholds, or outcomes. An
+`AbortedCell` structurally **cannot carry a result**, so coding "we stopped" as "it failed"
+is unavailable rather than merely discouraged. Resume is idempotent. Hard-coding subjects
+into this layer was the original mistake — it is why a bad subject choice took the machinery
+down with it — so it is now subject-agnostic.
 
-The **runner** (`lab/runner/`) executes the pre-registered methodology and emits **raw
-artifacts only**. It cannot emit Evidence (asserted against the source). Live mode with no
-credential **refuses** rather than falling back to fixtures — a silent fallback would emit a
-complete synthetic result set nothing downstream could tell from a real one. An
-`AbortedCell` carries **no score**, so coding "we stopped paying" as "it got it wrong" is
-structurally unavailable. The scoring oracle is deterministic, not an LLM: an LLM judge here
-would be the detector confound wearing a lab coat.
+## ✅ Vendor route RETIRED — withdrawn, not measured
 
-## 🔴 Blocked: the eval cannot run — credentials
+**Principal correction, 2026-07-12 (ADR-0047).** Letta was an *imperfect illustrative
+example of the broader context-repository idea* — never an evaluation subject. The
+memory-systems vendor comparison was not an authorized objective, and treating missing vendor
+API keys as a principal blocker compounded the error.
 
-`ANTHROPIC_API_KEY` absent **~56 days**. `LETTA_API_KEY`, `MEM0_API_KEY` absent. No code
-change fixes this. Escalated:
-`runtime/.handoff/URGENT-general-memory-systems-v1-credential-blocked-2026-07-12.md`.
-Two-minute action; also unblocks the intake Sonnet scorer, which has been on the heuristic
-fallback this entire time.
+Disposed in canon, honestly:
 
-## 🔴 Defect in the pre-registration — needs a principal decision
+| | |
+|---|---|
+| `Decision(kill)` `8c589b2448a76a6b` | disposes primary Claim `b7ff216f4eec6e58` |
+| `Decision(kill)` `e29e6d9cc80c8b72` | disposes control-arm Claim `bb7cee596f94289b` |
 
-**`methodology.md` names four subjects. Two are the same system.** Subject 3 ("MemGPT,
-reference implementation at `github.com/letta-ai/letta`") points at *Letta's own repo* —
-MemGPT was renamed Letta. Subjects 1 and 3 are one system in two deployment modes. **Four
-subjects on paper, three systems in fact.**
+Both cite **zero Evidence** — nothing was ever measured — and both open **"WITHDRAWN, NOT
+MEASURED"**, asserted by a test so no later reader can cite them as evidence that memory
+systems were evaluated. Each cites its frozen gate in full (canon rule 13): gates never met,
+never missed, never tested. **No successor vendor Claim.** No hash-bound artifact mutated to
+conceal lineage.
 
-Recorded in `lab/runner/run.py::INCOMPATIBILITIES` and stamped into every run manifest, per
-the handoff's instruction — **not improvised around.** The Claim is hash-bound and cannot be
-patched; the fix is a successor Claim (three options in the escalation handoff). **Decide
-this before anyone runs `--mode live`**, because the first Evidence closes the window on
-ever fixing it.
+**ADR-0036 was already settled and I re-opened it.** ADR-0036 (accepted 2026-06-11) states
+plainly: *"This is a deliberate cost decision, not a credential blocker. Reflection and
+synthesis jobs must stop carrying it forward as a blocker."* The heuristic scorer is the
+**intended** path, not a degraded one. **There is no credential blocker on this project.**
+Any future session that finds itself escalating an API key should re-read ADR-0036 and
+ADR-0047 first.
+
+**All model work is subscription-only.** `lab/runner/providers.py` shells out to the `claude`
+and `codex` CLIs with capacity-only failover; there is no metered-API code path, and
+`assert_no_metered_keys()` refuses to run if a metered key is merely *present* in the
+environment.
+
+## ▶ Next: first knowledge loop, re-anchored on internal evidence
+
+Per `synaplex-first-full-knowledge-loop-internal-evidence-2026-07-12.md` (supersedes the
+vendor route) and ADR-0047. Subject: **the Command outage of 2026-07-12** — a long-lived app
+serving a build directory *mutated in place*, versus one serving an **immutable versioned
+release with atomic activation**. Internal, empirical, falsifiable, zero external dependency,
+zero metered spend.
+
+The incident **motivates** the Claim but is **not** retroactive Evidence for it. A bounded
+Claim and a frozen methodology come first; controlled runs in fixtures/staging only, never
+against live Command.
 
 ## 🚧 Blocked: the public knowledge surface
 
@@ -351,10 +347,8 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    confirms all five are active (intake 4h, score hourly, digest
    daily 06:57Z, synthesize Sun 04:07Z, integrity daily 04:37Z).
    Left here for one cycle as a trail.
-6. **ANTHROPIC_API_KEY provisioning** — intake currently runs on the
-   heuristic scorer (no LLM calls). When the key lands in
-   `runtime/.secrets/synaplex.env`, the Sonnet scorer + Sonnet
-   synthesizer activate automatically at the next cron firing.
+6. ~~ANTHROPIC_API_KEY provisioning~~ — **CLOSED BY DECISION (ADR-0036).** Not a
+   blocker; the heuristic scorer is the intended path. Do not re-open this.
 
 ## Known broken or degraded
 (updated 2026-07-12T01:45Z)
