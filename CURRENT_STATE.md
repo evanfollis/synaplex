@@ -42,7 +42,7 @@ Chromium checks found no console errors or horizontal overflow, keyboard focus
 starts at the skip link, and all built internal links resolve. Cloudflare direct
 deployment is live at `https://synaplex.pages.dev/` from Pages project
 `synaplex`; the externally fetched JSON matches projection digest
-`sha256:8586d517eab50220ce3f8121aaa033beeff8f8196b64ef4a93bd6e0a4faeaaf7`
+`sha256:7c0ba7a7131637a7b6cfc33c98eee8d46c4bf2032eca8d3ce86d995eccdcad5a`
 and still reports zero findings. The sanctioned token at
 `runtime/.secrets/cloudflare_api_token` is present and valid; the earlier
 tool-environment absence was not credential absence. The apex custom domain is
