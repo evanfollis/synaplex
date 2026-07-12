@@ -1,0 +1,7 @@
+---
+import Layout from '../../layouts/Layout.astro'; import Status from '../../components/Status.astro'; import projection from '../../data/public-projection.json';
+---
+<Layout title="Artifacts" description="Public-safe methodological and research lineage artifacts.">
+  <p class="eyebrow">Artifacts</p><h1>Inspect the machinery.</h1><p class="lede">Public artifacts expose stable identities, methodological purpose, status, hashes through canon lineage, and the boundary between a record and a finding.</p>
+  <section class="section record-list">{projection.research.map((item) => <a class="record" href={`/artifacts/${item.slug}/`}><Status value={item.status}/><div><h3>{item.title}</h3><p>Claim {item.id} · public-safe lineage record</p></div><span aria-hidden="true">→</span></a>)}</section>
+</Layout>

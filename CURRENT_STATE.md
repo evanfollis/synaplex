@@ -1,12 +1,38 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T19:18Z
+updated: 2026-07-12T19:50Z
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (Claude subscription CLI ConnectionRefused; no opposing verdict); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
 ---
 
 # synaplex — current state
+
+## Public knowledge projection and reader surface (2026-07-12)
+
+ADR-0046's public projection is implemented as a deterministic, versioned,
+default-deny contract under `knowledge/`. The Astro build generates and consumes
+the same `public-projection.json` served at
+`/knowledge/public-projection.json`; projection v1.0.0 currently contains four
+research records, zero Decision-backed findings, and three methodological
+mechanisms. The zero-findings state is intentional and explicit. Withdrawn,
+invalidated, and blocked work remain distinct and retain stable Claim/Decision
+lineage. Programme content cannot support a finding.
+
+The site information architecture is now Overview, Method, Research, Insights,
+and Artifacts. Legacy promotional, directory, newsletter, and stale study routes
+were removed. Build-time generation fails closed on canon/metadata drift, private
+paths or fields, unstable identity, and any purported finding without a valid
+Decision-to-Evidence chain. The existing canon and publication guards still run
+before generation.
+
+Local acceptance is complete: all canon, conformance, runner, executor, intake,
+Programme, integrity, projection, and site-build checks pass; desktop and mobile
+Chromium checks found no console errors or horizontal overflow, keyboard focus
+starts at the skip link, and all built internal links resolve. Cloudflare direct
+deployment is the only unresolved delivery boundary: Wrangler 4.110.0 reached
+Cloudflare but refused non-interactive access because this host has no
+`CLOUDFLARE_API_TOKEN`. No new vendor, service, or credential was requested.
 
 ## Controlled three-arm instrument v2 — blocked before entry (2026-07-12)
 

@@ -1,79 +1,24 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import NewsletterSignup from '../components/NewsletterSignup.astro';
+import Status from '../components/Status.astro';
+import projection from '../data/public-projection.json';
+const moving = projection.research.filter((item) => ['active','blocked'].includes(item.status));
 ---
-
-<Layout
-  title="synaplex — discovering the structure of AI systems"
-  description="A self-learning, self-evolving system for uncovering the structure of AI systems. Publication that builds topology, not timeline. Evaluation lab that emits replayable canon envelopes. Pods that probe the structure from specific domains."
->
-  <section class="mb-12">
-    <p class="text-sm uppercase tracking-wider mb-3" style="color: var(--color-ink-dim);">
-      Discovering the structure of AI systems
-    </p>
-    <h1 class="text-4xl sm:text-5xl font-bold leading-tight tracking-tight mb-6">
-      AI systems have <span style="color: var(--color-accent);">real structure</span>. We are uncovering it.
-    </h1>
-    <p class="text-xl leading-relaxed max-w-2xl" style="color: var(--color-ink-dim);">
-      synaplex is a self-learning, self-evolving system. It ingests external signal, reasons against its own accumulated canon, validates candidate claims, and publishes what survives. Pods — atlas for systematic crypto, skillfoundry for commercial discovery — are bidirectional probes that uncover invariants and absorb them. The publication isn't a timeline. Each new piece refines the latent shape; old pieces don't age out, they become foundations.
-    </p>
+<Layout title="synaplex — systematic discovery, exposed" description="A systematic discovery methodology exposed as a public, inspectable system.">
+  <section class="hero">
+    <p class="eyebrow">A discovery system in public</p>
+    <h1>Knowledge should show <strong>how it earned its status.</strong></h1>
+    <p class="lede">Synaplex turns signals into conjectures, subjects them to criticism and evidence, and publishes only what a valid Decision can support. The method, movement, failures, and empty spaces remain visible.</p>
   </section>
-
-  <NewsletterSignup />
-
-  <section class="mb-12">
-    <h2 class="text-2xl font-semibold mb-4 mt-10 tracking-tight">
-      How the lab works
-    </h2>
-    <ol class="space-y-4 max-w-2xl">
-      <li>
-        <strong>Every evaluation pre-registers its falsification criteria.</strong> The claim is
-        recorded in canon before any data is collected. Post-hoc narrative changes don't
-        happen here.
-      </li>
-      <li>
-        <strong>Raw artifacts are hash-bound.</strong> Transcripts, datasets, and methodology
-        specs are referenced by SHA-256 content hash. Post-hoc edits produce new records,
-        not silent overwrites.
-      </li>
-      <li>
-        <strong>Adversarial review before publish.</strong> Every evaluation's methodology is
-        pressure-tested against an opposing-perspective agent before the writeup ships.
-      </li>
-      <li>
-        <strong>Sponsored evaluations are cryptographically distinguished.</strong> Paid evals
-        carry a <code>Policy.provenance.sponsor</code> attestation in canon. You can always
-        tell.
-      </li>
-    </ol>
+  <section class="grid" aria-label="Current projection counts">
+    <div class="card"><p class="number">{projection.counts.findings}</p><h2>Findings</h2><p>No claim has yet completed the full Evidence-to-Decision standard. That is a result of the publication threshold, not missing page content.</p></div>
+    <div class="card"><p class="number">{projection.counts.research}</p><h2>Research records</h2><p>Active, blocked, withdrawn, and invalidated work remains inspectable under stable identities.</p></div>
+    <div class="card"><p class="number">{projection.counts.mechanisms}</p><h2>Mechanisms</h2><p>Operational safeguards make preregistration, lineage, and publication constraints testable.</p></div>
   </section>
-
-  <section class="mb-12">
-    <h2 class="text-2xl font-semibold mb-4 mt-10 tracking-tight">
-      What we're working on
-    </h2>
-    <ul class="space-y-3 max-w-2xl">
-      <li>
-        <strong>First lab:</strong> a prospective transfer prediction over our own running
-        services — does a long-lived process resolve behaviour-critical assets from a
-        directory a build job can mutate, and does that predicate predict which services
-        break? Pre-registration in progress.
-      </li>
-      <li>
-        <strong>Withdrawn:</strong> a memory-systems vendor comparison was pre-registered
-        here and then <a href="/lab/memory-systems-v1/">withdrawn without ever being run</a>.
-        It is left up rather than deleted: the retraction is the more useful artifact. No
-        result was produced and none is implied.
-      </li>
-      <li>
-        <strong>Intake pipeline:</strong> daily ingestion across RSS, arxiv, HN
-        (with Reddit, GitHub, Substack, and podcasts queued); per-beat scoring;
-        weekly synthesis. The system's sense organs.
-      </li>
-      <li>
-        <strong>Directory build-out:</strong> harness · memory · orchestration · integration.
-        Quality-graded, grown from the lab's evaluation corpus.
-      </li>
-    </ul>
+  <section class="section">
+    <div class="section-head"><p class="eyebrow">Current movement</p><div><h2>Research does not disappear when it stalls.</h2><p>A blocked study remains distinct from an invalidated one. A withdrawal is not a negative finding. Inline labels preserve those differences.</p></div></div>
+    <div class="record-list">
+      {moving.map((item) => <a class="record" href={`/research/${item.slug}/`}><Status value={item.status}/><div><h3>{item.title}</h3><p>{item.summary}</p></div><span aria-hidden="true">→</span></a>)}
+    </div>
   </section>
 </Layout>

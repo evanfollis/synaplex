@@ -1,0 +1,109 @@
+{
+  "projection_version": "1.0.0",
+  "generated_at": "2026-07-12T19:18:00Z",
+  "counts": {
+    "research": 4,
+    "findings": 0,
+    "mechanisms": 3
+  },
+  "research": [
+    {
+      "id": "b7ff216f4eec6e58",
+      "slug": "memory-systems-v1",
+      "title": "Memory systems comparison v1",
+      "summary": "A vendor-comparison pre-registration retained as an inspectable withdrawal. It was never executed.",
+      "status": "withdrawn",
+      "validity": "withdrawn",
+      "registered_at": "2026-04-19T04:25:00Z",
+      "updated_at": "2026-07-12T12:55:27Z",
+      "superseded_by": null,
+      "public_artifact": "/artifacts/memory-systems-v1/",
+      "provenance": {
+        "claim_id": "b7ff216f4eec6e58",
+        "decision_id": "8c589b2448a76a6b",
+        "evidence_ids": []
+      }
+    },
+    {
+      "id": "bb7cee596f94289b",
+      "slug": "memory-systems-control-v1",
+      "title": "Memory systems control arm",
+      "summary": "A control-arm pre-registration created before observation and withdrawn with the unauthorized vendor route.",
+      "status": "withdrawn",
+      "validity": "withdrawn",
+      "registered_at": "2026-07-12T12:40:20Z",
+      "updated_at": "2026-07-12T12:55:27Z",
+      "superseded_by": null,
+      "public_artifact": "/artifacts/memory-systems-v1/",
+      "provenance": {
+        "claim_id": "bb7cee596f94289b",
+        "decision_id": "e29e6d9cc80c8b72",
+        "evidence_ids": []
+      }
+    },
+    {
+      "id": "bda4396c7638e63f",
+      "slug": "artifact-coherence-transfer-v1",
+      "title": "Artifact coherence transfer study v1",
+      "summary": "A prospective study invalidated before measurement after a protocol deviation and an independently identified detector defect.",
+      "status": "invalidated",
+      "validity": "invalid",
+      "registered_at": "2026-07-12T13:40:27Z",
+      "updated_at": "2026-07-12T16:33:51Z",
+      "superseded_by": null,
+      "public_artifact": "/artifacts/artifact-coherence-transfer-v1/",
+      "provenance": {
+        "claim_id": "bda4396c7638e63f",
+        "decision_id": "c40c91e1d1b56853",
+        "evidence_ids": []
+      }
+    },
+    {
+      "id": "e1c51ab0d83be772",
+      "slug": "artifact-delivery-instrument-v2",
+      "title": "Artifact delivery instrument v2",
+      "summary": "A controlled instrument-validation study preregistered but blocked before probe entry because the required opposing review produced no verdict.",
+      "status": "blocked",
+      "validity": "pending",
+      "registered_at": "2026-07-12T19:06:22Z",
+      "updated_at": "2026-07-12T19:18:00Z",
+      "superseded_by": null,
+      "public_artifact": "/artifacts/artifact-delivery-instrument-v2/",
+      "provenance": {
+        "claim_id": "e1c51ab0d83be772",
+        "decision_id": null,
+        "evidence_ids": []
+      },
+      "block": {
+        "code": "opposing-review-unavailable",
+        "since": "2026-07-12T19:18:00Z",
+        "summary": "Required opposing methodological review unavailable; no probe entry and no Evidence."
+      }
+    }
+  ],
+  "findings": [],
+  "mechanisms": [
+    {
+      "id": "mechanism:canon-envelope-store",
+      "title": "Canon envelope store",
+      "summary": "Append-only, validator-gated records for Claims, Evidence, Decisions, Policies, and events.",
+      "status": "operational",
+      "public_artifact": "/method/#canon"
+    },
+    {
+      "id": "mechanism:frozen-promotion-gates",
+      "title": "Frozen promotion gates",
+      "summary": "Evaluation thresholds are bound to Claims before observation and cannot be amended afterward.",
+      "status": "operational",
+      "public_artifact": "/method/#preregistration"
+    },
+    {
+      "id": "mechanism:publication-guard",
+      "title": "Decision-backed publication guard",
+      "summary": "The static build refuses result publication without a valid terminal Decision and intact canon lineage.",
+      "status": "operational",
+      "public_artifact": "/method/#publication"
+    }
+  ],
+  "digest": "sha256:55eff9ad461b44d71801674c27818bca20f92335838f576db7f404f9aacf5adc"
+}

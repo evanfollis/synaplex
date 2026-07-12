@@ -1,0 +1,11 @@
+---
+import Layout from '../../layouts/Layout.astro'; import Status from '../../components/Status.astro'; import projection from '../../data/public-projection.json';
+export function getStaticPaths() { return projection.research.map((item) => ({params:{slug:item.slug},props:{item}})); }
+const { item } = Astro.props;
+---
+<Layout title={item.title} description={item.summary}>
+  <p class="eyebrow">Research record</p><h1>{item.title}</h1><p class="lede">{item.summary}</p>
+  <div class="meta"><Status value={item.status}/><span>validity: {item.validity}</span><span>registered: {item.registered_at}</span><span>updated: {item.updated_at}</span></div>
+  {item.block && <section class="section empty-state"><p class="eyebrow">Blocked before entry</p><h2>No observation is in progress.</h2><p>{item.block.summary}</p></section>}
+  <section class="section prose"><h2>Lineage</h2><p>This record’s stable Claim id is <code>{item.provenance.claim_id}</code>. {item.provenance.decision_id ? <>Its disposition is recorded by Decision <code>{item.provenance.decision_id}</code>.</> : <>No terminal Decision exists.</>} It cites {item.provenance.evidence_ids.length} Evidence record{item.provenance.evidence_ids.length === 1 ? '' : 's'}.</p><p><a href={item.public_artifact}>Inspect the public-safe artifact record →</a></p></section>
+</Layout>

@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import ProjectionStamp from '../components/ProjectionStamp.astro';
 
 export interface Props {
   title: string;
@@ -7,7 +8,7 @@ export interface Props {
 }
 
 const { title, description } = Astro.props as Props;
-const siteTitle = 'synaplex — discovering the structure of AI systems';
+const siteTitle = 'synaplex — systematic discovery, exposed';
 const fullTitle = title === siteTitle ? title : `${title} · synaplex`;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 ---
@@ -21,38 +22,33 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
-    <link rel="alternate" type="application/rss+xml" title="synaplex" href="/rss.xml" />
   </head>
-  <body class="min-h-screen flex flex-col">
-    <header class="border-b border-gray-200 bg-white">
-      <div class="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
-        <a href="/" class="no-underline text-lg font-semibold tracking-tight" style="color: var(--color-ink);">
-          synaplex<span style="color: var(--color-accent);">.</span>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a href="/" class="wordmark" aria-label="Synaplex home">
+          synaplex<span>.</span>
         </a>
-        <nav class="text-sm space-x-5">
-          <a href="/editorial/" class="no-underline" style="color: var(--color-ink-dim);">Editorial</a>
-          <a href="/lab/" class="no-underline" style="color: var(--color-ink-dim);">Lab</a>
-          <a href="/directory/" class="no-underline" style="color: var(--color-ink-dim);">Directory</a>
-          <a href="/about/" class="no-underline" style="color: var(--color-ink-dim);">About</a>
+        <nav aria-label="Primary">
+          <a href="/">Overview</a>
+          <a href="/method/">Method</a>
+          <a href="/research/">Research</a>
+          <a href="/insights/">Insights</a>
+          <a href="/artifacts/">Artifacts</a>
         </nav>
       </div>
     </header>
 
-    <main class="flex-1 max-w-4xl mx-auto px-6 py-12 w-full">
+    <main id="content" class="shell main-content">
       <slot />
     </main>
 
-    <footer class="border-t border-gray-200 mt-16">
-      <div class="max-w-4xl mx-auto px-6 py-8 text-sm" style="color: var(--color-ink-dim);">
-        <p>
-          synaplex — discovering the structure of AI systems.
-          Every lab finding is backed by a replayable canon envelope
-          conforming to the
-          <a href="https://synaplex.ai/discovery-framework/0.1.0/">discovery-framework spec</a>.
-        </p>
-        <p class="mt-2">
-          <a href="/about/">About</a> · <a href="/rss.xml">RSS</a> · <a href="/feed.json">JSON feed</a>
-        </p>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p>Systematic discovery with explicit epistemic state.</p>
+        <ProjectionStamp />
+        <p><a href="/knowledge/public-projection.json">Machine-readable JSON</a></p>
       </div>
     </footer>
   </body>

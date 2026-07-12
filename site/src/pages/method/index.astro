@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import projection from '../../data/public-projection.json';
+---
+<Layout title="Method" description="The Synaplex discovery loop, its epistemic boundaries, and publication gates.">
+  <p class="eyebrow">Method</p><h1>Conjecture is cheap. Status is earned.</h1>
+  <p class="lede">The loop keeps research direction, observations, Evidence, and accepted knowledge in different types so motion cannot masquerade as truth.</p>
+  <div class="section prose">
+    <h2>Signal → conjecture → criticism</h2><p>External signals and Programme work create directions to test. Programme material is explicitly conjectural: it cannot support Evidence or a finding.</p>
+    <h2 id="preregistration">Claim → frozen gate</h2><p>A Claim states what could be false. Evaluation thresholds are frozen before observation and bound to the Claim. Changing the method creates a new record rather than rewriting history.</p>
+    <h2>Artifact → Evidence</h2><p>Raw observations are hash-bound. Evidence is typed, claim-specific, and cannot be manufactured from a blocked run or partial operational trace.</p>
+    <h2 id="canon">Decision → currently-best knowledge</h2><p>A Decision must cite its Evidence, contradictory material, and policies in force. Withdrawal and invalidation Decisions dispose work without turning it into empirical knowledge.</p>
+    <h2 id="publication">Projection → supersession → reflection</h2><p>The public build derives from the same versioned projection as the JSON endpoint. A result without a valid Decision fails closed. Later knowledge supersedes rather than silently edits prior lineage.</p>
+  </div>
+  <section class="section"><p class="eyebrow">Operational mechanisms</p><div class="record-list">{projection.mechanisms.map((item) => <div class="record"><span class="status status--operational">{item.status}</span><div><h3>{item.title}</h3><p>{item.summary}</p></div></div>)}</div></section>
+</Layout>

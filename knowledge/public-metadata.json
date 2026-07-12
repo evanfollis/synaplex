@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "research": {
+    "b7ff216f4eec6e58": {
+      "slug": "memory-systems-v1",
+      "title": "Memory systems comparison v1",
+      "summary": "A vendor-comparison pre-registration retained as an inspectable withdrawal. It was never executed.",
+      "public_artifact": "/artifacts/memory-systems-v1/"
+    },
+    "bb7cee596f94289b": {
+      "slug": "memory-systems-control-v1",
+      "title": "Memory systems control arm",
+      "summary": "A control-arm pre-registration created before observation and withdrawn with the unauthorized vendor route.",
+      "public_artifact": "/artifacts/memory-systems-v1/"
+    },
+    "bda4396c7638e63f": {
+      "slug": "artifact-coherence-transfer-v1",
+      "title": "Artifact coherence transfer study v1",
+      "summary": "A prospective study invalidated before measurement after a protocol deviation and an independently identified detector defect.",
+      "public_artifact": "/artifacts/artifact-coherence-transfer-v1/"
+    },
+    "e1c51ab0d83be772": {
+      "slug": "artifact-delivery-instrument-v2",
+      "title": "Artifact delivery instrument v2",
+      "summary": "A controlled instrument-validation study preregistered but blocked before probe entry because the required opposing review produced no verdict.",
+      "public_artifact": "/artifacts/artifact-delivery-instrument-v2/",
+      "blocked": {
+        "code": "opposing-review-unavailable",
+        "since": "2026-07-12T19:18:00Z",
+        "summary": "Required opposing methodological review unavailable; no probe entry and no Evidence."
+      }
+    }
+  },
+  "mechanisms": [
+    {
+      "id": "mechanism:canon-envelope-store",
+      "title": "Canon envelope store",
+      "summary": "Append-only, validator-gated records for Claims, Evidence, Decisions, Policies, and events.",
+      "status": "operational",
+      "public_artifact": "/method/#canon"
+    },
+    {
+      "id": "mechanism:frozen-promotion-gates",
+      "title": "Frozen promotion gates",
+      "summary": "Evaluation thresholds are bound to Claims before observation and cannot be amended afterward.",
+      "status": "operational",
+      "public_artifact": "/method/#preregistration"
+    },
+    {
+      "id": "mechanism:publication-guard",
+      "title": "Decision-backed publication guard",
+      "summary": "The static build refuses result publication without a valid terminal Decision and intact canon lineage.",
+      "status": "operational",
+      "public_artifact": "/method/#publication"
+    }
+  ]
+}

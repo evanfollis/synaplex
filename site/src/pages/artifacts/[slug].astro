@@ -1,0 +1,9 @@
+---
+import Layout from '../../layouts/Layout.astro'; import Status from '../../components/Status.astro'; import projection from '../../data/public-projection.json';
+export function getStaticPaths() { return projection.research.map((item) => ({params:{slug:item.slug},props:{item}})); }
+const { item } = Astro.props;
+---
+<Layout title={`${item.title} artifact`} description={`Public-safe lineage for ${item.title}.`}>
+  <p class="eyebrow">Public-safe artifact</p><h1>{item.title}</h1><div class="meta"><Status value={item.status}/><span>Claim {item.id}</span></div>
+  <section class="section prose"><h2>What this record establishes</h2><p>{item.summary}</p><h2>Provenance boundary</h2><p>The public projection exposes stable ids, timestamps, validity, status, and Decision/Evidence lineage. Private transcripts, local paths, raw telemetry, handoffs, secrets, and owner-only material are denied at generation time.</p><h2>Machine record</h2><p>Resolve Claim <code>{item.id}</code> in the <a href="/knowledge/public-projection.json">versioned JSON projection</a>.</p></section>
+</Layout>
