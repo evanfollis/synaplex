@@ -8,9 +8,10 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "prebuild": "cd .. && PYTHONPATH=. .venv/bin/python -m lab.canon.guard"
   },
-  "description": "synaplex.ai — the system. Publication + evaluation lab for the structure of AI systems.",
+  "description": "synaplex.ai \u2014 the system. Publication + evaluation lab for the structure of AI systems.",
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",
     "@astrojs/sitemap": "^3.7.2",

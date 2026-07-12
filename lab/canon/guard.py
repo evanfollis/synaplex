@@ -60,6 +60,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import store
 from .store import REPO_ROOT, decisions_for, load_all
 
 # Reader-facing surfaces that can publish a lab result.
@@ -215,17 +216,48 @@ def check_publication(root: Path | None = None) -> list[Violation]:
     return out
 
 
+def check_canon_integrity() -> list[Violation]:
+    """Every envelope in the store still validates — schema, canon rules, artifact hashes.
+
+    Canon is append-only, so an envelope that was valid at emission stays valid *unless the
+    world underneath it moved*: an artifact edited in place, a schema tightened, a Policy
+    referenced by a Decision that no longer resolves. Emission-time validation cannot catch
+    any of those, because they happen afterwards. This does.
+    """
+    from .rules import CanonRefusal, check_all
+    from .validate import validate
+    from .view import StoreView
+
+    out: list[Violation] = []
+    view = StoreView()
+    for object_type in ("Claim", "Evidence", "Decision", "EventLogEntry", "Policy"):
+        for envelope in store.load_all(object_type):
+            try:
+                validate(envelope, view)
+            except CanonRefusal as r:
+                out.append(
+                    Violation(
+                        "canon-integrity",
+                        f"{object_type} {envelope['id']}",
+                        f"[{r.violation_kind}] {r.rationale}",
+                    )
+                )
+    return out
+
+
 def run_checks(root: Path | None = None) -> list[Violation]:
-    return check_no_selection(root) + check_publication(root)
+    return check_no_selection(root) + check_publication(root) + check_canon_integrity()
 
 
 def main() -> int:
+    """Build gate. Exits non-zero on any violation — the site must not compile past it."""
     violations = run_checks()
     if violations:
+        print("CANON GUARDS FAILED — build refused\n")
         for v in violations:
-            print(v.render())
+            print(f"  {v.render()}")
         return 1
-    print("canon guards passed (no-selection, publication).")
+    print("canon guards passed: no-selection, publication, canon-integrity.")
     return 0
 
 

@@ -95,7 +95,11 @@ DECISION_POLICY_FIELDS = frozenset({
     "arbitration",
     "cited_evidence",
     "contradictions_addressed",
-    "rationale",
+    # NOT `rationale`: the event-log-entry schema legitimately defines
+    # `canon_violation.rationale`, so forbidding it here made our own refusal records fail
+    # validation. Caught by `check_canon_integrity` on the first store sweep — which is the
+    # hazard of a hand-curated forbidden list, and the reason this one stays short and every
+    # entry is checked against the schemas rather than assumed.
     "policies_in_force",
     "promotion_id",
     "target_policy_id",

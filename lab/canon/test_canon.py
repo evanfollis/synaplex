@@ -552,6 +552,37 @@ def test_declaring_no_results_while_citing_evidence_is_refused() -> None:
     _ok("AC9  a page declaring no-results while citing Evidence is refused")
 
 
+def test_build_gate_refuses_an_unbacked_results_page() -> None:
+    """The guard is wired into `npm run build` as a prebuild step, so a page publishing a
+    result with no Decision behind it cannot compile — not merely gets flagged by a nightly
+    cron the next morning, by which time it has shipped.
+
+    Verified live 2026-07-12: adding a page declaring `publishes-results = true` and citing
+    the Claim made `npm run build` exit 1 with the guard's refusal. A build gate nobody has
+    watched refuse a build is a build gate nobody has tested.
+    """
+    import json
+
+    from lab.canon.guard import check_publication
+
+    pkg = json.loads((REPO / "site" / "package.json").read_text())
+    prebuild = pkg["scripts"].get("prebuild", "")
+    assert "lab.canon.guard" in prebuild, (
+        "the canon guard is no longer wired into the site build. Publication became "
+        "fail-open the moment that line was removed."
+    )
+
+    with tempfile.TemporaryDirectory() as td, relocated_store():
+        fake = Path(td)
+        pages = fake / "site" / "src" / "pages" / "lab"
+        pages.mkdir(parents=True)
+        (pages / "results.astro").write_text(
+            f"// canon:publishes-results = true\n<p>Letta scores 0.62 on {PRIMARY}</p>"
+        )
+        assert check_publication(fake), "the build gate would have let a result through"
+    _ok("BUILD npm run build refuses a results page with no Decision behind it")
+
+
 def test_live_site_passes_the_publication_guard() -> None:
     """AC9/AC10 against the real site."""
     from lab.canon.guard import check_publication
@@ -638,6 +669,7 @@ TESTS = [
     test_publication_guard_blocks_results_without_a_decision,
     test_preregistration_page_may_publish_without_results,
     test_declaring_no_results_while_citing_evidence_is_refused,
+    test_build_gate_refuses_an_unbacked_results_page,
     test_live_site_passes_the_publication_guard,
     test_probe_entry_emits_cleanly,
     test_the_real_store_matches_what_we_deliberately_emitted,

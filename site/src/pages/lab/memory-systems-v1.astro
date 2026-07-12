@@ -28,12 +28,14 @@ import Layout from '../../layouts/Layout.astro';
 
   <div class="prose max-w-2xl">
     <p class="text-lg">
-      We're evaluating four agent memory systems on five task suites.
-      <strong>This page is the pre-registration.</strong> The Claim, falsification
-      criteria, thresholds, and methodology are hash-bound to the canon envelope at
-      <code>lab/.canon/claims/b7ff216f4eec6e58.json</code> before any evaluation runs.
-      Results will be appended here; the pre-registered methodology will not change
-      without a new Claim emission.
+      We intend to evaluate four agent memory systems on five task suites.
+      <strong>This page is the pre-registration, and only that.</strong> The Claim,
+      falsification criteria, thresholds, and methodology were hash-bound into canon
+      <em>before</em> any evaluation could run, and the promotion gate is frozen against
+      amendment by anyone. The evaluation has <strong>not been executed</strong>; no
+      results appear below because none exist, and none will appear on this page at all —
+      a finding publishes behind a canon <code>Decision</code>, not by editing a
+      pre-registration in place.
     </p>
 
     <h2>Claim (pre-registered)</h2>
@@ -83,19 +85,63 @@ import Layout from '../../layouts/Layout.astro';
       <li>Claude built-in memory (Anthropic native memory tool on Sonnet 4.6 / Opus 4.7)</li>
     </ol>
 
-    <h2>Timeline</h2>
+    <h2>Status: pre-registered, not executed</h2>
+    <p>
+      The Claim was pre-registered on 2026-04-19 and <strong>the evaluation has not been
+      run.</strong> No Evidence exists; no Decision exists. This eval is
+      <strong>incomplete</strong>, not inconclusive — there is nothing to be inconclusive
+      about yet.
+    </p>
+    <p>
+      Two things are true and worth stating plainly rather than burying:
+    </p>
     <ul>
-      <li><strong>Week 5 (now):</strong> pre-register — this page.</li>
-      <li><strong>Week 6:</strong> execute primary suites (1–4) across all 4 systems.</li>
-      <li><strong>Week 7:</strong> execute held-out suite (5). Run adversarial methodology review.</li>
-      <li><strong>Week 8:</strong> publish results — this page is updated in-place, with the canon Decision envelope becoming the primary artifact.</li>
+      <li>
+        <strong>The pre-registered design has four subjects and no control.</strong> If every
+        system scores below 0.80 — the outcome the Claim predicts — that result cannot
+        distinguish "memory systems are weak" from "this task is too hard for anything,
+        including a naive baseline that just pastes the prior transcripts into context."
+        We found this by applying a falsification lens to our own pre-registration, and we
+        are recording it here rather than discovering it in public after the fact. A
+        separately pre-registered control arm is the remedy, and it must be registered
+        before any Evidence exists or it is not a pre-registration at all.
+      </li>
+      <li>
+        <strong>Results will not be appended to this page.</strong> An earlier version of
+        this page promised exactly that, and it was wrong. A finding publishes only behind a
+        terminal canon <code>Decision</code> that cites every frozen gate bound to the Claim
+        and only Evidence gathered about the Claim it is deciding. Publishing numbers off a
+        raw Evidence envelope is how you publish the very finding a Decision exists to
+        override — this Claim's own second falsification criterion pre-registers that the
+        held-out suite may <em>reverse the ordering</em>. A build-time guard enforces this;
+        it is not a promise, it is a gate.
+      </li>
     </ul>
+
+    <h2>The promotion gate is frozen</h2>
+    <p>
+      The thresholds this eval will be judged against are bound to a canon
+      <code>Policy(class: frozen)</code> — issued inside the pre-registration window, before
+      any Evidence was observed, and <strong>amendable by nobody</strong>: not by an agent,
+      not by the principal. Its <code>derived_from</code> pointer lets canon
+      <em>mechanically prove</em> the gate carries no information the hash-bound Claim does
+      not already contain.
+    </p>
+    <p>
+      This matters because the attack on a pre-registered eval is almost never amendment.
+      It is choosing the gate <em>after</em> seeing the results — which no amendment check
+      would ever catch. The window for issuing this gate closed permanently the moment any
+      Evidence could exist, which is why it was issued before the eval could run.
+    </p>
 
     <h2>Audit trail</h2>
     <p>
-      Canon Claim: <code>lab/.canon/claims/b7ff216f4eec6e58.json</code><br/>
-      Methodology: <code>lab/evals/memory-systems-v1/methodology.md</code> (SHA-256 hash-bound in the Claim's ArtifactPointer)<br/>
-      Pre-registration integrity: any change to the methodology invalidates this Claim; a new Claim with a new id must be emitted.
+      Canon Claim: <code>b7ff216f4eec6e58</code><br/>
+      Frozen promotion gate: <code>3e500cb2aec93dfc</code> (<code>amendment_authority: []</code>)<br/>
+      Methodology: SHA-256 hash-bound in the Claim's ArtifactPointer<br/>
+      Pre-registration integrity: any change to the methodology invalidates this Claim; a
+      new Claim with a new id must be emitted. The methodology is therefore
+      <em>not</em> repaired when it goes stale — it is superseded.
     </p>
   </div>
 </Layout>
