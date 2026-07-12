@@ -1,0 +1,10 @@
+[Unit]
+Description=Continue the Synaplex cycle v2 pre-entry review
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/workspace/projects/synaplex
+ExecStart=/bin/bash /opt/workspace/projects/synaplex/scripts/run-cycle-v2-review-continuation.sh
+

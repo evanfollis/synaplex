@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T19:58Z
+updated: 2026-07-12T20:49Z
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (Claude subscription CLI ConnectionRefused; no opposing verdict); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (fresh prompt-eval release failed 14/14; opposing review forbidden and not run); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
 ---
 
 # synaplex — current state
@@ -53,6 +53,26 @@ DNS-record request returns HTTP 403 because DNS edit is not granted. Therefore
 DNS mutation authority, not Pages access, token presence, build, or deploy.
 
 ## Controlled three-arm instrument v2 — blocked before entry (2026-07-12)
+
+**Latest continuation (20:47Z): the launcher was repaired, but the fresh release
+gate failed.** The scheduled retry at 20:21Z had not tested model capacity: its
+transient systemd unit used bare `codex` and exited 127 after 14 ms because PATH
+could not resolve the installed subscription CLI. That execution-boundary
+failure is recorded at
+`lab/evals/artifact-delivery-instrument-v2/reviews/codex-review-retry-execution-boundary-2026-07-12.md`.
+All five frozen hashes were then reverified, and exactly one prescribed no-cache
+release ran with metered credentials absent and absolute subscription CLI paths
+available. Run `run-20260712T204705Z-867ae4` failed all 14 must-pass cases
+(aggregate 0.0). Per the continuation contract, the opposing review was not run
+and no retry was attempted. Full receipt:
+`lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md`.
+The state remains `BLOCKED_PRE_ENTRY`; zero Evidence and zero subject access.
+
+The durable non-interactive launcher now lives at
+`scripts/run-cycle-v2-review-continuation.sh`, with absolute configured Claude
+and Codex paths in `deploy/subscription-cli-paths.env` and a persistent systemd
+unit in `deploy/synaplex-cycle-v2-review-retry.service`. Future systemd execution
+does not depend on interactive-shell PATH.
 
 Phase A preregistered Claim `e1c51ab0d83be772` and frozen Policy
 `7628c88b8f08c7e8` for a prescribed coherent / transport-broken / HTTP-200

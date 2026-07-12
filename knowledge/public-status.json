@@ -2,13 +2,13 @@
   "schema_version": "1.0.0",
   "blocks": {
     "e1c51ab0d83be772": {
-      "code": "opposing-review-unavailable",
-      "since": "2026-07-12T19:18:00Z",
-      "summary": "Required opposing methodological review unavailable; no probe entry and no Evidence.",
+      "code": "prompt-eval-release-failed",
+      "since": "2026-07-12T20:47:05Z",
+      "summary": "Fresh no-cache prompt-eval release failed 14 of 14 must-pass cases; opposing review was not run, with no probe entry and no Evidence.",
       "authority": {
         "kind": "review_artifact",
-        "path": "lab/evals/artifact-delivery-instrument-v2/reviews/claude-methodological-review-blocked-2026-07-12.md",
-        "content_hash": "sha256:37f5ed92c486b95520fb4b008388a2965cd62ae423752bd88121c9407ce8e321"
+        "path": "lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md",
+        "content_hash": "sha256:44b061f0aaee67c9c026e8ac240c166c91cf3130ff88ee9371a86f869faacc71"
       }
     }
   }
