@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T13:40Z
+updated: 2026-07-12T15:44Z
 owner: executive (principal: evan)
-phase: Layer 1 intake autonomous; Layer 2 discovery plane live; prospective transfer Claim pre-registered and unexecuted
+phase: PROTOCOL DEVIATION recorded; prospective run STOPPED unexecuted pending opposing disposition
 ---
 
 # synaplex — current state
@@ -150,6 +150,43 @@ A double failure returns explicit `undelivered` status and remains visible on
 stderr. The normal integrity command was verified to complete successfully against the
 real read-only runtime path while preserving its success event in an overridden test spool.
 This changes no canon, Decision, or publication gate; those remain separate and fail-closed.
+
+## ⚠ PROTOCOL DEVIATION 2026-07-12 — the target was consulted before probe entry
+
+**A session consulted the transfer subject out-of-band, before Phase 1 existed and before any
+`methodology_log` / `phase_transition(→probe)` was in canon.** Verbatim record, with the
+contamination analysis and the standing constraints it imposes:
+`lab/evals/artifact-coherence-transfer-v1/PROTOCOL-DEVIATION-2026-07-12-preprobe-target-consultation.md`.
+
+What ran: `systemctl status launchpad-lint.service` and two read-only `curl` GETs against
+`https://skillfoundry.synaplex.ai/products/launchpad-lint/`. Both returned output. **This
+violates ADR-0049 §Decision step 2** ("emit the required methodology-log and probe-entry
+events ... *before observing the subject*") and the handoff's §Phase 2 ordering.
+
+**It is not Evidence and is not admissible.** The out-of-band B0 diagnostic is **void** — no
+run directory, no source SHA, no dirty-state binding, no artifact hashing, no manifest. It is
+discarded, not reused.
+
+What held: the subject was **not mutated** (read-only GETs); **no browser sample** was taken,
+so the denominator is intact; `methodology.md` still hashes to the value bound into the Claim;
+the frozen gate is unamendable and predates the read by ~2h; Evidence remains **zero**, so the
+pre-registration window is still open.
+
+The residual harm is **executor-construction bias**: the executor did not yet exist, and its
+author now knows the service is currently serving successfully. The leaked content is
+otherwise a *subset of what the pre-registration already asserts* (the expected identity string
+and the P=false basis are both written verbatim into the hash-bound `methodology.md`) — but the
+directional hint cannot be un-known. Mitigation is mechanical, not a promise: the executor must
+ship with **fail-injection tests proving it can produce a failing sample**.
+
+**The run is STOPPED, unexecuted.** This session's disposition — that the deviation voids the
+B0 diagnostic but not the prospective run — is written by the contaminated party and is
+therefore **not final**. Sequence from here, per principal instruction:
+
+1. Complete + commit Phase 1 substrate, executor, and tests. **Do not observe the target again.**
+2. Obtain an **opposing-model methodological disposition** of this deviation.
+3. Probe entry only if that disposition holds the run valid. **If validity is ambiguous, the
+   run stays unexecuted and the study is reported incomplete** rather than forced forward.
 
 ## ▶ Current phase: prospective transfer Claim pre-registered, not executed
 
