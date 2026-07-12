@@ -639,14 +639,23 @@ def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
         f"found {counts['Claim']}"
     )
     assert counts["Policy"] == 2, "each Claim carries exactly one frozen promotion gate"
-    assert counts["Decision"] == 0, "nothing has concluded; memory-systems-v1 is incomplete"
-    assert counts["Evidence"] == 0, (
-        "EVIDENCE EXISTS. If a real run produced it, good — but note that the "
-        "pre-registration window on both frozen gates is now closed forever, and no further "
-        "control, rival, or gate can ever be registered for this eval. If a test wrote it, "
-        "that is corruption of an append-only store and there is no undo."
+    assert counts["Decision"] == 2, (
+        "expected 2 Decision(kill) envelopes — the vendor-comparison route was WITHDRAWN, "
+        "not measured (principal, 2026-07-12)"
     )
-    _ok("SAFE real store: 2 Claims, 2 frozen gates, 0 Evidence, 0 Decisions — as intended")
+    assert counts["Evidence"] == 0, (
+        "EVIDENCE EXISTS, and it should not. The vendor route was retired without ever "
+        "running: both Claims were disposed by Decision(kill) citing zero Evidence, because "
+        "nothing was ever measured. Evidence in this store would mean something emitted a "
+        "result for an evaluation that was withdrawn."
+    )
+    for d in store.load_all("Decision"):
+        assert d["kind"] == "kill" and not d["cited_evidence"]
+        assert "WITHDRAWN, NOT MEASURED" in d["rationale"], (
+            "a kill Decision must say plainly that it is a withdrawal and not a finding, or a "
+            "later reader will cite it as evidence that memory systems were evaluated"
+        )
+    _ok("SAFE real store: 2 Claims, 2 frozen gates, 0 Evidence, 2 kill Decisions (withdrawn)")
 
 
 TESTS = [

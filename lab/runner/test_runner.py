@@ -1,12 +1,11 @@
-"""Verifiable assertions for the eval runner (Phase C).
+"""Verifiable assertions for the generic execution adapter.
 
     PYTHONPATH=. .venv/bin/python lab/runner/test_runner.py
 
-The runner's job is to be *boring and honest*. These tests are mostly about the ways it
-could quietly lie: scoring an abort as a zero, dropping an answer instead of counting it as
-a miss, double-counting a resumed cell, falling back to fixtures when the credential is
-missing, or emitting Evidence and slamming the pre-registration window shut as a side effect
-of a script finishing.
+The vendor-specific route (Letta / mem0 / MemGPT arms, the memory-probe corpus, the metered
+Anthropic client) is retired. What remains is subject-agnostic, and these tests are about the
+ways it could quietly lie: scoring an abort, double-counting a resumed cell, emitting
+Evidence as a side effect, or reaching for a metered API.
 """
 
 from __future__ import annotations
@@ -18,194 +17,198 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SEED = "test-seed-do-not-use-for-real-runs"
 
 
 def _ok(msg: str) -> None:
     print(f"  ok   {msg}")
 
 
-def test_corpus_is_deterministic() -> None:
-    """Same seed, same case, byte-identical — or a disputed result cannot be re-run."""
-    from lab.runner.corpus import build_case
+def test_no_metered_api_path_exists() -> None:
+    """ADR-0036: subscription plans only. There must be no code path that can spend metered
+    tokens — not a disabled one, not a guarded one. None."""
+    import inspect
 
-    a = build_case("multi_session_coherence", 10, 3, SEED)
-    b = build_case("multi_session_coherence", 10, 3, SEED)
-    assert a == b
-    c = build_case("multi_session_coherence", 10, 4, SEED)
-    assert a != c, "different run_index must produce a different case"
-    d = build_case("multi_session_coherence", 10, 3, "other-seed")
-    assert a != d, "the seed must actually determine the corpus"
-    _ok("corpus is deterministic in the seed and varies with run_index")
+    from lab.runner import execution, oracle, providers
 
-
-def test_ground_truth_is_never_shown_to_the_arm() -> None:
-    """The canonical answer must not appear in the context an arm receives — except where
-    the fact itself was stated, which is the whole point of the task."""
-    from lab.runner.arms import Arm, Budget, FixtureProvider
-    from lab.runner.corpus import build_case
-
-    case = build_case("multi_session_coherence", 10, 0, SEED)
-    control = Arm(key="control", memory=None, provider=FixtureProvider(), budget=Budget())
-    context, _ = control.build_context(case)
-    for probe in case.probes:
-        assert probe.question not in context, "the probe question leaked into the context"
-    _ok("probe questions never leak into an arm's context")
+    for mod in (providers, execution, oracle):
+        src = inspect.getsource(mod)
+        for banned in ("anthropic.Anthropic", "openai.OpenAI", "api.anthropic.com"):
+            assert banned not in src, f"{mod.__name__} contains a metered-API client: {banned}"
+    src = inspect.getsource(providers)
+    assert "claude" in src and "codex" in src, "the subscription CLIs are the only model seam"
+    _ok("no metered-API code path exists; the model seam is the subscription CLIs")
 
 
-def test_oracle_is_deterministic_and_not_an_llm() -> None:
-    from lab.runner.oracle import cell_recall, normalize, score_recall_at_1
+def test_metered_keys_in_the_environment_are_refused() -> None:
+    """A key sitting in the environment is a loaded gun: some library picks it up, spend
+    happens, nobody notices until the invoice."""
+    from lab.runner.providers import assert_no_metered_keys
 
-    assert normalize("The Ravenna.") == normalize("ravenna")
-    assert normalize("Three") == "3"
-    assert score_recall_at_1("Ravenna", "ravenna") == 1
-    assert score_recall_at_1("Uppsala", "ravenna") == 0
-    assert score_recall_at_1("", "ravenna") == 0, "an empty answer is a miss, not a skip"
-    assert cell_recall(["a", "b"], ["a", "x"]) == 0.5
-    _ok("oracle: deterministic normalisation, empty answer scores as a miss")
+    os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test"
+    try:
+        assert_no_metered_keys()
+    except RuntimeError as e:
+        assert "ADR-0036" in str(e)
+    else:
+        raise AssertionError("a metered API key in the environment was not refused")
+    finally:
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+    assert_no_metered_keys()  # clean env passes
+    _ok("a metered API key present in the environment is refused (ADR-0036)")
 
 
-def test_dropped_answer_cannot_shrink_the_denominator() -> None:
-    """Omitting an answer instead of recording a miss inflates the score. Refuse it."""
-    from lab.runner.oracle import cell_recall
+def test_failover_is_capacity_only() -> None:
+    """A capacity failure means 'this provider cannot serve right now' — try the other. Any
+    other failure means something is WRONG, and retrying it elsewhere would launder a bug
+    into a result produced by a model we did not intend to use."""
+    from lab.runner.providers import (
+        CapacityExhausted, Completion, ProviderFailed, SubscriptionPool,
+    )
 
+    class Exhausted:
+        name, model = "claude", "sonnet"
+
+        def complete(self, prompt, timeout_s=180):
+            raise CapacityExhausted("rate limit")
+
+    class Broken:
+        name, model = "claude", "sonnet"
+
+        def complete(self, prompt, timeout_s=180):
+            raise ProviderFailed("segfault")
+
+    class Works:
+        name, model = "codex", "gpt-5.4"
+
+        def complete(self, prompt, timeout_s=180):
+            return Completion("ok", self.name, self.model, 1, 1, 5)
+
+    got = SubscriptionPool(providers=(Exhausted(), Works())).complete("x")
+    assert got.provider == "codex" and got.fallback_from == "claude"
+
+    try:
+        SubscriptionPool(providers=(Broken(), Works())).complete("x")
+    except ProviderFailed:
+        pass
+    else:
+        raise AssertionError("a non-capacity failure failed over — that launders a bug")
+
+    try:
+        SubscriptionPool(providers=(Exhausted(), Exhausted())).complete("x")
+    except CapacityExhausted as e:
+        assert "hard-stop" in str(e) and "metered" in str(e)
+    else:
+        raise AssertionError("both providers exhausted must hard-stop, not fall back")
+    _ok("failover is capacity-only; other failures raise; both-exhausted hard-stops")
+
+
+def test_aborted_cell_has_no_result() -> None:
+    from dataclasses import fields
+
+    from lab.runner.execution import AbortedCell, CellResult
+
+    assert "output" not in {f.name for f in fields(AbortedCell)}
+    assert "reason" in {f.name for f in fields(AbortedCell)}
+    assert "output" in {f.name for f in fields(CellResult)}
+    _ok("AbortedCell carries no result — an abort is structurally not a finding")
+
+
+def test_runner_cannot_emit_evidence() -> None:
+    import inspect
+
+    from lab.runner import execution, oracle, providers
+
+    for mod in (execution, oracle, providers):
+        assert "emit_evidence" not in inspect.getsource(mod), (
+            f"{mod.__name__} can emit Evidence. That closes every frozen gate's "
+            f"pre-registration window permanently, and no rerun can reopen it."
+        )
+    _ok("the runner cannot emit Evidence — checked in source, not promised in prose")
+
+
+def test_resume_is_idempotent() -> None:
+    from lab.runner import execution
+    from lab.runner.execution import Cell, CellResult, Run, now
+
+    calls: list[str] = []
+
+    def run_cell(cell: Cell) -> CellResult:
+        calls.append(cell.key)
+        return CellResult(key=cell.key, output={"v": cell.payload["v"]}, observed_at=now())
+
+    with tempfile.TemporaryDirectory() as td:
+        original = execution.RUNS_ROOT
+        execution.RUNS_ROOT = Path(td)
+        try:
+            cells = [Cell(key=f"c{i}", payload={"v": i}) for i in range(3)]
+            r = Run(eval_id="t", run_id="r1", cells=cells, execute_cell=run_cell,
+                    code_files=("lab/runner/execution.py",))
+            d = r.execute()
+            assert len(calls) == 3
+            m = json.loads((d / "manifest.json").read_text())
+            assert m["cells_completed"] == 3 and m["cells_resumed"] == 0 and not m["partial"]
+            assert m["emits_evidence"] is False and m["billing"] == "subscription"
+
+            d = Run(eval_id="t", run_id="r1", cells=cells, execute_cell=run_cell,
+                    code_files=("lab/runner/execution.py",)).execute()
+            assert len(calls) == 3, "a resumed run re-executed completed cells"
+            m = json.loads((d / "manifest.json").read_text())
+            assert m["cells_resumed"] == 3
+            assert len(list((d / "cells").glob("*.json"))) == 3, "cells were duplicated"
+            assert json.loads((d / "artifact-hashes.json").read_text()), "no artifact hashes"
+        finally:
+            execution.RUNS_ROOT = original
+    _ok("resume is idempotent: completed cells skipped, never re-run, never duplicated")
+
+
+def test_oracle_still_refuses_a_shrinking_denominator() -> None:
+    from lab.runner.oracle import cell_recall, score_recall_at_1
+
+    assert score_recall_at_1("", "x") == 0, "an empty answer is a miss, not a skip"
     try:
         cell_recall(["a"], ["a", "b"])
     except ValueError as e:
         assert "denominator" in str(e)
     else:
-        raise AssertionError("a missing answer was silently dropped and the score inflated")
-    _ok("a dropped answer raises rather than shrinking the denominator")
+        raise AssertionError("a dropped answer shrank the denominator and inflated the score")
+    _ok("oracle: an omitted answer raises rather than inflating the score")
 
 
-def test_aborted_cell_has_no_score() -> None:
-    """The most dangerous bug available to an eval: coding 'we stopped paying' as 'it was
-    wrong'. `AbortedCell` has no score field, so the mistake is unavailable, not discouraged."""
-    from dataclasses import fields
+def test_vendor_route_is_gone() -> None:
+    """The retired route must not be resurrectable by accident.
 
-    from lab.runner.arms import AbortedCell, CellResult
+    Vendor names may appear in exactly one place: the metered-key refusal list, where naming
+    `LETTA_API_KEY` is how we refuse it. Everywhere else, a vendor name means the arms are
+    back.
+    """
+    runner = REPO / "lab" / "runner"
+    for gone in ("arms.py", "corpus.py", "run.py"):
+        assert not (runner / gone).exists(), f"{gone} is back; the vendor route was retired"
 
-    aborted_fields = {f.name for f in fields(AbortedCell)}
-    assert "answers" not in aborted_fields and "recall_at_1" not in aborted_fields
-    assert "reason" in aborted_fields, "an abort must record why"
-    assert "answers" in {f.name for f in fields(CellResult)}
-    _ok("AbortedCell cannot carry a score — an abort is structurally not a result")
-
-
-def test_live_mode_refuses_rather_than_faking() -> None:
-    """A silent fallback to fixtures would emit a complete synthetic result set that nothing
-    downstream could distinguish from a real one. That is worse than not running."""
-    from lab.runner.arms import LiveProvider
-
-    saved = os.environ.pop("ANTHROPIC_API_KEY", None)
-    try:
-        LiveProvider("claude-sonnet-5")
-    except RuntimeError as e:
-        assert "hard refusal" in str(e) and "fallback" in str(e)
-    else:
-        raise AssertionError("live mode started with no credential — it must refuse")
-    finally:
-        if saved:
-            os.environ["ANTHROPIC_API_KEY"] = saved
-    _ok("live mode refuses without a credential; it never degrades to fixtures")
-
-
-def test_runner_emits_no_evidence() -> None:
-    """Evidence emission closes every frozen gate's pre-registration window, permanently.
-    That is an epistemic act, not a side effect of a script finishing."""
-    import inspect
-
-    from lab.runner import arms, corpus, oracle, run
-
-    for mod in (run, arms, corpus, oracle):
-        src = inspect.getsource(mod)
-        assert "emit_evidence" not in src, (
-            f"{mod.__name__} references emit_evidence. A runner that emits Evidence closes the "
-            f"pre-registration window on a partial run, and no rerun can reopen it."
-        )
-    manifest_default = "emits_evidence"
-    assert manifest_default in inspect.getsource(run), "the manifest must say so explicitly"
-    _ok("the runner cannot emit Evidence — checked in source, not promised in a docstring")
-
-
-def test_fixture_run_is_idempotent_on_resume() -> None:
-    """A resumed run must skip completed cells, never re-run and never double-count."""
-    from lab.runner import run as runner
-
-    with tempfile.TemporaryDirectory() as td:
-        os.environ["SYNAPLEX_CORPUS_SEED"] = SEED
-        original = runner.RUNS_ROOT
-        runner.RUNS_ROOT = Path(td)
-        try:
-            d1 = runner.execute(mode="fixture", runs=3, arms=["control"], run_id="r1")
-            m1 = json.loads((d1 / "manifest.json").read_text())
-            assert m1["cells_completed"] == 3 and m1["cells_resumed"] == 0
-            assert not m1["partial"]
-
-            d2 = runner.execute(mode="fixture", runs=3, arms=["control"], run_id="r1")
-            m2 = json.loads((d2 / "manifest.json").read_text())
-            assert m2["cells_resumed"] == 3, "a resumed run re-executed completed cells"
-            assert len(list((d2 / "cells").glob("*.json"))) == 3, "cells were duplicated"
-
-            s = runner.summarize(d2)
-            assert s["control"]["completed"] == 3
-        finally:
-            runner.RUNS_ROOT = original
-            os.environ.pop("SYNAPLEX_CORPUS_SEED", None)
-    _ok("resume is idempotent: completed cells are skipped, never duplicated")
-
-
-def test_manifest_captures_what_a_replay_needs() -> None:
-    from lab.runner import run as runner
-
-    with tempfile.TemporaryDirectory() as td:
-        os.environ["SYNAPLEX_CORPUS_SEED"] = SEED
-        original = runner.RUNS_ROOT
-        runner.RUNS_ROOT = Path(td)
-        try:
-            d = runner.execute(mode="fixture", runs=2, arms=["control"], run_id="m1")
-            m = json.loads((d / "manifest.json").read_text())
-            for key in ("corpus_digest", "code_digest", "arms", "runs_per_cell",
-                        "session_depth", "cells_planned", "partial", "incompatibilities"):
-                assert key in m, f"manifest is missing {key}"
-            assert m["emits_evidence"] is False
-            assert m["corpus_digest"].startswith("sha256:")
-            # The seed itself must never reach the manifest — publishing it would let a future
-            # subject train on the corpus, and the point is that nothing has.
-            assert SEED not in json.dumps(m), "the private corpus seed leaked into the manifest"
-            hashes = json.loads((d / "artifact-hashes.json").read_text())
-            assert hashes, "no artifact hashes recorded; Evidence would have nothing to bind to"
-        finally:
-            runner.RUNS_ROOT = original
-            os.environ.pop("SYNAPLEX_CORPUS_SEED", None)
-    _ok("manifest carries corpus+code digests, abort accounting — and never the seed")
-
-
-def test_incompatibilities_are_recorded_not_improvised_around() -> None:
-    """MemGPT and Letta are one system. The handoff says record it and propose the smallest
-    honest successor — do not quietly rename an arm and still call it four subjects."""
-    from lab.runner.run import INCOMPATIBILITIES
-
-    kinds = {i["kind"] for i in INCOMPATIBILITIES}
-    assert "not_semantically_distinct" in kinds
-    assert "credential_blocked" in kinds
-    memgpt = next(i for i in INCOMPATIBILITIES if i["subject"] == "memgpt")
-    assert "letta-ai/letta" in memgpt["detail"]
-    assert memgpt["smallest_honest_successor"]
-    _ok("the MemGPT/Letta collision and the credential block are recorded in every manifest")
+    for path in runner.glob("*.py"):
+        if path.name == "test_runner.py":
+            continue  # this file names the retired vendors in order to assert they are gone
+        for lineno, line in enumerate(path.read_text().splitlines(), 1):
+            low = line.lower()
+            if "_api_key" in low:  # the refusal list — naming a key is how we refuse it
+                continue
+            for vendor in ("letta", "mem0", "memgpt"):
+                assert vendor not in low, (
+                    f"{path.name}:{lineno} names vendor {vendor!r} outside the metered-key "
+                    f"refusal list — the retired arms are back"
+                )
+    _ok("vendor route gone; vendors appear only in the metered-key refusal list")
 
 
 TESTS = [
-    test_corpus_is_deterministic,
-    test_ground_truth_is_never_shown_to_the_arm,
-    test_oracle_is_deterministic_and_not_an_llm,
-    test_dropped_answer_cannot_shrink_the_denominator,
-    test_aborted_cell_has_no_score,
-    test_live_mode_refuses_rather_than_faking,
-    test_runner_emits_no_evidence,
-    test_fixture_run_is_idempotent_on_resume,
-    test_manifest_captures_what_a_replay_needs,
-    test_incompatibilities_are_recorded_not_improvised_around,
+    test_no_metered_api_path_exists,
+    test_metered_keys_in_the_environment_are_refused,
+    test_failover_is_capacity_only,
+    test_aborted_cell_has_no_result,
+    test_runner_cannot_emit_evidence,
+    test_resume_is_idempotent,
+    test_oracle_still_refuses_a_shrinking_denominator,
+    test_vendor_route_is_gone,
 ]
 
 

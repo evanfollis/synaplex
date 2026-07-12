@@ -1,0 +1,39 @@
+{
+  "id": "8c589b2448a76a6b",
+  "spec_version": "0.2.0",
+  "object_type": "Decision",
+  "emitted_at": "2026-07-12T12:55:27Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Decision"
+  ],
+  "role_declared_at": "2026-07-12T12:55:27Z",
+  "binding": "binding",
+  "sources": [],
+  "instance_id": "synaplex",
+  "kind": "kill",
+  "candidate_claims": [
+    "b7ff216f4eec6e58"
+  ],
+  "chosen_claim_id": "b7ff216f4eec6e58",
+  "cited_evidence": [],
+  "rationale": "WITHDRAWN, NOT MEASURED. No evaluation was ever executed: the canon store holds zero Evidence envelopes for this Claim and it never entered probe. This Decision disposes a pre-registration that should not have been opened; it is NOT an empirical finding, and nothing here says anything about the systems named in the methodology.\n\nGrounds for withdrawal (principal, 2026-07-12): the vendor comparison was never the subject. Letta was an imperfect illustrative example of the broader context-repository idea, not an evaluation target. A head-to-head of third-party memory vendors is not the question this system exists to answer, and executing it would additionally have required metered API spend, which ADR-0036 forbids (subscription plans only).\n\nTwo defects found while preparing the run are recorded here so the withdrawal is not mistaken for a clean shelving: (1) the methodology names four subjects, but subjects 1 and 3 (Letta, and 'MemGPT' at github.com/letta-ai/letta) are one system in two deployment modes — MemGPT was renamed Letta — so it was four subjects on paper and three in fact; (2) the design had four subjects and no control, so a universal sub-0.80 result could not have distinguished weak memory systems from a harness unable to detect success at all. Defect (2) was remedied by pre-registering the control-arm rival Claim bb7cee596f94289b before any Evidence existed; that Claim is withdrawn here alongside the primary, having served only to make this failure mode visible.\n\nThe frozen promotion gate bound to this Claim is cited in full, as canon rule 13 requires. It was never met, never missed, and never tested.",
+  "policies_in_force": [
+    {
+      "policy_id": "3e500cb2aec93dfc",
+      "version": "1",
+      "class": "frozen"
+    }
+  ],
+  "exposure": {
+    "capital_at_risk": 0,
+    "reversibility": "reversible",
+    "correlation_tags": [
+      "withdrawn",
+      "vendor-comparison-retired"
+    ],
+    "time_to_realization": "P0D",
+    "blast_radius": "local"
+  }
+}
