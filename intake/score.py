@@ -1,7 +1,7 @@
 """Per-beat scoring.
 
 Two providers behind a common interface. Chosen at run-time via
-`SYNAPLEX_SCORE_PROVIDER`; default is `heuristic` when no API key is
+heuristic-only (ADR-0036: no metered API spend). The former Sonnet path is
 available, `sonnet` otherwise.
 
 Scored item shape (added to raw fields):
@@ -110,113 +110,29 @@ def score_heuristic(item: dict, beat: Beat) -> tuple[float, str]:
 # --------------------------------------------------------------------------
 
 
-def _have_anthropic_key() -> bool:
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
-
-
-SONNET_MODEL = os.environ.get("SYNAPLEX_SONNET_MODEL", "claude-sonnet-4-6")
-SONNET_SYSTEM_PROMPT = (
-    "You are a beat editor for synaplex.ai, a system that discovers the "
-    "structure of AI systems. Your job is to score intake items 0-100 "
-    "on their relevance to a named beat and return a single JSON object "
-    'of the form {"score": <0-100>, "rationale": "<one sentence>"}. '
-    "Score 0 means 'irrelevant, off-beat, or noise'; score 100 means "
-    "'a reader building in this beat would cite this in a technical "
-    "design review'. Reserve 80+ for genuinely technical, primary-source, "
-    "or clearly load-bearing items. Do not inflate scores for hype."
-)
-
-
-def _sonnet_user_message(item: dict, beat: Beat) -> str:
-    return (
-        f"Beat: {beat.name}\n"
-        f"Beat definition:\n{beat.definition}\n\n"
-        f"Item:\n"
-        f"  source: {item.get('source','')}\n"
-        f"  title: {item.get('title','')}\n"
-        f"  url: {item.get('url','')}\n"
-        f"  summary: {(item.get('summary','') or '')[:1000]}\n\n"
-        'Return ONLY the JSON object, no prose. Format: {"score": <0-100>, "rationale": "<one sentence>"}'
-    )
-
-
-def score_sonnet_batch(items: list[dict], beat: Beat) -> list[tuple[float, str]]:
-    """Score a batch via the Anthropic SDK, with prompt caching.
-
-    Cached:
-      - system prompt
-      - beat definition (prepended as an ephemeral-cached user block)
-
-    Uncached:
-      - the per-item title/url/summary
-
-    First-pass implementation scores items one at a time (one API call per
-    item) but with prompt caching the repeated system+beat tokens hit the
-    cache on the second and subsequent calls in a run. Batch-packing
-    multiple items per call is a second-pass optimization.
-    """
-    try:
-        import anthropic  # type: ignore[import-not-found]
-    except ImportError as exc:
-        raise RuntimeError("anthropic SDK not installed in this venv") from exc
-
-    client = anthropic.Anthropic()
-    results: list[tuple[float, str]] = []
-    beat_block_text = (
-        f"Beat: {beat.name}\nBeat definition:\n{beat.definition}"
-    )
-    for item in items:
-        try:
-            msg = client.messages.create(
-                model=SONNET_MODEL,
-                max_tokens=256,
-                system=[{
-                    "type": "text",
-                    "text": SONNET_SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }],
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": beat_block_text,
-                                "cache_control": {"type": "ephemeral"},
-                            },
-                            {"type": "text", "text": _sonnet_user_message(item, beat)},
-                        ],
-                    }
-                ],
-            )
-            text = "".join(
-                b.text for b in msg.content if getattr(b, "type", None) == "text"
-            ).strip()
-            # tolerate a stray code fence
-            if text.startswith("```"):
-                text = text.strip("`").split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-            data = json.loads(text)
-            raw_score = float(data.get("score", 0))
-            score = max(0.0, min(1.0, raw_score / 100.0))
-            rationale = str(data.get("rationale", ""))[:240]
-            results.append((score, rationale))
-        except Exception as exc:
-            # fall back to heuristic for this item; record the fact in rationale
-            h_score, h_rat = score_heuristic(item, beat)
-            results.append((h_score, f"sonnet-fallback({type(exc).__name__}); {h_rat}"))
-    return results
-
-
 # --------------------------------------------------------------------------
 # Dispatcher
 # --------------------------------------------------------------------------
 
 
 def _chosen_provider() -> str:
-    explicit = os.environ.get("SYNAPLEX_SCORE_PROVIDER")
-    if explicit:
-        return explicit.lower()
-    return "sonnet" if _have_anthropic_key() else "heuristic"
+    """Always `heuristic`. There is no other provider, and that is deliberate.
+
+    ADR-0036 (accepted 2026-06-11, principal directive) caps AI spend at the two subscription
+    plans and forbids metered API keys. The heuristic scorer is the **intended** path, not a
+    degraded fallback waiting for a key.
+
+    This function used to return `"sonnet"` whenever ANTHROPIC_API_KEY was present. That was
+    latent metered spend: the systemd units load `EnvironmentFile=runtime/.secrets/synaplex.env`,
+    so a key appearing in that file — for any reason, set by anyone — would have silently
+    started billing metered tokens on a 6x/day cron. Nobody would have noticed until the
+    invoice. Gating it behind a flag would have left the same loaded gun with a safety catch;
+    the path is removed instead, so there is nothing to re-enable by accident.
+
+    If LLM-assisted scoring is ever authorized, it goes through the subscription CLIs
+    (`lab.runner.providers.SubscriptionPool`), not a metered SDK.
+    """
+    return "heuristic"
 
 
 def _read_raw_for_date(date: str) -> list[dict]:
@@ -265,19 +181,7 @@ def score_day(beat_id: str, date: str) -> dict:
         out.write_text("", encoding="utf-8")
         return {"provider": provider, "count": 0, "deduped": deduped, "out": str(out)}
 
-    if provider == "sonnet":
-        try:
-            scores = score_sonnet_batch(items, beat)
-        except Exception as exc:
-            emit_failure(
-                "intake", "score",
-                f"sonnet init failed, falling back to heuristic: {type(exc).__name__}: {exc}",
-                "",
-            )
-            provider = "heuristic"
-            scores = [score_heuristic(i, beat) for i in items]
-    else:
-        scores = [score_heuristic(i, beat) for i in items]
+    scores = [score_heuristic(i, beat) for i in items]
 
     out = scored_path(beat_id, date)
     kept = 0

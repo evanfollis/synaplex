@@ -5,8 +5,17 @@ Reads the last 7 days of per-beat digests (or as many as exist), writes a
 and refreshes the `<beat>-latest.md` symlink so executive sessions auto-load
 the most recent synthesis via the workspace `context-always-load` mechanism.
 
-Synthesis provider selection mirrors `score.py`: heuristic if no API key,
-Sonnet otherwise. The heuristic path produces a structured digest-of-digests
+Synthesis is heuristic-only, mirroring `score.py` (ADR-0036: no metered API
+spend).
+
+The former `if ANTHROPIC_API_KEY: _render_sonnet(...)` branch was latent metered
+spend, not a dormant feature: the systemd unit loads
+`EnvironmentFile=-/opt/workspace/runtime/.secrets/synaplex.env`, so a key landing
+in that file would have started billing on the weekly cron with nothing to
+announce it. It is removed, not gated — a gate is the same loaded gun with a
+safety catch.
+
+The heuristic path produces a structured digest-of-digests
 (top items across the week grouped by theme); the Sonnet path produces
 prose synthesis with a beat editor's voice.
 
@@ -175,8 +184,9 @@ def _render_heuristic(
         lines.append("")
 
     lines.append(
-        "_Synaplex Layer 1 intake — heuristic briefing. Set ANTHROPIC_API_KEY "
-        "for prose synthesis. See ADR-0029 and intake/README.md._"
+        "_Synaplex Layer 1 intake — heuristic briefing. This is the intended path, not a "
+        "degraded one: ADR-0036 caps AI spend at the two subscription plans and authorizes no "
+        "metered API. See ADR-0029 and intake/README.md._"
     )
     return "\n".join(lines) + "\n"
 
@@ -191,79 +201,6 @@ SONNET_SYNTHESIS_SYSTEM = (
     "implies for next week' paragraph. Avoid hype. Cite items by their URL. "
     "Output clean markdown. Target length: 600-900 words."
 )
-
-
-def _render_sonnet(
-    beat: Beat,
-    iso_week: str,
-    end_date: str,
-    dates_covered: list[str],
-    items: list[dict],
-) -> str | None:
-    try:
-        import anthropic  # type: ignore[import-not-found]
-    except ImportError:
-        return None
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        return None
-
-    client = anthropic.Anthropic()
-    top = sorted(items, key=lambda i: -i.get("score", 0))[:30]
-    compact = [
-        {
-            "title": it.get("title", ""),
-            "url": it.get("url", ""),
-            "source": it.get("source", ""),
-            "score": it.get("score", 0),
-            "summary": (it.get("summary", "") or "")[:500],
-            "published": it.get("published", ""),
-        }
-        for it in top
-    ]
-    user_block = (
-        f"Beat: {beat.name}\nBeat definition:\n{beat.definition}\n\n"
-        f"Window: {dates_covered[0] if dates_covered else end_date} to "
-        f"{dates_covered[-1] if dates_covered else end_date}\n\n"
-        f"Top items (JSON array):\n{json.dumps(compact, ensure_ascii=False, indent=2)}"
-    )
-    try:
-        msg = client.messages.create(
-            model=os.environ.get("SYNAPLEX_SONNET_MODEL", "claude-sonnet-4-6"),
-            max_tokens=2500,
-            system=[{
-                "type": "text",
-                "text": SONNET_SYNTHESIS_SYSTEM,
-                "cache_control": {"type": "ephemeral"},
-            }],
-            messages=[{"role": "user", "content": user_block}],
-        )
-    except Exception as exc:
-        emit_failure(
-            "intake", "synthesize",
-            f"sonnet call failed: {type(exc).__name__}: {exc}", "",
-        )
-        return None
-
-    body = "".join(
-        b.text for b in msg.content if getattr(b, "type", None) == "text"
-    ).strip()
-
-    header: list[str] = []
-    header.append("---")
-    header.append(f"name: {beat.name} weekly synthesis — {iso_week}")
-    header.append(
-        f"description: Auto-injected into executive sessions. Synthesis of "
-        f"the last week of scored intake for the {beat.id} beat."
-    )
-    header.append(f"beat: {beat.id}")
-    header.append(f"iso_week: {iso_week}")
-    header.append(f"end_date: {end_date}")
-    header.append(f"updated: {end_date}")
-    header.append(f"dates_covered: {','.join(dates_covered) if dates_covered else '[]'}")
-    header.append("synthesis_provider: sonnet")
-    header.append("---")
-    header.append("")
-    return "\n".join(header) + body.strip() + "\n"
 
 
 def _update_latest_symlink(beat_id: str, target: Path) -> Path:
@@ -288,11 +225,11 @@ def synthesize(beat_id: str, end_date: str | None = None) -> dict:
 
     items, dates_covered = _gather_week(beat_id, end_str)
 
-    body: str | None = None
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        body = _render_sonnet(beat, iso_week, end_str, dates_covered, items)
-    if body is None:
-        body = _render_heuristic(beat, iso_week, end_str, dates_covered, items)
+    # Heuristic, unconditionally. There is no credential branch here and there must never be
+    # one again — see the module docstring for why the metered renderer was removed rather
+    # than gated. `test_no_metered_spend.py` fails if a credential name reappears in this
+    # function at all, including in a comment, because a comment is how the next one starts.
+    body = _render_heuristic(beat, iso_week, end_str, dates_covered, items)
 
     # size guard — trim if over target
     encoded = body.encode("utf-8")
