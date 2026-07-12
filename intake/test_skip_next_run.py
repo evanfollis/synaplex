@@ -14,6 +14,12 @@ import sys
 from pathlib import Path
 
 
+def _reset_intake_runtime_modules() -> None:
+    """Force path-derived modules to re-read SYNAPLEX_RUNTIME_ROOT."""
+    for name in ("intake.escalation", "intake.friction", "intake.paths"):
+        sys.modules.pop(name, None)
+
+
 def assert_set_and_consume_round_trip() -> None:
     from intake.escalation import (
         consume_skip_next_run,
@@ -132,15 +138,34 @@ def assert_set_failure_emits_friction() -> None:
 
 
 def main() -> int:
+    import os
+    import tempfile
+
     print("skip_next_run primitive assertions (arxiv backoff handoff 2026-05-14):")
-    try:
-        assert_set_and_consume_round_trip()
-        assert_set_is_idempotent()
-        assert_per_source_independence()
-        assert_set_failure_emits_friction()
-    except AssertionError as exc:
-        print(f"FAIL: {exc}", file=sys.stderr)
-        return 1
+    prior_runtime_root = os.environ.get("SYNAPLEX_RUNTIME_ROOT")
+    prior_source_type = os.environ.get("SYNAPLEX_SOURCE_TYPE")
+    with tempfile.TemporaryDirectory() as td:
+        os.environ["SYNAPLEX_RUNTIME_ROOT"] = td
+        os.environ["SYNAPLEX_SOURCE_TYPE"] = "smoke"
+        _reset_intake_runtime_modules()
+        try:
+            assert_set_and_consume_round_trip()
+            assert_set_is_idempotent()
+            assert_per_source_independence()
+            assert_set_failure_emits_friction()
+        except AssertionError as exc:
+            print(f"FAIL: {exc}", file=sys.stderr)
+            return 1
+        finally:
+            if prior_runtime_root is None:
+                os.environ.pop("SYNAPLEX_RUNTIME_ROOT", None)
+            else:
+                os.environ["SYNAPLEX_RUNTIME_ROOT"] = prior_runtime_root
+            if prior_source_type is None:
+                os.environ.pop("SYNAPLEX_SOURCE_TYPE", None)
+            else:
+                os.environ["SYNAPLEX_SOURCE_TYPE"] = prior_source_type
+            _reset_intake_runtime_modules()
     print("All assertions pass — skip_next_run behaves as specified.")
     return 0
 
