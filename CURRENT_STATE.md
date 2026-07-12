@@ -88,6 +88,34 @@ bugs.
 move and no Evidence to judge against it. The remaining blocker is the **runner** — it
 does not exist (Phase C of the knowledge-loop handoff).
 
+**Publication is fail-closed at the BUILD, not just in cron** (`synaplex@54dca82`).
+`npm run build` runs `lab.canon.guard` as a prebuild step: no-selection + publication +
+canon-integrity. A page that publishes a result with no Decision behind it **cannot
+compile**. Verified by making it refuse. A nightly cron only tells you the page shipped
+yesterday.
+
+**The site no longer states falsehoods.** The lab page had said "Week 5 (now)" — an April
+timeline, 12 weeks stale, in present tense — and promised results would be "appended here",
+which the guard forbids and which would publish the exact finding a Decision exists to
+override. Both pages cited canon v0.1.0. All corrected; the page now states that the eval
+has not run, that results will never be appended to it, and that **the pre-registered
+design has four subjects and no control** — recorded in public rather than discovered in
+public.
+
+## 🚧 Blocked: the public knowledge surface
+
+`synaplex-public-live-knowledge-surface` is **blocked by its own dependency** — its
+contract says "complete the first full knowledge loop before making its projection the site
+source of truth", and the loop is not closed. The chain:
+
+> public projection ← knowledge invariant ← **Decision** ← **Evidence** ← **runner (does
+> not exist)**
+
+The runner is Phase C of the knowledge-loop handoff and is the single thing gating
+everything downstream. Not built here; that is deliberate, not neglect. DNS/deploy stays
+off per the handoff's own instruction ("restore DNS/deployment only after the projection is
+truthful enough to publish").
+
 ## One-line status
 
 Repo rebranded from `agentstack` → `synaplex` per ADR-0027. Layer 1
