@@ -142,8 +142,11 @@ spool when possible, returns a degraded-delivery receipt, and lets the caller co
 host-persistent default is `/var/tmp/synaplex/friction-spool/events.jsonl`; tests and
 constrained jobs may override it with `SYNAPLEX_FRICTION_SPOOL`. Each versioned spool record
 preserves the exact original event and destination. `python -m intake.friction_spool` drains
-recoverable records under a shared lock and retains every malformed or still-undeliverable
-record. A double failure returns explicit `undelivered` status and remains visible on
+recoverable records under a shared lock, but authorizes only the canonical `FRICTION_LOG`
+destination by default; record-provided destinations carry no authority. The spool boundary
+must be current-user-owned `0700`, with symlinked or group/world-accessible parents refused.
+The drain retains every malformed, unauthorized, or still-undeliverable record byte-for-byte.
+A double failure returns explicit `undelivered` status and remains visible on
 stderr. The normal integrity command was verified to complete successfully against the
 real read-only runtime path while preserving its success event in an overridden test spool.
 This changes no canon, Decision, or publication gate; those remain separate and fail-closed.

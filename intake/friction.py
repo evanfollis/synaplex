@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import fcntl
 import os
+import stat
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,11 +53,16 @@ def _fallback_spool() -> Path:
     return Path("/var/tmp/synaplex/friction-spool/events.jsonl")
 
 
-def _append_jsonl(path: Path, record: dict, *, durable: bool = False) -> None:
+def _append_jsonl(
+    path: Path, record: dict, *, durable: bool = False, nofollow: bool = False
+) -> None:
     """Append one complete JSON line; optionally fsync before reporting success."""
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = (json.dumps(record, ensure_ascii=False) + "\n").encode("utf-8")
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+    if nofollow:
+        flags |= os.O_NOFOLLOW
+    fd = os.open(path, flags, 0o600)
     try:
         view = memoryview(payload)
         while view:
@@ -74,12 +80,33 @@ def _spool_lock_path(spool: Path) -> Path:
     return spool.with_name(f".{spool.name}.lock")
 
 
+def _ensure_private_spool_parent(spool: Path) -> None:
+    """Create/verify the immediate spool boundary as owned 0700, never a symlink."""
+    parent = spool.parent
+    parent.mkdir(parents=True, mode=0o700, exist_ok=True)
+    info = os.lstat(parent)
+    if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+        raise PermissionError(f"spool parent is not a real directory: {parent}")
+    if info.st_uid != os.geteuid():
+        raise PermissionError(
+            f"spool parent {parent} owned by uid {info.st_uid}, expected {os.geteuid()}"
+        )
+    mode = stat.S_IMODE(info.st_mode)
+    if mode != 0o700:
+        raise PermissionError(f"spool parent {parent} mode {mode:o}, expected private 700")
+
+
 def _append_spool(spool: Path, record: dict) -> None:
     """Serialize spool append against maintenance drain/replace."""
-    spool.parent.mkdir(parents=True, exist_ok=True)
-    with open(_spool_lock_path(spool), "a", encoding="utf-8") as lock:
+    _ensure_private_spool_parent(spool)
+    lock_fd = os.open(
+        _spool_lock_path(spool),
+        os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW,
+        0o600,
+    )
+    with os.fdopen(lock_fd, "a", encoding="utf-8") as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        _append_jsonl(spool, record, durable=True)
+        _append_jsonl(spool, record, durable=True, nofollow=True)
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 

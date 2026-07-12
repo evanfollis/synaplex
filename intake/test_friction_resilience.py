@@ -18,8 +18,8 @@ def test_default_spool_is_host_persistent_and_overridable() -> None:
         assert friction._fallback_spool() == Path(
             "/var/tmp/synaplex/friction-spool/events.jsonl"
         )
-        os.environ[friction.FALLBACK_SPOOL_ENV] = "/tmp/explicit-friction-spool.jsonl"
-        assert friction._fallback_spool() == Path("/tmp/explicit-friction-spool.jsonl")
+        os.environ[friction.FALLBACK_SPOOL_ENV] = "/tmp/private/explicit-spool.jsonl"
+        assert friction._fallback_spool() == Path("/tmp/private/explicit-spool.jsonl")
     finally:
         if original is None:
             os.environ.pop(friction.FALLBACK_SPOOL_ENV, None)
@@ -43,9 +43,11 @@ def test_primary_failure_spools_full_event_and_surfaces_warning() -> None:
         original_spool = os.environ.get(friction.FALLBACK_SPOOL_ENV)
         attempted_paths: list[Path] = []
 
-        def recording_append(path: Path, record: dict, *, durable: bool = False) -> None:
+        def recording_append(
+            path: Path, record: dict, *, durable: bool = False, nofollow: bool = False
+        ) -> None:
             attempted_paths.append(path)
-            original_append(path, record, durable=durable)
+            original_append(path, record, durable=durable, nofollow=nofollow)
 
         friction.FRICTION_LOG = broken_primary
         friction._append_jsonl = recording_append
@@ -94,9 +96,11 @@ def test_double_write_failure_is_visible_but_does_not_raise() -> None:
         original_spool = os.environ.get(friction.FALLBACK_SPOOL_ENV)
         attempted_paths: list[Path] = []
 
-        def recording_append(path: Path, record: dict, *, durable: bool = False) -> None:
+        def recording_append(
+            path: Path, record: dict, *, durable: bool = False, nofollow: bool = False
+        ) -> None:
             attempted_paths.append(path)
-            original_append(path, record, durable=durable)
+            original_append(path, record, durable=durable, nofollow=nofollow)
 
         friction.FRICTION_LOG = primary
         friction._append_jsonl = recording_append
@@ -133,7 +137,7 @@ def test_drain_replays_exact_event_and_retains_failures() -> None:
         bad_destination = root / "still-a-directory"
         bad_destination.mkdir()
         spool = root / "spool" / "events.jsonl"
-        spool.parent.mkdir()
+        spool.parent.mkdir(mode=0o700)
         good_event = {"eventType": "success", "reason": "exact", "nested": {"v": [1, 2]}}
         bad_event = {"eventType": "failure", "reason": "retain me"}
         records = [
@@ -142,7 +146,7 @@ def test_drain_replays_exact_event_and_retains_failures() -> None:
         ]
         spool.write_text("".join(json.dumps(r) + "\n" for r in records))
 
-        receipt = drain(spool)
+        receipt = drain(spool, allowed_destinations={good_destination, bad_destination})
         assert receipt["found"] == 2 and receipt["replayed"] == 1
         assert receipt["retained"] == 1 and len(receipt["errors"]) == 1
         assert json.loads(good_destination.read_text()) == good_event
@@ -150,11 +154,70 @@ def test_drain_replays_exact_event_and_retains_failures() -> None:
         assert remaining == [records[1]], "drain dropped or mutated an unreplayed record"
 
 
+def test_drain_rejects_malicious_destination_and_retains_exact_record() -> None:
+    from intake.friction_spool import drain
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        spool = root / "spool" / "events.jsonl"
+        spool.parent.mkdir(mode=0o700)
+        malicious = {
+            "spool_version": 1,
+            "destination": str(root / "not-allowlisted.jsonl"),
+            "event": {"eventType": "success", "reason": "do not replay"},
+        }
+        exact_line = json.dumps(malicious, separators=(",", ":")) + "\n"
+        spool.write_text(exact_line)
+
+        receipt = drain(spool)
+        assert receipt["replayed"] == 0 and receipt["retained"] == 1
+        assert receipt["errors"][0]["type"] == "PermissionError"
+        assert spool.read_text() == exact_line, "rejected record was mutated or dropped"
+        assert not Path(malicious["destination"]).exists()
+
+
+def test_spool_rejects_unsafe_and_symlinked_parents() -> None:
+    from intake import friction
+    from intake.friction_spool import drain
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        unsafe = root / "unsafe"
+        unsafe.mkdir(mode=0o777)
+        unsafe.chmod(0o777)
+        try:
+            friction._append_spool(unsafe / "events.jsonl", {"event": {}})
+        except PermissionError as error:
+            assert "expected private 700" in str(error)
+        else:
+            raise AssertionError("group/world-accessible spool parent was accepted")
+
+        real = root / "real"
+        real.mkdir(mode=0o700)
+        linked = root / "linked"
+        linked.symlink_to(real, target_is_directory=True)
+        try:
+            friction._append_spool(linked / "events.jsonl", {"event": {}})
+        except PermissionError as error:
+            assert "not a real directory" in str(error)
+        else:
+            raise AssertionError("symlinked spool parent was accepted")
+
+        try:
+            drain(linked / "events.jsonl")
+        except PermissionError as error:
+            assert "not a real directory" in str(error)
+        else:
+            raise AssertionError("drain accepted a symlinked spool parent")
+
+
 TESTS = [
     test_default_spool_is_host_persistent_and_overridable,
     test_primary_failure_spools_full_event_and_surfaces_warning,
     test_double_write_failure_is_visible_but_does_not_raise,
     test_drain_replays_exact_event_and_retains_failures,
+    test_drain_rejects_malicious_destination_and_retains_exact_record,
+    test_spool_rejects_unsafe_and_symlinked_parents,
 ]
 
 
