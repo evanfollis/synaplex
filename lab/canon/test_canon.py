@@ -125,19 +125,43 @@ def test_canon_schema_set_has_not_drifted() -> None:
 # --- AC2: validation refuses -----------------------------------------------
 
 
-def test_refuses_decision_and_policy() -> None:
-    """AC13: Phase 1 emits no Decision and no Policy. Attempting one is the canon gap
-    biting, and it must stop the write rather than improvise a Policy."""
+def test_refuses_unemittable_object_types() -> None:
+    """Decision and Policy are authorized now (canon v0.2.0 `frozen` class resolved the gap).
+    Promotion and Realization are not — the lab has no consumer for them, and an emitter for
+    an envelope nobody emits is speculative infrastructure."""
     from lab.canon.validate import CanonRefusal, validate
 
-    for object_type in ("Decision", "Policy"):
+    for object_type in ("Promotion", "Realization", "NotAThing"):
         try:
             validate({"object_type": object_type, "id": "x"})
         except CanonRefusal as r:
-            assert "Phase 1" in r.rationale and "canon gap" in r.rationale
+            assert "not emittable" in r.rationale
         else:
             raise AssertionError(f"validator accepted a {object_type} envelope")
-    _ok("AC13 Decision and Policy envelopes are refused, citing the canon gap")
+    _ok("SCOPE Promotion/Realization/unknown types are refused; Decision+Policy are not")
+
+
+def test_observed_at_cannot_be_defaulted() -> None:
+    """The single most load-bearing parameter in the emitter has no default, on purpose.
+
+    Canon rule 10 anchors the frozen-gate pre-registration window on `Evidence.observed_at`,
+    because `emitted_at` is entirely under the emitter's control. A default — any default,
+    but especially `now()` — would let a caller destroy the anchor by omission and silently
+    reopen the evidence-laundering attack that adversarial review found in canon v0.2.0's
+    first draft. Making it required means the lie has to be typed out deliberately.
+    """
+    import inspect
+
+    from lab.canon.emit import emit_evidence
+
+    param = inspect.signature(emit_evidence).parameters["observed_at"]
+    assert param.default is inspect.Parameter.empty, (
+        "emit_evidence.observed_at has acquired a default. If that default is now(), the "
+        "frozen-gate window anchor is destroyed and the re-emission attack is open again."
+    )
+    doc = emit_evidence.__doc__ or ""
+    assert "never from the clock" in doc
+    _ok("R16  emit_evidence.observed_at is required — it comes from the run, not the clock")
 
 
 def test_refuses_phase2_fields_on_a_phase1_envelope() -> None:
@@ -482,7 +506,7 @@ def test_publication_guard_blocks_results_without_a_decision() -> None:
         )
         found = check_publication(fake)
         assert found, "a results page shipped with no Decision behind it"
-        assert "no validator-passing Decision exists" in found[0].detail
+        assert "no Decision exists" in found[0].detail
     _ok("AC9  a results page with no Decision behind it is blocked")
 
 
@@ -515,6 +539,7 @@ def test_declaring_no_results_while_citing_evidence_is_refused() -> None:
             tier="internal_operational",
             polarity="supports",
             artifact=artifact_pointer(METHODOLOGY),
+            observed_at="2026-07-12T09:00:00Z",
         )
         fake = Path(td)
         lab_pages = fake / "site" / "src" / "pages" / "lab"
@@ -561,22 +586,39 @@ def test_probe_entry_emits_cleanly() -> None:
     _ok("PH1  probe entry (phase_transition + methodology_log) emits cleanly")
 
 
-def test_the_real_store_was_never_written() -> None:
-    """The suite must not have touched the append-only store it is testing."""
+def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
+    """The suite must not have written into the real store, and the real store must hold
+    exactly what was emitted on purpose.
+
+    As of 2026-07-12 that is: the pre-registered Claim, its frozen promotion gate, and one
+    EventLogEntry(canon_violation) — a real refusal, recorded when the first frozen-gate
+    emission was rejected for carrying `instance_id`, which the Policy schema forbids. That
+    record stays. Canon is append-only, and deleting an inconvenient record because it came
+    from our own bug is precisely the behaviour this whole apparatus exists to forbid.
+
+    **Evidence must stay at 0 until a real run produces some.** The moment the first
+    Evidence lands, the frozen gate's pre-registration window closes forever — which is the
+    point, and is why the gate was emitted before the runner exists rather than after.
+    """
     from lab.canon import store
 
     counts = store.counts()
     assert counts["Claim"] == 1, f"real store has {counts['Claim']} Claims, expected 1"
-    assert counts["Evidence"] == 0 and counts["Decision"] == 0 and counts["Policy"] == 0
-    assert counts["EventLogEntry"] == 0, "the test suite wrote events into the real store"
-    _ok("SAFE the real lab/.canon/ is untouched: 1 Claim, 0 everything else")
+    assert counts["Policy"] == 1, "the frozen promotion gate should be the only Policy"
+    assert counts["Decision"] == 0, "nothing has concluded; memory-systems-v1 is incomplete"
+    assert counts["Evidence"] == 0, (
+        "Evidence exists in the real store. Either a run happened (good — but the "
+        "pre-registration window is now closed), or a test wrote into canon (bad)."
+    )
+    _ok("SAFE real store: 1 Claim, 1 frozen gate, 0 Evidence, 0 Decisions — as intended")
 
 
 TESTS = [
     test_id_contract_reproduces_the_preexisting_claim,
     test_preregistration_artifact_still_hashes,
     test_canon_schema_set_has_not_drifted,
-    test_refuses_decision_and_policy,
+    test_refuses_unemittable_object_types,
+    test_observed_at_cannot_be_defaulted,
     test_refuses_phase2_fields_on_a_phase1_envelope,
     test_refuses_backdated_role_declaration,
     test_refuses_stale_artifact_hash,
@@ -598,7 +640,7 @@ TESTS = [
     test_declaring_no_results_while_citing_evidence_is_refused,
     test_live_site_passes_the_publication_guard,
     test_probe_entry_emits_cleanly,
-    test_the_real_store_was_never_written,
+    test_the_real_store_matches_what_we_deliberately_emitted,
 ]
 
 

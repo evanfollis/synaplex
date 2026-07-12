@@ -1,6 +1,9 @@
-"""The only writer to `lab/.canon/`. Phase 1: Claim, Evidence, EventLogEntry.
+"""The only writer to `lab/.canon/`: Claim, Evidence, Decision, EventLogEntry, Policy.
 
-ADR-0042 authorizes exactly this and nothing adjacent to it.
+ADR-0042 authorized Phase 1 (Claim, Evidence, EventLogEntry) and blocked Decision and
+Policy on a named canon gap: canon v0.1.0 could not express a frozen, pre-registered,
+eval-local promotion gate. Canon v0.2.0 resolved it with the `frozen` mutability class
+(reviewed, conformance-tested, `context-repository@42907eb`), so Phase 2 is now here too.
 
 ## The one rule that matters
 
@@ -23,18 +26,19 @@ The `canon_violation` record is itself written through the low-level path, delib
 bypassing the refusal machinery: a validator that could refuse to record its own refusal
 would lose exactly the events most worth keeping.
 
-## What Phase 1 cannot do
+## The mutability class that makes an eval gate honest
 
-No `Decision`. No `Policy`. Canon v0.1.0 cannot express a frozen, pre-registered,
-eval-local promotion gate — `policy.md` offers `operational` (an agent can move the gate
-after seeing Evidence, which is what pre-registration exists to prevent) and
-`constitutional` (principal-only, framework-level). A pre-registered eval gate is
-neither. The gap is escalated to context-repository, which owns canon. `validate.py`
-refuses any attempt to construct one, so the constraint is enforced rather than
-remembered.
+`operational` lets an agent move the gate after seeing the Evidence — precisely what
+pre-registration exists to prevent. `constitutional` is principal-only and framework-level.
+An eval gate is neither: it must be agent-issuable and then unmovable, by anyone, forever.
+That is `frozen`, and `emit_frozen_gate` is how you issue one.
 
-Consequence, stated plainly: `memory-systems-v1` can enter probe and produce Evidence.
-It **cannot conclude**. It is `incomplete`, not `concluded`, until Phase 2 lands.
+Late issuance — not amendment — is the attack the class exists to stop. An unamendable
+gate chosen *after* the results is just a post-hoc gate that no amendment check will ever
+catch. So the window (canon rule 10) anchors on `Evidence.observed_at`, and
+`emit_evidence` therefore **requires** `observed_at` and takes it from the run, never from
+the clock. Read that function's docstring before using it; passing `_now()` there silently
+reopens the whole attack.
 """
 
 from __future__ import annotations
@@ -48,8 +52,12 @@ from .ids import claim_id, derived_id, hash_file
 from .serialize import equal, to_disk
 from .store import REPO_ROOT, dir_for, path_for
 from .validate import CanonRefusal, validate
+from .view import StoreView
 
-SPEC_VERSION = "0.1.0"
+# New envelopes declare v0.2.0 — the version that introduced the `frozen` Policy class.
+# The pre-existing Claim keeps its `0.1.0` stamp: it is immutable, and 0.2.0 is backward
+# compatible (verified: all live envelopes across three repos still validate).
+SPEC_VERSION = "0.2.0"
 EMITTER = "L3:synaplex"
 LAYER = "L3"
 INSTANCE_ID = "synaplex"
@@ -86,7 +94,7 @@ def artifact_pointer(rel_path: str, version: str = "1", media_type: str = "text/
 
 
 def _base(object_type: str, envelope_id: str, emitted_at: str) -> dict[str, Any]:
-    return {
+    envelope: dict[str, Any] = {
         "id": envelope_id,
         "spec_version": SPEC_VERSION,
         "object_type": object_type,
@@ -97,8 +105,13 @@ def _base(object_type: str, envelope_id: str, emitted_at: str) -> dict[str, Any]
         "role_declared_at": emitted_at,
         "binding": "binding",
         "sources": [],
-        "instance_id": INSTANCE_ID,
     }
+    # Policy is the one envelope type with no `instance_id` — it is scoped by `scope`, and
+    # its schema closes with `additionalProperties: false`. Found by the validator refusing
+    # our own first frozen-gate emission, which is the machinery working as intended.
+    if object_type != "Policy":
+        envelope["instance_id"] = INSTANCE_ID
+    return envelope
 
 
 def _write(envelope: dict) -> Path:
@@ -165,10 +178,16 @@ def record_violation(
 
 
 def _emit(envelope: dict) -> tuple[str, Path]:
-    """Validate, enforce append-only, write. The single choke point for every emission."""
+    """Validate, enforce append-only, write. The single choke point for every emission.
+
+    Validation runs against a `StoreView` carrying the *pending* envelope, so the
+    cross-envelope rules (9-17) see the world as it would be after the write. A frozen gate
+    that is legal before it exists and illegal after is not something to discover post-hoc:
+    canon is append-only and there is no undo.
+    """
     object_type, envelope_id = envelope["object_type"], envelope["id"]
     try:
-        validate(envelope)
+        validate(envelope, StoreView(pending=envelope))
     except CanonRefusal as refusal:
         record_violation(
             refusal.violation_kind,
@@ -246,20 +265,43 @@ def emit_evidence(
     tier: str,
     polarity: str,
     artifact: dict,
-    observed_at: str | None = None,
+    observed_at: str,
     sources: list[dict] | None = None,
 ) -> tuple[str, Path]:
     """Emit Evidence against a Claim.
 
-    `polarity` is the emitter's declared interpretation (`supports` / `contradicts` /
-    `neutral`) and is required so that the contradictory set is mechanically
-    discoverable (canon obligation 6). Note for whoever runs an eval: **a cell aborted
-    on cost is `neutral`, never `contradicts`** — coding a budget ceiling as a failed
-    result manufactures support for the claim out of our own spending limit.
+    ## `observed_at` is REQUIRED, and it comes from the run — never from the clock
 
-    The id derives from (claim, type, polarity, artifact hash): the same observation of
-    the same artifact is the same Evidence, and re-emitting it is refused rather than
-    duplicated into a second envelope that would double-count in any aggregation.
+    This is the single most load-bearing parameter in the emitter, and the reason it has no
+    default is that a default would be a lie.
+
+    `observed_at` is the emitter's assertion about **when reality was consulted**. Canon
+    rule 10 anchors the frozen-gate pre-registration window on it, and rule 16 makes it
+    mandatory for any Claim carrying a frozen gate. Adversarial review of canon v0.2.0
+    proved why: `emitted_at` is *entirely under the emitter's control*, so an emitter that
+    has already seen its results can mint a fresh Claim, freeze a flattering gate against
+    it, re-emit the same observations as brand-new Evidence with later `emitted_at`, and
+    walk through a window keyed on emission order. Anchoring on `observed_at` means the
+    attack is no longer available by *ordering envelopes* — it requires falsifying an
+    observation timestamp against a hash-pinned artifact, which is fabrication, not a
+    loophole.
+
+    **So: pass the timestamp the run actually observed the world. Passing `_now()` here
+    destroys the anchor and silently reopens the entire attack.** Canon can close a
+    loophole. It cannot stop a liar, and neither can this signature — but it can refuse to
+    make lying the path of least resistance.
+
+    ## Polarity
+
+    Required so the contradictory set is mechanically discoverable (canon obligation 6).
+    **A cell aborted on cost is `neutral`, never `contradicts`** — coding a budget ceiling
+    as a failed result manufactures support for the claim out of our own spending limit.
+
+    ## Identity
+
+    Derived from (claim, type, polarity, artifact hash): the same observation of the same
+    artifact is the same Evidence. Re-emitting is refused rather than duplicated into a
+    second envelope that would double-count in any aggregation.
     """
     ts = _now()
     eid = derived_id("Evidence", claim, evidence_type, polarity, artifact["content_hash"])
@@ -270,11 +312,124 @@ def emit_evidence(
         tier=tier,
         polarity=polarity,
         artifact=artifact,
+        observed_at=observed_at,
     )
-    if observed_at:
-        envelope["observed_at"] = observed_at
     if sources:
         envelope["sources"] = sources
+    return _emit(envelope)
+
+
+def emit_frozen_gate(
+    *,
+    claim: str,
+    field_path: str,
+    value: Any,
+    derived_from: str | None = None,
+    scope: str = f"L3:{INSTANCE_ID}",
+    version: str = "1",
+) -> tuple[str, Path]:
+    """Emit a `Policy(class=frozen)` — a pre-registered eval gate amendable by nobody.
+
+    The third mutability class (canon v0.2.0). `operational` means an agent can move the
+    gate after seeing the Evidence, which is exactly what pre-registration exists to
+    prevent. `constitutional` is principal-only and framework-level. An eval gate is
+    neither: it must be agent-issuable and then *unmovable*, by anyone, forever.
+
+    So `amendment_authority` is `[]` — not the principal, not us. Issuing a frozen Policy
+    **renounces** amendment power rather than granting it, which is why no principal signoff
+    is needed. That argument holds only because rule 17 forbids a frozen gate on a
+    constitutional field; without it, an agent could grant *itself* a capital ceiling that
+    nobody, including Evan, could ever amend. A safety argument with an unstated
+    precondition is not a safety argument.
+
+    **`derived_from`** is an RFC-6901 pointer into the bound Claim. When set, canon rule 14
+    proves `value` is canonical-JSON-equal to the Claim's hash-bound subtree — so the gate
+    is *mechanically provable* to carry zero information the pre-registration does not
+    already contain. Use it. A gate that merely *claims* to restate the Claim is a gate
+    nobody can check.
+
+    The window: canon rule 10 requires `claim.emitted_at <= policy.emitted_at <= probe
+    entry`, and before any Evidence was emitted *or observed*. Issue it while the window is
+    open, or not at all.
+    """
+    ts = _now()
+    pid = derived_id("Policy", claim, field_path, version)
+    envelope = _base("Policy", pid, ts)
+    envelope.update(
+        **{"class": "frozen"},
+        scope=scope,
+        field_path=field_path,
+        value=value,
+        version=version,
+        issuer=EMITTER,
+        amendment_authority=[],  # nobody. This is the class.
+        ratification_rule={"kind": "none"},
+        rollback_rule={"rules": [], "precedence": []},
+        provenance=[{"version": version, "effective_from": ts}],
+        effective_from=ts,
+        effective_until=None,  # a frozen policy never expires; it is superseded with its Claim
+        bound_to_claim_id=claim,
+    )
+    if derived_from:
+        envelope["derived_from"] = derived_from
+    return _emit(envelope)
+
+
+def emit_decision(
+    *,
+    kind: str,
+    candidate_claims: list[str],
+    chosen_claim_id: str,
+    cited_evidence: list[str],
+    rationale: str,
+    policies_in_force: list[dict],
+    rejected_alternatives: list[dict] | None = None,
+    arbitration: dict | None = None,
+    contradictions_addressed: list[dict] | None = None,
+    successor_claim_id: str | None = None,
+    correlation_tags: list[str] | None = None,
+) -> tuple[str, Path]:
+    """Emit a Decision — the only envelope that can conclude anything.
+
+    A terminal Decision (`promote` / `kill` / `pivot`) must cite **every** frozen Policy
+    bound to the chosen Claim (canon rule 13): citing only the gates you passed is
+    cherry-picking a pre-registration. It may only cite Evidence gathered about a Claim it
+    is actually deciding (rule 15) — that rule is what stops the evidence-laundering path
+    and is what makes rules 9–14 mean anything at all.
+
+    Contradicting Evidence known at decision time MUST be cited and addressed. A Decision
+    that quietly omits the evidence against it is the failure this whole apparatus exists
+    to make impossible.
+
+    The emitter does not compute `kind`, choose the Claim, or decide which Evidence is
+    decisive. It serializes what the caller decided and refuses what canon forbids.
+    """
+    ts = _now()
+    did = derived_id("Decision", kind, chosen_claim_id, ",".join(sorted(cited_evidence)), ts)
+    envelope = _base("Decision", did, ts)
+    envelope.update(
+        kind=kind,
+        candidate_claims=candidate_claims,
+        chosen_claim_id=chosen_claim_id,
+        cited_evidence=cited_evidence,
+        rationale=rationale,
+        policies_in_force=policies_in_force,
+        exposure={
+            "capital_at_risk": 0,
+            "reversibility": "reversible",
+            "correlation_tags": correlation_tags or [],
+            "time_to_realization": "P0D",
+            "blast_radius": "local",
+        },
+    )
+    if rejected_alternatives:
+        envelope["rejected_alternatives"] = rejected_alternatives
+    if arbitration:
+        envelope["arbitration"] = arbitration
+    if contradictions_addressed:
+        envelope["contradictions_addressed"] = contradictions_addressed
+    if successor_claim_id:
+        envelope["successor_claim_id"] = successor_claim_id
     return _emit(envelope)
 
 

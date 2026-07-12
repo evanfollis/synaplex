@@ -35,8 +35,11 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, RefResolver
 
+from . import rules
 from .ids import hash_file
-from .store import PHASE_1_TYPES, REPO_ROOT
+from .rules import CanonRefusal
+from .store import EMITTABLE_TYPES, REPO_ROOT
+from .view import CanonView
 
 SCHEMA_ROOT = Path(
     os.environ.get(
@@ -49,26 +52,25 @@ PROGRAMME_REL = "reasoning/programmes"
 
 # The digest of the canon schema set this emitter was written and reviewed against.
 #
-# WHY THIS EXISTS: `spec/` is in context-repository's `.gitignore` (line 11), so the L1
-# canon — the highest truth source in this system, the contract every envelope in three
-# repos binds itself to — is **not under version control**. It cannot be diffed,
-# reviewed, attributed, or reverted. On 2026-07-12 it changed from 0.1.0 to 0.2.0 in
-# place, with no CHANGELOG entry and no review artifact; the "frozen" 0.1.0 spec is
-# unrecoverable. Nothing detected it. This tripwire is what detects it next time.
+# WHY THIS EXISTS: on 2026-07-12 the canon spec changed from 0.1.0 to 0.2.0 *in place*,
+# and nothing in the system noticed — because `spec/` was in context-repository's
+# `.gitignore` and the L1 canon, the contract every envelope in three repos binds itself
+# to, had never been under version control. This tripwire is what caught it. It is now
+# fixed at the source (`context-repository@d93d4e5` tracks `spec/`), so git is the real
+# guard; this pin stays as consumer-side defense-in-depth, which is what caught it once.
 #
-# Canon demands every artifact be hash-bound and immutable. That discipline was never
-# applied to canon itself. Here it is, applied by its first programmatic writer.
+# Canon demands every artifact be hash-bound and immutable. That discipline had never been
+# applied to canon itself.
 #
-# A drift here is NOT necessarily a fault — context-repository owns canon and may
-# legitimately bump it. But a bump must be *seen*. `test_canon.py` asserts this digest;
-# when it fails, a human re-reads the schemas, confirms the change is intended and
-# backward-compatible, and updates the pin. Silent is the only outcome forbidden.
-# Pinned 2026-07-12 against the schema set on disk that day: `$id` 0.2.0, Policy class
-# enum {constitutional, operational, frozen}, decision.schema.json referencing a
-# "validator rule 13". Verified on pinning: all 275 pre-existing envelopes across
-# synaplex, atlas, and skillfoundry still validate — the bump is additive, so nothing
-# in canon was retroactively invalidated. That was luck, not process.
-EXPECTED_SCHEMA_DIGEST = "bcc6d01315fed7f9"
+# A drift here is NOT automatically a fault — context-repository owns canon and may
+# legitimately bump it. It means *a bump happened and nobody told us*. Re-read the schemas,
+# re-validate every live envelope, then repin deliberately. Repinning to make the test
+# green without reading is how the next silent change gets laundered through.
+#
+# Pinned 2026-07-12 against `context-repository@42907eb` — canon v0.2.0 *after* adversarial
+# review closed two blocking defects (evidence laundering; constitutional land-grab). The
+# earlier pin `bcc6d01315fed7f9` was the pre-review 0.2.0 and is not safe to build on.
+EXPECTED_SCHEMA_DIGEST = "eac15d4c32d90f86"
 
 
 def schema_digest() -> str:
@@ -79,11 +81,12 @@ def schema_digest() -> str:
         h.update(hashlib.sha256(path.read_bytes()).hexdigest().encode("utf-8"))
     return h.hexdigest()[:16]
 
-# Fields that belong only to Decision or Policy envelopes. Phase 1 emits neither, so
-# their presence on a Phase-1 envelope means a caller is trying to smuggle Phase-2
-# semantics through a Phase-1 door. ADR-0042 AC13: if implementation finds itself
-# needing one of these, that is the canon gap biting — stop and escalate.
-PHASE_2_FIELDS = frozenset({
+# Fields that belong only to Decision or Policy envelopes. Legal there (Phase 2 is now
+# authorized — canon v0.2.0 resolved the gap with the `frozen` class); still refused on a
+# Claim, Evidence, or EventLogEntry at ANY depth. Adversarial review nested
+# `chosen_claim_id` inside `methodology_log` — a subtree the canon schema does not close
+# with `additionalProperties: false` — and got it past the first version of this check.
+DECISION_POLICY_FIELDS = frozenset({
     "kind",
     "candidate_claims",
     "chosen_claim_id",
@@ -104,19 +107,6 @@ PHASE_2_FIELDS = frozenset({
     "provenance",
     "class",
 })
-
-
-class CanonRefusal(Exception):
-    """A write was refused. Carries the ViolationKind so the emitter can record it.
-
-    Raised, never returned — a refusal that a caller can accidentally ignore is a
-    warning wearing a costume.
-    """
-
-    def __init__(self, violation_kind: str, rationale: str) -> None:
-        super().__init__(rationale)
-        self.violation_kind = violation_kind
-        self.rationale = rationale
 
 
 @lru_cache(maxsize=None)
@@ -145,7 +135,9 @@ def _validator(object_type: str) -> Draft202012Validator:
     name = {
         "Claim": "claim",
         "Evidence": "evidence",
+        "Decision": "decision",
         "EventLogEntry": "event-log-entry",
+        "Policy": "policy",
     }[object_type]
     store = _schema_store()
     schema = store[f"{name}.schema.json"]
@@ -200,28 +192,27 @@ def _walk_artifact_pointers(value: Any) -> list[dict]:
     return found
 
 
-def check_phase_1_scope(envelope: dict) -> None:
-    """Refuse anything that is not a Phase-1 envelope, or that carries Phase-2 fields.
+def check_object_scope(envelope: dict) -> None:
+    """Refuse unknown envelope types, and Decision/Policy semantics smuggled into others.
 
-    Checks keys at **every depth**, not just the top level.
+    Checks keys at **every depth** — nesting is not an exemption.
     """
     object_type = envelope.get("object_type")
-    if object_type not in PHASE_1_TYPES:
+    if object_type not in EMITTABLE_TYPES:
         raise CanonRefusal(
             "schema_validation_failure",
-            f"object_type={object_type!r} is not authorized in Phase 1. ADR-0042 authorizes "
-            f"{', '.join(PHASE_1_TYPES)} only; Decision and Policy are blocked on the canon "
-            f"gap (canon v0.1.0 cannot express a frozen, pre-registered, eval-local promotion "
-            f"gate). If you need one, stop and escalate — do not construct a Policy.",
+            f"object_type={object_type!r} is not emittable. This emitter writes "
+            f"{', '.join(EMITTABLE_TYPES)}; Promotion and Realization have no lab consumer.",
         )
-    intruders = sorted(PHASE_2_FIELDS.intersection(_walk_keys(envelope)))
+    if object_type in {"Decision", "Policy"}:
+        return  # these fields are theirs; the schema and rules.py govern them
+    intruders = sorted(DECISION_POLICY_FIELDS.intersection(_walk_keys(envelope)))
     if intruders:
         raise CanonRefusal(
             "schema_validation_failure",
             f"{object_type} carries Decision/Policy-only field(s) at some depth: "
-            f"{', '.join(intruders)}. Canon rules 2-6 and 8 govern these and Phase 1 does not "
-            f"check them; passing them through unvalidated is how a Phase-2 semantic lands in "
-            f"canon by the back door. Nesting is not an exemption.",
+            f"{', '.join(intruders)}. Passing them through unvalidated is how a Decision "
+            f"semantic lands in canon by the back door. Nesting is not an exemption.",
         )
 
 
@@ -311,15 +302,20 @@ def check_schema(envelope: dict) -> None:
         raise CanonRefusal("schema_validation_failure", f"schema validation failed: {detail}")
 
 
-def validate(envelope: dict) -> None:
-    """Run every Phase-1 check. Raises `CanonRefusal` on the first failure.
+def validate(envelope: dict, view: "CanonView | None" = None) -> None:
+    """Run every canon check. Raises `CanonRefusal` on the first failure.
 
-    Order matters: scope before schema, so an unauthorized `Decision` is refused with
-    the reason that actually explains it ("Phase 2 is blocked on a canon gap") rather
-    than a schema error about a missing `policies_in_force`.
+    Single-envelope rules run first (1, 7, scope, schema), then the cross-envelope rules
+    (2-5, 9-17) which need a `CanonView` — the world as it would be *after* this write.
+
+    `view=None` runs only the single-envelope checks. That is correct for a caller who has
+    a bare document and no store, and wrong for an emission — so `emit._emit` always passes
+    a `StoreView`.
     """
-    check_phase_1_scope(envelope)
+    check_object_scope(envelope)
     check_programme_isolation(envelope)
     check_role_timestamps(envelope)
     check_artifact_hash(envelope)
     check_schema(envelope)
+    if view is not None:
+        rules.check_all(envelope, view)

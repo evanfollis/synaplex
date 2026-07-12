@@ -1,0 +1,46 @@
+{
+  "id": "3e500cb2aec93dfc",
+  "spec_version": "0.2.0",
+  "object_type": "Policy",
+  "emitted_at": "2026-07-12T12:11:33Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Policy"
+  ],
+  "role_declared_at": "2026-07-12T12:11:33Z",
+  "binding": "binding",
+  "sources": [],
+  "class": "frozen",
+  "scope": "L3:synaplex",
+  "field_path": "lab.eval.memory_systems_v1.promotion_gate",
+  "value": {
+    "recall_at_1": 0.8,
+    "alpha": 0.05,
+    "bootstrap_iterations": 1000,
+    "runs_per_cell": 10,
+    "cohens_d_meaningful": 0.5,
+    "max_tokens_per_run_input": 30000,
+    "max_tokens_per_run_output": 3000
+  },
+  "version": "1",
+  "issuer": "L3:synaplex",
+  "amendment_authority": [],
+  "ratification_rule": {
+    "kind": "none"
+  },
+  "rollback_rule": {
+    "rules": [],
+    "precedence": []
+  },
+  "provenance": [
+    {
+      "version": "1",
+      "effective_from": "2026-07-12T12:11:33Z"
+    }
+  ],
+  "effective_from": "2026-07-12T12:11:33Z",
+  "effective_until": null,
+  "bound_to_claim_id": "b7ff216f4eec6e58",
+  "derived_from": "/thresholds"
+}

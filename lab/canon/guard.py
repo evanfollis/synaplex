@@ -187,16 +187,19 @@ def check_publication(root: Path | None = None) -> list[Violation]:
                 cited = set(CLAIM_ID.findall(text))
                 backed = {c for c in cited if decisions_for(c)}
                 unbacked = sorted(cited - backed)
-                out.append(
-                    Violation(
-                        "publication-guard",
-                        rel,
-                        "declares it publishes results, but no validator-passing Decision exists "
-                        f"citing {'claim(s) ' + ', '.join(unbacked) if unbacked else 'any claim'}. "
-                        "Phase 2 (Decision/Policy emission) is blocked on the canon gap, so no "
-                        "Decision can exist — therefore no results page can ship. Intended.",
+                if not cited or unbacked:
+                    out.append(
+                        Violation(
+                            "publication-guard",
+                            rel,
+                            "declares it publishes results, but no Decision exists citing "
+                            f"{'claim(s) ' + ', '.join(unbacked) if unbacked else 'any claim'}. "
+                            "A result is only publishable behind a terminal Decision that cites "
+                            "every frozen gate bound to the chosen Claim (canon rule 13) and only "
+                            "Evidence gathered about a Claim it is actually deciding (rule 15). "
+                            "Evidence alone is not a finding.",
+                        )
                     )
-                )
                 continue
 
             leaked = sorted(known_evidence & set(CLAIM_ID.findall(text)))

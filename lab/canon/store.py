@@ -37,9 +37,11 @@ DIRS = {
     "Policy": "policies",
 }
 
-# The only types Phase 1 may write. Decision and Policy are blocked on the canon gap
-# named in ADR-0042 §Phase 2 — not on indecision, on a spec question with an owner.
-PHASE_1_TYPES = ("Claim", "Evidence", "EventLogEntry")
+# The envelope types this emitter writes. Decision and Policy joined the set when canon
+# v0.2.0 shipped the `frozen` mutability class, resolving the gap ADR-0042 Phase 2 was
+# blocked on. Promotion and Realization stay out: the lab has no consumer for them, and an
+# emitter for an envelope nobody emits is speculative infrastructure.
+EMITTABLE_TYPES = ("Claim", "Evidence", "Decision", "EventLogEntry", "Policy")
 
 
 def dir_for(object_type: str) -> Path:

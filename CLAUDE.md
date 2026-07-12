@@ -76,9 +76,35 @@ Five layers, one circulatory system:
   not do outbound personally (FINRA). Intake + synthesis + draft generation
   are cron-agentic; sponsor emails are agent-drafted with Evan-click-send
   gate.
-- **L1 canon is frozen at v0.1.0.** If a lab eval exposes a canon gap,
-  escalate via context-repository adversarial review to bump the spec, not
-  a local workaround.
+- **L1 canon is at v0.2.0.** If a lab eval exposes a canon gap, escalate via
+  context-repository adversarial review to bump the spec, not a local
+  workaround. This has now happened once and it worked: canon v0.1.0 could
+  not express a frozen, pre-registered, eval-local promotion gate; the gap
+  was escalated rather than worked around, and v0.2.0 added the `frozen`
+  Policy class. Do not treat an edit to the schema files as a spec bump —
+  a bump arrives as a decision record plus a review artifact, or it is not
+  a bump.
+- **Eval promotion gates MUST be `Policy(class: frozen)`.** This is a domain
+  obligation and **canon cannot enforce it for us** — canon does not define
+  domain promotion thresholds and cannot recognize one when it sees it.
+  Nothing in the spec stops an adapter gating an eval on an `operational`
+  Policy and then moving the gate after seeing the Evidence, which is
+  exactly what pre-registration exists to prevent. `operational` means
+  agent-amendable; `constitutional` means principal-only and
+  framework-level; an eval gate is neither. It must be agent-issuable and
+  then unmovable, by anyone, forever. If this rule does not live here, the
+  `frozen` class is available and unused, which is the same as not having
+  it. Use `lab.canon.emit_frozen_gate`, and set `derived_from` so the gate
+  is *mechanically provable* to carry no information the hash-bound Claim
+  does not already contain.
+- **`Evidence.observed_at` comes from the run, never from the clock.** Canon
+  rule 10 anchors the frozen-gate pre-registration window on it precisely
+  because `emitted_at` is entirely under the emitter's control. Stamping
+  `observed_at` at emission time destroys the anchor and silently reopens
+  the evidence-laundering attack (mint a fresh Claim post-results, freeze a
+  flattering gate on its open window, re-emit the same observations under
+  it). `emit_evidence` requires the parameter and has no default, so the
+  lie has to be typed out deliberately rather than arrived at by omission.
 - **Intake dedup contract.** Every adapter uses the shared
   `intake.hashing.content_id(...)` helper — no adapter-local dedup schemes.
   Divergent ID schemes across write paths silently corrupt cross-path

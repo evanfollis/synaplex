@@ -1,0 +1,25 @@
+{
+  "id": "12fec5167a3fbf31",
+  "spec_version": "0.2.0",
+  "object_type": "EventLogEntry",
+  "emitted_at": "2026-07-12T12:11:00Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "EventLogEntry"
+  ],
+  "role_declared_at": "2026-07-12T12:11:00Z",
+  "binding": "binding",
+  "sources": [],
+  "instance_id": "synaplex",
+  "event_kind": "canon_violation",
+  "canon_violation": {
+    "violation_kind": "schema_validation_failure",
+    "offending_emission": {
+      "object_type": "Policy",
+      "attempted_id": "3e500cb2aec93dfc"
+    },
+    "rationale": "schema validation failed: <root>: Additional properties are not allowed ('instance_id' was unexpected)"
+  },
+  "subject_id": "3e500cb2aec93dfc"
+}
