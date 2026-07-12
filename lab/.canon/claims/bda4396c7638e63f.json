@@ -1,0 +1,55 @@
+{
+  "id": "bda4396c7638e63f",
+  "spec_version": "0.2.0",
+  "object_type": "Claim",
+  "emitted_at": "2026-07-12T13:40:27Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Claim"
+  ],
+  "role_declared_at": "2026-07-12T13:40:27Z",
+  "binding": "binding",
+  "sources": [],
+  "instance_id": "synaplex",
+  "statement": "For the predeclared launchpad-lint transfer population, the static predicate is false and no completed browser sample at barriers B1, B3, or B4 will exhibit a behavioral failure attributable to artifact-set incoherence",
+  "falsification_criteria": [
+    "If any completed browser sample at B1, B3, or B4 exhibits a behavioral failure attributable to artifact-set incoherence while the predicate is false, this claim is falsified.",
+    "If static inspection proves launchpad-lint was scored predicate-false incorrectly under the predeclared predicate definition, the classifier is falsified for this population."
+  ],
+  "exposure": {
+    "capital_at_risk": 0,
+    "reversibility": "reversible",
+    "correlation_tags": [
+      "artifact-coherence",
+      "prospective-transfer",
+      "internal-evidence"
+    ],
+    "time_to_realization": "P1D",
+    "blast_radius": "local"
+  },
+  "thresholds": {
+    "population": [
+      "launchpad-lint"
+    ],
+    "population_size": 1,
+    "predicate": {
+      "launchpad-lint": false
+    },
+    "browser_barriers_seconds": [
+      1,
+      30,
+      120
+    ],
+    "primary_outcome": "browser_behavior",
+    "required_completed_samples": 3,
+    "command_incident_role": "retrospective_regression_only",
+    "two_arm_test": "rejected_not_run"
+  },
+  "artifact": {
+    "uri": "file://lab/evals/artifact-coherence-transfer-v1/methodology.md",
+    "content_hash": "sha256:5e1742731c58f06fa329f98cbff0b9b583227578515b172f8d218473777e8c50",
+    "version": "1",
+    "media_type": "text/markdown"
+  }
+}

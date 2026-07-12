@@ -1,0 +1,55 @@
+{
+  "id": "5273e9a31e92f6c3",
+  "spec_version": "0.2.0",
+  "object_type": "Policy",
+  "emitted_at": "2026-07-12T13:40:27Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Policy"
+  ],
+  "role_declared_at": "2026-07-12T13:40:27Z",
+  "binding": "binding",
+  "sources": [],
+  "class": "frozen",
+  "scope": "L3:synaplex",
+  "field_path": "/thresholds",
+  "value": {
+    "population": [
+      "launchpad-lint"
+    ],
+    "population_size": 1,
+    "predicate": {
+      "launchpad-lint": false
+    },
+    "browser_barriers_seconds": [
+      1,
+      30,
+      120
+    ],
+    "primary_outcome": "browser_behavior",
+    "required_completed_samples": 3,
+    "command_incident_role": "retrospective_regression_only",
+    "two_arm_test": "rejected_not_run"
+  },
+  "version": "1",
+  "issuer": "L3:synaplex",
+  "amendment_authority": [],
+  "ratification_rule": {
+    "kind": "none"
+  },
+  "rollback_rule": {
+    "rules": [],
+    "precedence": []
+  },
+  "provenance": [
+    {
+      "version": "1",
+      "effective_from": "2026-07-12T13:40:27Z"
+    }
+  ],
+  "effective_from": "2026-07-12T13:40:27Z",
+  "effective_until": null,
+  "bound_to_claim_id": "bda4396c7638e63f",
+  "derived_from": "/thresholds"
+}

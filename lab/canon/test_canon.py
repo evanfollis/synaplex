@@ -621,7 +621,8 @@ def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
     """The suite must not have written into the real store, and the real store must hold
     exactly what was emitted on purpose.
 
-    As of 2026-07-12 that is: the pre-registered Claim, its frozen promotion gate, and one
+    As of 2026-07-12 that is: two withdrawn vendor-route Claims, the prospective
+    artifact-coherence transfer Claim, their frozen gates, and one
     EventLogEntry(canon_violation) — a real refusal, recorded when the first frozen-gate
     emission was rejected for carrying `instance_id`, which the Policy schema forbids. That
     record stays. Canon is append-only, and deleting an inconvenient record because it came
@@ -634,11 +635,12 @@ def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
     from lab.canon import store
 
     counts = store.counts()
-    assert counts["Claim"] == 2, (
-        f"expected 2 Claims — the primary and its pre-registered control-arm rival — "
+    assert counts["Claim"] == 3, (
+        f"expected 3 Claims — two withdrawn vendor-route Claims and one prospective "
+        f"artifact-coherence transfer Claim — "
         f"found {counts['Claim']}"
     )
-    assert counts["Policy"] == 2, "each Claim carries exactly one frozen promotion gate"
+    assert counts["Policy"] == 3, "each Claim carries exactly one frozen promotion gate"
     assert counts["Decision"] == 2, (
         "expected 2 Decision(kill) envelopes — the vendor-comparison route was WITHDRAWN, "
         "not measured (principal, 2026-07-12)"
@@ -655,7 +657,11 @@ def test_the_real_store_matches_what_we_deliberately_emitted() -> None:
             "a kill Decision must say plainly that it is a withdrawal and not a finding, or a "
             "later reader will cite it as evidence that memory systems were evaluated"
         )
-    _ok("SAFE real store: 2 Claims, 2 frozen gates, 0 Evidence, 2 kill Decisions (withdrawn)")
+    transfer = store.claims()["bda4396c7638e63f"]
+    assert transfer["thresholds"]["population"] == ["launchpad-lint"]
+    assert transfer["thresholds"]["command_incident_role"] == "retrospective_regression_only"
+    assert transfer["thresholds"]["two_arm_test"] == "rejected_not_run"
+    _ok("SAFE real store: 3 Claims, 3 frozen gates, 0 Evidence, 2 vendor kills")
 
 
 TESTS = [

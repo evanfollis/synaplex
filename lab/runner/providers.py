@@ -154,7 +154,10 @@ def claude_cli(model: str = "sonnet") -> CliProvider:
 
 
 def codex_cli(model: str = "gpt-5.4") -> CliProvider:
-    return CliProvider("codex", ("codex", "exec", "--sandbox", "read-only", "-"), model)
+    # Telemetry may name a model only if the invocation actually pins that model.
+    return CliProvider(
+        "codex", ("codex", "exec", "--sandbox", "read-only", "--model", model, "-"), model
+    )
 
 
 @dataclass

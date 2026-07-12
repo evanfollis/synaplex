@@ -117,9 +117,16 @@ def test_failover_is_capacity_only() -> None:
     """A capacity failure means 'this provider cannot serve right now' — try the other. Any
     other failure means something is WRONG, and retrying it elsewhere would launder a bug
     into a result produced by a model we did not intend to use."""
+    from lab.runner import providers
     from lab.runner.providers import (
         CapacityExhausted, Completion, ProviderFailed, SubscriptionPool,
     )
+
+    # Telemetry is off the hot path, but this unit test must not touch the production
+    # append-only friction log. Capture the attempted events in memory.
+    emitted: list[dict] = []
+    original_emit = providers.friction.emit
+    providers.friction.emit = lambda **event: emitted.append(event) or event
 
     class Exhausted:
         name, model = "claude", "sonnet"
@@ -139,23 +146,40 @@ def test_failover_is_capacity_only() -> None:
         def complete(self, prompt, timeout_s=180):
             return Completion("ok", self.name, self.model, 1, 1, 5)
 
-    got = SubscriptionPool(providers=(Exhausted(), Works())).complete("x")
-    assert got.provider == "codex" and got.fallback_from == "claude"
-
     try:
-        SubscriptionPool(providers=(Broken(), Works())).complete("x")
-    except ProviderFailed:
-        pass
-    else:
-        raise AssertionError("a non-capacity failure failed over — that launders a bug")
+        got = SubscriptionPool(providers=(Exhausted(), Works())).complete("x")
+        assert got.provider == "codex" and got.fallback_from == "claude"
 
-    try:
-        SubscriptionPool(providers=(Exhausted(), Exhausted())).complete("x")
-    except CapacityExhausted as e:
-        assert "hard-stop" in str(e) and "metered" in str(e)
-    else:
-        raise AssertionError("both providers exhausted must hard-stop, not fall back")
+        try:
+            SubscriptionPool(providers=(Broken(), Works())).complete("x")
+        except ProviderFailed:
+            pass
+        else:
+            raise AssertionError("a non-capacity failure failed over — that launders a bug")
+
+        try:
+            SubscriptionPool(providers=(Exhausted(), Exhausted())).complete("x")
+        except CapacityExhausted as e:
+            assert "hard-stop" in str(e) and "metered" in str(e)
+        else:
+            raise AssertionError("both providers exhausted must hard-stop, not fall back")
+    finally:
+        providers.friction.emit = original_emit
+    assert emitted, "failover emitted no model-state telemetry"
     _ok("failover is capacity-only; other failures raise; both-exhausted hard-stops")
+
+
+def test_telemetry_model_is_passed_to_each_cli() -> None:
+    """A configured label is not provenance unless the child invocation receives it."""
+    from lab.runner.providers import claude_cli, codex_cli
+
+    for provider in (claude_cli("claude-test-model"), codex_cli("codex-test-model")):
+        argv = list(provider.argv)
+        assert "--model" in argv, f"{provider.name} telemetry names a model it does not pass"
+        assert argv[argv.index("--model") + 1] == provider.model, (
+            f"{provider.name} reports {provider.model!r}, but invokes {argv!r}"
+        )
+    _ok("telemetry model labels are pinned in both subscription CLI invocations")
 
 
 def test_aborted_cell_has_no_result() -> None:
@@ -260,6 +284,7 @@ TESTS = [
     test_no_metered_api_path_exists,
     test_child_cli_cannot_see_a_metered_credential,
     test_failover_is_capacity_only,
+    test_telemetry_model_is_passed_to_each_cli,
     test_aborted_cell_has_no_result,
     test_runner_cannot_emit_evidence,
     test_resume_is_idempotent,

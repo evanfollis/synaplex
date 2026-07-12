@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T02:25Z
+updated: 2026-07-12T13:40Z
 owner: executive (principal: evan)
-phase: Layer 1 intake autonomous; Layer 2 discovery plane (Programmes) live; canon still holds 1 unexecuted pre-registration
+phase: Layer 1 intake autonomous; Layer 2 discovery plane live; prospective transfer Claim pre-registered and unexecuted
 ---
 
 # synaplex — current state
@@ -120,20 +120,24 @@ ADR-0047 first.
 
 **All model work is subscription-only.** `lab/runner/providers.py` shells out to the `claude`
 and `codex` CLIs with capacity-only failover; there is no metered-API code path, and
-`assert_no_metered_keys()` refuses to run if a metered key is merely *present* in the
-environment.
+every metered credential is stripped from the child environment so subscription CLIs
+cannot silently route onto metered billing. The pipeline does not clog merely because an
+unrelated parent environment contains a key. Codex now receives the same explicit model
+that telemetry records; a regression test prevents model-label provenance from drifting.
 
-## ▶ Next: first knowledge loop, re-anchored on internal evidence
+## ▶ Current phase: prospective transfer Claim pre-registered, not executed
 
-Per `synaplex-first-full-knowledge-loop-internal-evidence-2026-07-12.md` (supersedes the
-vendor route) and ADR-0047. Subject: **the Command outage of 2026-07-12** — a long-lived app
-serving a build directory *mutated in place*, versus one serving an **immutable versioned
-release with atomic activation**. Internal, empirical, falsifiable, zero external dependency,
-zero metered spend.
+Claim `bda4396c7638e63f` and frozen gate `5273e9a31e92f6c3` bind the next honest
+phase. The named prospective population is exactly `launchpad-lint` (N=1), selected from
+the 2026-07-12T11:27:24Z verified service snapshot after excluding Command because its
+outcome is already known. The static predicate is pre-scored false. Three browser samples
+are fixed at 1s, 30s, and 120s barriers; browser-visible behavior is primary and liveness is
+separate. **No browser observation has run and Evidence remains zero.**
 
-The incident **motivates** the Claim but is **not** retroactive Evidence for it. A bounded
-Claim and a frozen methodology come first; controlled runs in fixtures/staging only, never
-against live Command.
+The Command incident is labeled only as retrospective Evidence and a deterministic
+regression fixture. It is excluded from the transfer denominator. The rejected two-arm
+test will not run. No mechanism fixture is needed for this phase; any later causality probe
+must be separately pre-registered with the three ADR-0047 arms.
 
 ## 🚧 Blocked: the public knowledge surface
 
@@ -141,13 +145,12 @@ against live Command.
 contract says "complete the first full knowledge loop before making its projection the site
 source of truth", and the loop is not closed. The chain:
 
-> public projection ← knowledge invariant ← **Decision** ← **Evidence** ← **runner (does
-> not exist)**
+> public projection ← knowledge invariant ← **Decision** ← **Evidence** ← **prospective
+> browser observation (not yet run)**
 
-The runner is Phase C of the knowledge-loop handoff and is the single thing gating
-everything downstream. Not built here; that is deliberate, not neglect. DNS/deploy stays
-off per the handoff's own instruction ("restore DNS/deployment only after the projection is
-truthful enough to publish").
+The generic raw-artifact runner exists, but the browser observation adapter and its run
+artifacts do not. DNS/deploy stays off per the handoff's own instruction ("restore
+DNS/deployment only after the projection is truthful enough to publish").
 
 ## One-line status
 
@@ -191,7 +194,7 @@ Cross-repo work preserved:
 |---|---|---|---|---|---|
 | atlas | 47 | 123 | 82 | 1 | 253 |
 | skillfoundry-valuation-context | 3 | 3 | 4 | 1 | 11 |
-| synaplex/lab | 1 | 0 | 0 | 0 | 1 |
+| synaplex/lab | 3 | 0 | 1 | 3 | 9 (includes 2 Decisions) |
 
 Extraction of L2 `discovery-runtime` remains correctly deferred until
 synaplex has executed several evals.
@@ -227,10 +230,9 @@ becomes visible.
 - **Layer 1 intake (this handoff)**: RSS + arxiv + HN adapters, per-beat
   scoring for `agent-platforms`, daily digest, friction event emission,
   systemd unit files authored. First digest due within 24h of handoff.
-- **memory-systems-v1 first lab execution**: pre-registration live at
-  `lab/.canon/claims/b7ff216f4eec6e58.json` (immutable — id and
-  methodology hash preserved through the rebrand). Execution scheduled
-  Week 6; eval-running code not yet written.
+- **artifact-coherence-transfer-v1**: prospective Claim and gate are live, but no
+  observation has run. The old memory-systems Claims remain immutable and canonically
+  withdrawn, not measured; they are not queued for execution.
 - **Site deploy**: `site/dist/` builds locally; deploy to `synaplex.ai`
   (or staging subdomain) is a separate handoff.
 - **Pre-canon observation: harness engineering as platform knowledge** —
@@ -362,19 +364,10 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   short-circuits on repo inactivity and there were no commits for ~30 days. A quiet
   repo therefore produces a *confidently stale* front door rather than a loud one.
   The 2026-07-12 commits re-arm it.
-- **`memory-systems-v1` has four subjects and zero controls.** A universal sub-0.80
-  result — exactly what the pre-registered claim predicts — cannot distinguish "memory
-  systems are weak" from "our harness cannot detect success at all." Structurally the
-  same detector/measurement trap named in the Programme's D2 refusal. It has been
-  pre-registered and unexecuted since 2026-04-19 (~12 weeks). Any execution plan must
-  address the missing control before it runs. The current routed recommendation is a
-  rival Claim with a no-memory full-context control, not mutation of the hash-bound
-  primary Claim; see
-  `/opt/workspace/runtime/.handoff/synaplex-memory-systems-v1-missing-control-arm-2026-07-12T02-05Z.md`.
-- **Doc drift in `CLAUDE.md` §Structure**: it lists `lab/canon_emit.py` and "a small
-  in-repo validator". Neither exists. There is currently **no code that writes to
-  `lab/.canon/`** — the one Claim there was hand-authored. Do not read §Structure as
-  an inventory.
+- **The prospective transfer population is intentionally only N=1.** A clean observation
+  can support only the launchpad-lint prediction, not causality, a rate estimate, or a
+  cross-service invariant. Widening the population post hoc is forbidden; a broader Claim
+  needs a new pre-registration.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
   is documented, not repaired — the file is hash-bound and repairing it would break
