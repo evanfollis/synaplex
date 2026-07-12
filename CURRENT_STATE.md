@@ -1,12 +1,29 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T16:45Z
+updated: 2026-07-12T19:18Z
 owner: executive (principal: evan)
-phase: artifact-coherence-transfer-v1 INVALIDATED (protocol deviation; opposing verdict STOP_RUN_INVALID); Claim killed with zero Evidence; knowledge loop reported INCOMPLETE
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (Claude subscription CLI ConnectionRefused; no opposing verdict); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
 ---
 
 # synaplex — current state
+
+## Controlled three-arm instrument v2 — blocked before entry (2026-07-12)
+
+Phase A preregistered Claim `e1c51ab0d83be772` and frozen Policy
+`7628c88b8f08c7e8` for a prescribed coherent / transport-broken / HTTP-200
+semantic-mismatch census. The method includes a direct click/event/output
+behavior assertion, provisioner-owned non-injectable fixture identity, exact
+monotonic barriers and half-open timeouts, zero retries, atomic three-sample
+completion, lossless asynchronous archive acknowledgements, bounded rebuildable
+indexes, and deletion-prohibiting archive backpressure. No runnable arm,
+executor, subject, probe-entry event, sample, or Evidence was created.
+
+The required opposing Claude review is **not complete**. Both the fresh
+ADR-0039 prompt-eval release and the direct Claude Opus review failed with
+`API Error: Unable to connect to API (ConnectionRefused)` and produced no model
+tokens or verdict. The study is `BLOCKED_PRE_ENTRY`, not ready. See
+`lab/evals/artifact-delivery-instrument-v2/reviews/claude-methodological-review-blocked-2026-07-12.md`.
 
 ## Read this first (2026-07-12)
 
