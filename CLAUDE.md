@@ -41,7 +41,12 @@ Five layers, one circulatory system:
 - **Layer 2 — Reasoning**: daily per-beat job that loads pod canon state +
   intake synthesis → runs conjecture/criticism → writes candidate Claim /
   Evidence / Decision envelopes to the relevant pod's `.canon/candidates/`.
-  Lives under `reasoning/` (not yet built).
+  Lives under `reasoning/` (automation not yet built).
+  - **Programme substrate (ADR-0038)**: `reasoning/programmes/` is the manual
+    discovery-plane substrate for theory construction. It is not Layer 2
+    automation, a scheduler, or an authority surface. Programmes own
+    conjectural state but have zero epistemic authority; canon/writeups must
+    never cite Programme paths.
 - **Layer 3 — Validation**: woven throughout. Adversarial review + counter-
   search + canon integrity. Lives under `validation/` (not yet built).
 - **Layer 4 — Presentation**: accepted claims → agent-drafted MDX writeups
@@ -80,6 +85,13 @@ Five layers, one circulatory system:
   queries (workspace rule S1-P3).
 - **Every layer emits typed friction events.** A silent layer is
   indistinguishable from a stuck one (S3-P2, generalized by ADR-0029).
+- **Programmes are discovery-plane only (ADR-0038).** Programmes live under
+  `reasoning/programmes/` and hold leads, signals, source pointers, mechanisms,
+  tensions, draft claims, and a graduation ledger. They may feed draft Claims
+  through the normal canon path, but they cannot support, validate, decide,
+  publish, or elevate anything. Do not cite Programme files from canon envelopes
+  or reader-facing writeups. Run `python reasoning/check_programmes.py` before
+  publishing or touching canon/writeup surfaces.
 - **Session-startup CURRENT_STATE commit hygiene.** Every synaplex
   session, as its first repo-touching action of the turn, commits any
   pending `CURRENT_STATE.md` edits before proceeding to other work.
@@ -112,7 +124,9 @@ synaplex/
 │   └── src/content/{editorial,lab,directory}/
 ├── intake/              Layer 1: adapters, scoring, digest, friction
 │   └── adapters/        rss, arxiv, hackernews (reddit/github/substack/podcast queued)
-├── reasoning/           Layer 2: per-beat daily jobs (not yet built)
+├── reasoning/           Layer 2: Programme substrate now; automation not yet built
+│   ├── programmes/      ADR-0038 discovery-plane markdown workspaces
+│   └── check_programmes.py  ADR-0038 read-path/vocabulary guard
 ├── validation/          Layer 3: counter-search, canon integrity (not yet built)
 ├── editorial/           Layer 4: draft synthesis surface
 ├── scan/                legacy surface; collapsing into intake/
@@ -156,6 +170,8 @@ truth.
   - `supervisor/decisions/0027-synaplex-is-the-system.md` (accepted)
   - `supervisor/decisions/0029-synaplex-loop-five-layer-pipeline.md`
     (proposed)
+  - `supervisor/decisions/0038-programmes-as-discovery-plane.md`
+    (accepted)
   - `supervisor/decisions/0026-agentstack-lab-third-canon-instance.md`
     (superseded by ADR-0027, retained for context)
 - **Shaping surface**: `supervisor/projects/products/synaplex.md`.
@@ -204,3 +220,5 @@ A meaningful change is incomplete if it cannot answer:
   separate systems. ADR-0029 §Layer 5: one system.
 - Don't bolt intake onto the reflection job. ADR-0029 §Alternatives
   considered §1: rejected; different concerns at different cadences.
+- Don't treat Programmes as evidence, decisions, or publication sources.
+  ADR-0038 makes them non-authoritative discovery workspaces only.

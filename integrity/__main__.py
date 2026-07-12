@@ -8,7 +8,8 @@ does four things:
 2. Sweeps expired candidates (expires_at < now()) into an expired/
    subdir with a retention-log entry.
 3. Walks scored/ and raw/ to count recent activity by source.
-4. Emits a typed friction event summarizing the run. A skip or failure
+4. Runs the ADR-0038 Programme contract guard.
+5. Emits a typed friction event summarizing the run. A skip or failure
    emits a `stuck` event per S3-P2.
 
 Layer 2 work adds the real promotion-rate + quarantine logic on top of
@@ -24,6 +25,7 @@ from pathlib import Path
 
 from intake.friction import emit_failure, emit_stuck, emit_success
 from intake.paths import INTAKE_ROOT, RUNTIME_ROOT
+from reasoning.check_programmes import run_checks as run_programme_checks
 
 LAB_CANON_CANDIDATES = (
     Path("/opt/workspace/projects/synaplex/lab/.canon/candidates")
@@ -118,11 +120,34 @@ def main() -> int:
     try:
         cand = _walk_candidates()
         activity = _today_activity()
+        programme_findings, programme_vocab_source = run_programme_checks()
     except Exception as exc:
         emit_failure(
             "validation", "integrity",
             f"integrity run failed: {type(exc).__name__}: {exc}", "",
         )
+        return 1
+
+    if programme_findings:
+        reason = (
+            f"ADR-0038 programme guard found {len(programme_findings)} violation(s); "
+            f"first={programme_findings[0].render()}"
+        )
+        emit_failure(
+            "validation",
+            "programme_guard",
+            reason,
+            "reasoning/programmes",
+        )
+        print(json.dumps({
+            "candidates": cand,
+            "activity": activity,
+            "programme_guard": {
+                "status": "failed",
+                "vocabulary_source": programme_vocab_source,
+                "findings": [f.render() for f in programme_findings],
+            },
+        }, indent=2))
         return 1
 
     reason_parts = [
@@ -131,6 +156,7 @@ def main() -> int:
         f"quarantined={cand['quarantined']}",
         f"expired_this_run={cand['expired_moved_this_run']}",
         f"today_raw_sources={len(activity['raw_by_source'])}",
+        "programme_guard=clean",
     ]
     reason = " ".join(reason_parts)
     emit_success(
@@ -145,7 +171,14 @@ def main() -> int:
             "no candidates and no raw activity today — is Layer 2 online? is intake running?",
             str(LAB_CANON_CANDIDATES),
         )
-    print(json.dumps({"candidates": cand, "activity": activity}, indent=2))
+    print(json.dumps({
+        "candidates": cand,
+        "activity": activity,
+        "programme_guard": {
+            "status": "clean",
+            "vocabulary_source": programme_vocab_source,
+        },
+    }, indent=2))
     return 0
 
 
