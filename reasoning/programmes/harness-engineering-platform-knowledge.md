@@ -5,7 +5,7 @@ lifecycle_status: active
 title: "Harness engineering as platform knowledge"
 slug: harness-engineering-platform-knowledge
 created: 2026-07-12
-updated: 2026-07-12 (Stage 2 review — D2 tightened, graduation refused on the detector confound)
+updated: 2026-07-12
 owner: synaplex
 ---
 
@@ -110,7 +110,7 @@ Use pointers only. Do not copy source content into this file.
 | draft | status | note |
 | --- | --- | --- |
 | D1. Repository-visible harnesses outperform repo-blind harnesses on complex multi-step coding tasks when repository state includes current decisions, checks, and telemetry. | sketching | Weakest of the three. "Outperform" is undefined, the task class is unbounded, and the antecedent bundles three independent variables (decisions, checks, telemetry) into one conjunction — a result could not attribute the effect to any of them. Also close to truistic: more relevant context helping is not a discovery. The interesting question is which component carries the effect and how large it is. |
-| D2. For repository coding tasks whose completion has a runtime state distinct from "merged", a harness that exposes post-change runtime signals to the agent produces fewer false completion reports than a harness whose only feedback is build plus test. | tightened, not_ready | Strongest of the three; tightened in the section below. Single independent variable, bounded task class, and a failure class that is operationally defined rather than gestured at. Graduation refused for now: the treatment is also the detector (see "The detector confound"). |
+| D2. For repository coding tasks whose completion has a runtime state distinct from "merged", a harness that exposes post-change runtime signals to the agent produces fewer false completion reports than a harness whose only feedback is build plus test. | sketching | Strongest of the three; tightened in the section below but not ready for canon. Single independent variable, bounded task class, and a failure class that is operationally defined rather than gestured at. Graduation refused for now: the treatment is also the detector (see "The detector confound"). |
 | D3. Repeated agent failure patterns compound only when converted into durable repository or hook changes. | sketching | "Compound" is undefined and currently unmeasurable; "only when" is a universal that one counterexample kills, which sounds rigorous but is doing no work until "compound" is operational. Highest circularity risk of the three — it is a claim about our own reflection loop, tested by our own reflection loop. |
 
 ## Draft under review: runtime observability and false completion

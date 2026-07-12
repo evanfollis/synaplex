@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T01:45Z (ADR-0038 Programme substrate landed; Stage 2 review refused D2 graduation; agent-initiated lab/campaign kernel reverted as premature)
+updated: 2026-07-12T02:25Z
 owner: executive (principal: evan)
 phase: Layer 1 intake autonomous; Layer 2 discovery plane (Programmes) live; canon still holds 1 unexecuted pre-registration
 ---
@@ -32,6 +32,11 @@ verifier plan, supersede-never-edit).
 
 **Stage 2 Programme review is done** (`synaplex@29ee5fd`): D2 tightened,
 graduation **refused** on the detector confound. See below.
+
+**Telemetry source-type hygiene is fixed** (`synaplex@7e82a36`,
+`synaplex@86ae064`): explicit `SYNAPLEX_SOURCE_TYPE` now beats inherited
+systemd markers, and skip-next-run tests no longer write into production
+friction telemetry.
 
 ## One-line status
 
@@ -241,18 +246,6 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 
 **Open, unfixed:**
 
-- **`intake/friction.py` sourceType precedence is inverted.** `_default_source_type()`
-  checks the ambient systemd env (`INVOCATION_ID` / `SYSTEMD_EXEC_PID`) *before* the
-  explicit `SYNAPLEX_SOURCE_TYPE` declaration. Every tmux session on this host is
-  supervised by `workspace-session@*.service`, so those vars are inherited by every
-  agent shell: any hand-run adapter command emits `sourceType: "cron"`,
-  indistinguishable in meta-scan from the real 4-hourly timer, and
-  `SYNAPLEX_SOURCE_TYPE=smoke` cannot take effect in the one context it exists for.
-  This is ADR-0019's failure class reproduced *inside* the telemetry built to detect
-  it. Fix is a one-line precedence swap (explicit declaration wins). It was included
-  in the reverted `15edd38` and went back with it — **still unfixed**. Consequence:
-  historical `cron`-tagged intake events cannot be trusted to be cron; treat them as
-  "cron or agent-run."
 - **The 12h reflection loop is short-circuiting.** Every reflection since
   2026-06-11 reads `Reflection skipped — no activity in window`; `reflect.sh`
   short-circuits on repo inactivity and there were no commits for ~30 days. A quiet
@@ -263,9 +256,10 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   systems are weak" from "our harness cannot detect success at all." Structurally the
   same detector/measurement trap named in the Programme's D2 refusal. It has been
   pre-registered and unexecuted since 2026-04-19 (~12 weeks). Any execution plan must
-  address the missing control before it runs, and doing so likely needs a successor
-  Claim (adding a control arm changes the design; `methodology.md` is hash-bound and
-  immutable).
+  address the missing control before it runs. The current routed recommendation is a
+  rival Claim with a no-memory full-context control, not mutation of the hash-bound
+  primary Claim; see
+  `/opt/workspace/runtime/.handoff/synaplex-memory-systems-v1-missing-control-arm-2026-07-12T02-05Z.md`.
 - **Doc drift in `CLAUDE.md` §Structure**: it lists `lab/canon_emit.py` and "a small
   in-repo validator". Neither exists. There is currently **no code that writes to
   `lab/.canon/`** — the one Claim there was hand-authored. Do not read §Structure as
@@ -276,6 +270,13 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   pre-registration.
 
 **Historical (resolved) — see git history:**
+
+- ~~`intake/friction.py` sourceType precedence inverted~~ **FIXED 2026-07-12** —
+  `SYNAPLEX_SOURCE_TYPE` now wins over inherited systemd env, so hand-run smoke
+  commands are not misclassified as cron (`synaplex@7e82a36`).
+- ~~`intake/test_skip_next_run.py` polluted production friction telemetry~~
+  **FIXED 2026-07-12** — the test now runs against a temporary runtime root and
+  restores environment-derived modules afterward (`synaplex@86ae064`).
 
 - ~~`layer1_cap()` not applied to arxiv/hackernews adapters~~ **FIXED**
   this turn — `layer1_cap()` now applied symmetrically in all three
