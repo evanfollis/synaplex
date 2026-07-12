@@ -1,0 +1,11 @@
+{
+  "enforce": true,
+  "note": "ADR-0039 coverage ratchet. Synaplex CLAUDE.md is a governed agent charter; scan currently reports no additional likely prompt artifacts.",
+  "prompts": [
+    {
+      "file": "CLAUDE.md",
+      "id": "synaplex-charter",
+      "status": "governed"
+    }
+  ]
+}

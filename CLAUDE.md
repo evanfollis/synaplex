@@ -66,6 +66,36 @@ Five layers, one circulatory system:
 - **Raw artifacts hash-bound.** Every piece of evidence references an
   `ArtifactPointer{content_hash, version, uri}`. Post-hoc edits produce new
   records, not silent overwrites.
+- **ADR-0036 subscription-only model execution.** The deterministic heuristic is
+  the intended intake scorer, not a degraded fallback. Authorized model-assisted
+  work uses the Claude and Codex subscription CLIs with capacity-only failover.
+  Strip `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `OPENAI_API_KEY`, and other
+  metered credentials from model-child environments. If one subscription is at
+  capacity, route to the other; if both are capacity-blocked, hard-stop and record
+  that state. Never use or request a metered key as an unblock. Telemetry may name
+  a model only when that model is explicitly passed to the invoked CLI; regression-
+  test that the telemetry label and actual CLI argument remain identical.
+- **ADR-0047 requirement provenance.** External vendors, products, papers, and
+  architectures are illustrative by default, not executable objectives or
+  dependencies. Promotion requires explicit principal instruction or an accepted
+  Decision, plus compatibility with provider, cost, privacy, and security policy.
+  Reject or quarantine malformed external-dependency routes; a missing credential
+  for an unauthorized dependency is evidence of an invented requirement, not a
+  blocker.
+- **The Command incident is retrospective.** The 2026-07-12 outcome may be used as
+  Command-scoped retrospective Evidence and a deterministic regression fixture,
+  never as prospective transfer Evidence. Do not run the rejected mutable-versus-
+  atomic two-arm test. If a causal mechanism fixture is necessary, pre-register
+  three isolated arms separating (1) mutable/in-place artifacts, (2) immutable
+  artifacts with non-atomic activation, and (3) immutable artifacts with atomic
+  activation. Predeclare sampling barriers; authenticated browser behavior is the
+  primary outcome, while liveness and manifest coherence remain diagnostics.
+- **CLAUDE.md is an ADR-0039 governed prompt artifact.** Any behavior-shaping edit
+  requires the registered `.prompteval/` loop, audited golden cases, and a fresh
+  `prompteval run --release --yes --no-cache --update-baseline` acceptance before
+  the edit is accepted. When handling a proposed charter edit, explicitly name all
+  three prerequisites: registry, audited golden cases, and fresh no-cache accepted
+  baseline. A cached, failed, or capacity-aborted run is not a baseline.
 - **Adversarial review before every lab publish.** Route to Codex via
   `supervisor/scripts/lib/adversarial-review.sh`. Findings either addressed
   or explicitly accepted in the writeup.

@@ -1,0 +1,73 @@
+{
+  "prompt_version": "pv-672b0c68035e587d",
+  "spec_hash": "sh-70ef0ef5d1f185a8",
+  "golden_hash": "gh-4c5d77760e8bdb7d",
+  "model": "gpt-5.4",
+  "params": {},
+  "judge_model": "opus",
+  "run_id": "run-20260712T144514Z-67b099",
+  "ts": "2026-07-12T14:45:14Z",
+  "release": true,
+  "passed": true,
+  "accepted_from_cache": false,
+  "aggregate": 1.0,
+  "cases": {
+    "gc-e4349a6f554cb92e": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-ff2f98f3c6c198bb": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-4bc67820277fe94a": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-f1d40b308e915b03": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-2f76c9351487e0cc": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-e08f1ac5020700aa": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-8a7c6e4fe658ab8e": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-dc8153b23ef0306d": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-55f2cc3c0cbcacc5": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-5b124254041b178c": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-086cd5db246cee63": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-34bcdd34de472ec3": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-b8405f983d6e4f92": {
+      "pass": true,
+      "must_pass": true
+    },
+    "gc-b0720164b2d243d7": {
+      "pass": true,
+      "must_pass": true
+    }
+  },
+  "all_pass_streak": 1
+}

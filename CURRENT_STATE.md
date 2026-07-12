@@ -125,6 +125,16 @@ cannot silently route onto metered billing. The pipeline does not clog merely be
 unrelated parent environment contains a key. Codex now receives the same explicit model
 that telemetry records; a regression test prevents model-label provenance from drifting.
 
+**The Synaplex charter is now ADR-0039 governed.** `.prompteval/synaplex-charter/`
+registers the whole `CLAUDE.md` prompt with 12 active human-provenance regressions and 2
+sealed holdouts. The cases encode the principal correction directly: no metered-key
+fallback, illustrative vendors are not executable objectives, Command remains
+retrospective, the two-arm mechanism test is rejected, canon emission never selects, and
+model telemetry must match the actual CLI argument. Three fresh release attempts correctly
+remained unaccepted while they exposed incomplete or inconsistent charter behavior. Fresh
+no-cache release `run-20260712T144514Z-67b099` accepted prompt version
+`pv-672b0c68035e587d` at aggregate 1.0 with all 14 cases passing across three trials.
+
 ## ▶ Current phase: prospective transfer Claim pre-registered, not executed
 
 Claim `bda4396c7638e63f` and frozen gate `5273e9a31e92f6c3` bind the next honest

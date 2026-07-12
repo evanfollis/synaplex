@@ -1,0 +1,24 @@
+{
+  "id": "synaplex-charter",
+  "description": "Gates Synaplex charter behavior, especially ADR-0036 subscription-only execution, ADR-0047 requirement provenance, and the reviewed canon writer boundary.",
+  "owner": "synaplex",
+  "source": {
+    "type": "whole_file",
+    "file": "CLAUDE.md"
+  },
+  "model": "gpt-5.4",
+  "params": {},
+  "executor": {
+    "type": "codex_cli",
+    "user_template": "You are operating Synaplex under the charter above. Respond to this concrete scenario with the action you would take and the governing reason. Be concise but explicit.\\n\\nScenario:\\n{scenario}"
+  },
+  "judge": {
+    "model": "opus"
+  },
+  "gate": {
+    "aggregate_floor_delta": 0.02,
+    "trials": 3,
+    "max_unknown_ratio": 0.2
+  },
+  "created": "2026-07-12T13:46:47Z"
+}
