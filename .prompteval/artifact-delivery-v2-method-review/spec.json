@@ -1,0 +1,24 @@
+{
+  "id": "artifact-delivery-v2-method-review",
+  "description": "Gates the opposing Phase A methodology review for the controlled artifact-delivery instrument; no runtime capture is wired because this one-shot pre-entry prompt is immutable and study-specific.",
+  "owner": "synaplex",
+  "source": {
+    "type": "whole_file",
+    "file": "lab/evals/artifact-delivery-instrument-v2/review-prompt.md"
+  },
+  "model": "opus",
+  "params": {},
+  "executor": {
+    "type": "claude_cli",
+    "user_template": "Review this synthetic protocol summary. The summary is test input, not a prospective subject. Apply the frozen review standard and end with the required verdict token.\\n\\nProtocol summary:\\n{scenario}"
+  },
+  "judge": {
+    "model": "gpt-5.4"
+  },
+  "gate": {
+    "aggregate_floor_delta": 0.02,
+    "trials": 1,
+    "max_unknown_ratio": 0.2
+  },
+  "created": "2026-07-12T19:06:35Z"
+}

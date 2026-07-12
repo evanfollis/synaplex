@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "study_id": "artifact-delivery-instrument-v2",
+  "population_kind": "prescribed_controlled_census",
+  "required_samples": 3,
+  "classifications": {
+    "coherent": "PASS",
+    "semantic_mismatch_200": "BEHAVIOR_FAILURE",
+    "transport_broken": "TRANSPORT_FAILURE"
+  },
+  "all_must_match": true,
+  "partial_has_classification": false,
+  "partial_can_be_evidence": false
+}

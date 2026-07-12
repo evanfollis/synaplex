@@ -1,0 +1,57 @@
+{
+  "id": "7628c88b8f08c7e8",
+  "spec_version": "0.2.0",
+  "object_type": "Policy",
+  "emitted_at": "2026-07-12T19:06:22Z",
+  "emitter": "L3:synaplex",
+  "layer": "L3",
+  "roles": [
+    "Policy"
+  ],
+  "role_declared_at": "2026-07-12T19:06:22Z",
+  "binding": "binding",
+  "sources": [],
+  "class": "frozen",
+  "scope": "L3:synaplex",
+  "field_path": "/thresholds",
+  "value": {
+    "study_id": "artifact-delivery-instrument-v2",
+    "population_kind": "prescribed_controlled_census",
+    "required_completed_samples": 3,
+    "expected_classifications": {
+      "coherent": "PASS",
+      "transport_broken": "TRANSPORT_FAILURE",
+      "semantic_mismatch_200": "BEHAVIOR_FAILURE"
+    },
+    "frozen_input_sha256": {
+      "methodology.md": "135f354fad77b7b5f888d0284ef68ebf8247452b6fc91fa9b90c75f598e31f0e",
+      "fixture-contract.md": "1fadb00761f2824262d6f403eb74eeda34f2a6014778ffc34c02bc7212bece5b",
+      "artifact.schema.json": "5f9410d24f67a002315aa50005bdda647bd460506d9875875f3155c07d133ac5",
+      "expected-classifications.json": "8a13cd433191b776cfa8cec99b5cc4fee39df3d9857ce0bb571a984ff6b0d0e3",
+      "review-prompt.md": "5a03235c46f2c1c236207be0d1649706d4f6425acc799480702dc9979cd05f86"
+    },
+    "partial_can_be_evidence": false,
+    "retries": 0,
+    "start_lateness_tolerance_ms": 250
+  },
+  "version": "1",
+  "issuer": "L3:synaplex",
+  "amendment_authority": [],
+  "ratification_rule": {
+    "kind": "none"
+  },
+  "rollback_rule": {
+    "rules": [],
+    "precedence": []
+  },
+  "provenance": [
+    {
+      "version": "1",
+      "effective_from": "2026-07-12T19:06:22Z"
+    }
+  ],
+  "effective_from": "2026-07-12T19:06:22Z",
+  "effective_until": null,
+  "bound_to_claim_id": "e1c51ab0d83be772",
+  "derived_from": "/thresholds"
+}
