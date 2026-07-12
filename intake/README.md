@@ -12,8 +12,8 @@ Three adapters, one beat, one digest:
 - `adapters/rss.py` — blogs + newsletters via RSS/Atom (`feedparser`).
 - `adapters/arxiv.py` — cs.AI / cs.CL / cs.LG / q-fin via the arxiv API.
 - `adapters/hackernews.py` — top + new + Show HN + Ask HN via Firebase.
-- `score.py` — per-beat relevance scoring. First pass ships a keyword
-  heuristic + a Sonnet scorer; the active provider is chosen at run-time.
+- `score.py` — deterministic per-beat relevance scoring with the intended
+  keyword + regex heuristic. It has no metered model path.
 - `digest.py` — daily per-beat markdown.
 - `friction.py` — typed events emitted to `runtime/friction/events.jsonl`
   (ADR-0029 §Layer 5).
@@ -80,18 +80,18 @@ handoff constraint). When enabled:
 - `synaplex-score.timer` runs scoring hourly.
 - `synaplex-digest.timer` renders the daily digest at 06:57 UTC.
 
-## Scoring providers
+## Scoring
 
-`score.py` dispatches on `SYNAPLEX_SCORE_PROVIDER`:
+`score.py` always uses the keyword + regex heuristic against the beat's
+keyword bank. This is the intended provider: deterministic, token-free, and
+independent of ambient API keys. ADR-0036 forbids metered model APIs; an
+`ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in the parent environment neither
+changes scoring nor represents a blocker. Authorized model-assisted lab work,
+when needed elsewhere, uses the Claude/Codex subscription CLIs with metered
+credentials removed from child environments.
 
-- `heuristic` (default when no API key): keyword + regex scoring against
-  the beat's keyword bank. Cheap, deterministic, no tokens.
-- `sonnet`: Claude Sonnet 4.6 with prompt caching on the system prompt
-  + beat definition (per the `claude-api` skill). Requires
-  `ANTHROPIC_API_KEY`.
-
-The two providers write the same `scored.jsonl` shape, so swapping is
-transparent to downstream layers.
+Every scored item records `score_provider: heuristic`; downstream layers do
+not have a runtime provider switch to interpret.
 
 ## Operational controls (ADR-0029 §Adversarial review response)
 

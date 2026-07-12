@@ -1,8 +1,7 @@
 """Per-beat scoring.
 
-Two providers behind a common interface. Chosen at run-time via
-heuristic-only (ADR-0036: no metered API spend). The former Sonnet path is
-available, `sonnet` otherwise.
+The scorer is unconditionally heuristic (ADR-0036: no metered API spend).
+Ambient API keys do not select a provider and are not a blocker.
 
 Scored item shape (added to raw fields):
     {
@@ -12,23 +11,18 @@ Scored item shape (added to raw fields):
       "score_rationale": "matched keywords: mcp, tool use"
     }
 
-The two providers emit the *same* shape so downstream layers don't care
-which scorer ran. A score is in [0.0, 1.0]; the digest uses a cutoff
+Every run emits the same shape with `score_provider: heuristic`. A score is
+in [0.0, 1.0]; the digest uses a cutoff
 (default 0.5) to decide what gets rendered.
-
-Per the `claude-api` skill, the Sonnet provider caches the system prompt +
-beat definition. Beat definitions are stable across a scoring run; the
-system prompt is constant.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Iterable
 
 from .beats import Beat, get_beat
 from .friction import emit_failure, emit_stuck, emit_success
@@ -103,11 +97,6 @@ def score_heuristic(item: dict, beat: Beat) -> tuple[float, str]:
         rationale_parts.append("no beat-keyword matches")
     rationale = "; ".join(rationale_parts)
     return score, rationale
-
-
-# --------------------------------------------------------------------------
-# Sonnet scorer
-# --------------------------------------------------------------------------
 
 
 # --------------------------------------------------------------------------
