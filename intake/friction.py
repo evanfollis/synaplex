@@ -20,11 +20,14 @@ Event shape:
 from __future__ import annotations
 
 import json
+import fcntl
 import os
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Literal
 
-from .paths import FRICTION_LOG, ensure_dirs
+from .paths import FRICTION_LOG
 
 Layer = Literal["intake", "reasoning", "validation", "presentation"]
 # `throttled` is a non-failure health signal for rate-limit/cap enforcement —
@@ -32,6 +35,61 @@ Layer = Literal["intake", "reasoning", "validation", "presentation"]
 # designed truncation as an incident. Added 2026-04-24 per reflection OBS-C.
 EventType = Literal["success", "failure", "stuck", "escalated", "throttled"]
 SourceType = Literal["user", "system", "smoke", "cron"]
+
+FALLBACK_SPOOL_ENV = "SYNAPLEX_FRICTION_SPOOL"
+
+
+def _fallback_spool() -> Path:
+    """Writable, host-local fallback for off-hot-path telemetry.
+
+    Resolve dynamically so tests and operators can redirect it without reloading this
+    module. The spool is deliberately outside the primary runtime tree: an EROFS runtime
+    mount must not make its own fallback unreachable.
+    """
+    configured = os.environ.get(FALLBACK_SPOOL_ENV)
+    if configured:
+        return Path(configured)
+    return Path("/var/tmp/synaplex/friction-spool/events.jsonl")
+
+
+def _append_jsonl(path: Path, record: dict, *, durable: bool = False) -> None:
+    """Append one complete JSON line; optionally fsync before reporting success."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = (json.dumps(record, ensure_ascii=False) + "\n").encode("utf-8")
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    try:
+        view = memoryview(payload)
+        while view:
+            written = os.write(fd, view)
+            if written == 0:
+                raise OSError("zero-byte append while telemetry payload remained")
+            view = view[written:]
+        if durable:
+            os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _spool_lock_path(spool: Path) -> Path:
+    return spool.with_name(f".{spool.name}.lock")
+
+
+def _append_spool(spool: Path, record: dict) -> None:
+    """Serialize spool append against maintenance drain/replace."""
+    spool.parent.mkdir(parents=True, exist_ok=True)
+    with open(_spool_lock_path(spool), "a", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        _append_jsonl(spool, record, durable=True)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def _surface_write_failure(message: str) -> None:
+    """Best-effort operator-visible signal. Telemetry must never break its caller."""
+    try:
+        sys.stderr.write(f"synaplex friction telemetry: {message}\n")
+        sys.stderr.flush()
+    except Exception:  # noqa: BLE001 - even a broken stderr cannot enter the hot path
+        pass
 
 
 def _now_iso_and_epoch_ms() -> tuple[str, int]:
@@ -92,8 +150,15 @@ def emit(
     sourceType: SourceType | None = None,
     extra: dict | None = None,
 ) -> dict:
-    """Emit one friction event. Returns the dict that was written."""
-    ensure_dirs()
+    """Attempt primary telemetry, spooling failures without blocking the caller.
+
+    The returned object is the event on primary success. On failure it also carries a
+    private ``_telemetry_delivery`` receipt so programmatic callers can detect degraded
+    delivery without parsing stderr. The persisted event shape remains unchanged.
+
+    This non-blocking rule applies only to optional friction telemetry. Canon, Decision,
+    and publication gates use separate fail-closed paths and are not routed through here.
+    """
     ts_iso, ts_ms = _now_iso_and_epoch_ms()
     event = {
         "ts": ts_iso,
@@ -107,9 +172,46 @@ def emit(
     }
     if extra:
         event.update(extra)
-    with open(FRICTION_LOG, "a", encoding="utf-8") as f:
-        f.write(json.dumps(event, ensure_ascii=False) + "\n")
-    return event
+    try:
+        _append_jsonl(FRICTION_LOG, event)
+        return event
+    except Exception as primary_error:  # noqa: BLE001 - EROFS must not block primary work
+        spool = _fallback_spool()
+        failure = {
+            "spool_version": 1,
+            "spooled_at": _now_iso(),
+            "destination": str(FRICTION_LOG),
+            "primary_error": {
+                "type": type(primary_error).__name__,
+                "message": str(primary_error),
+            },
+            "event": event,
+        }
+        receipt = {
+            "status": "undelivered",
+            "primary_path": str(FRICTION_LOG),
+            "primary_error": failure["primary_error"],
+            "spool_path": str(spool),
+            "spooled": False,
+        }
+        try:
+            _append_spool(spool, failure)
+            receipt["status"] = "spooled"
+            receipt["spooled"] = True
+            _surface_write_failure(
+                f"primary append failed ({type(primary_error).__name__}: {primary_error}); "
+                f"full event spooled to {spool}"
+            )
+        except Exception as spool_error:  # noqa: BLE001 - still off the hot path
+            receipt["spool_error"] = {
+                "type": type(spool_error).__name__,
+                "message": str(spool_error),
+            }
+            _surface_write_failure(
+                f"primary append failed ({type(primary_error).__name__}: {primary_error}); "
+                f"fallback spool also failed ({type(spool_error).__name__}: {spool_error})"
+            )
+        return {**event, "_telemetry_delivery": receipt}
 
 
 def emit_success(layer: Layer, source: str, reason: str, ref: str = "") -> dict:

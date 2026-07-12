@@ -135,6 +135,19 @@ remained unaccepted while they exposed incomplete or inconsistent charter behavi
 no-cache release `run-20260712T144514Z-67b099` accepted prompt version
 `pv-672b0c68035e587d` at aggregate 1.0 with all 14 cases passing across three trials.
 
+**Optional friction telemetry is off the hot path.** `intake/friction.py` still attempts
+the primary append first. If that write fails (including EROFS), it surfaces a bounded
+stderr warning, fsyncs the full original event plus primary error into a writable fallback
+spool when possible, returns a degraded-delivery receipt, and lets the caller continue. The
+host-persistent default is `/var/tmp/synaplex/friction-spool/events.jsonl`; tests and
+constrained jobs may override it with `SYNAPLEX_FRICTION_SPOOL`. Each versioned spool record
+preserves the exact original event and destination. `python -m intake.friction_spool` drains
+recoverable records under a shared lock and retains every malformed or still-undeliverable
+record. A double failure returns explicit `undelivered` status and remains visible on
+stderr. The normal integrity command was verified to complete successfully against the
+real read-only runtime path while preserving its success event in an overridden test spool.
+This changes no canon, Decision, or publication gate; those remain separate and fail-closed.
+
 ## ▶ Current phase: prospective transfer Claim pre-registered, not executed
 
 Claim `bda4396c7638e63f` and frozen gate `5273e9a31e92f6c3` bind the next honest
