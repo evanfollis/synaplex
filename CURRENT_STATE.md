@@ -38,6 +38,36 @@ graduation **refused** on the detector confound. See below.
 systemd markers, and skip-next-run tests no longer write into production
 friction telemetry.
 
+**The lab can write canon** (`synaplex@44422a4`, `@f387e90`) — ADR-0042 Phase 1.
+`lab/canon/` emits `Claim`, `Evidence`, and `EventLogEntry` behind one validating,
+append-only choke point. 26 assertions; adversarially reviewed by Codex, which found
+three real validator holes (all fixed, all with regression tests). The rule the design
+turns on: **the emitter serializes, validates, and writes — it never selects what to
+emit.**
+
+- **No `Decision`, no `Policy`** — refused *in code*, not in prose. Canon cannot express
+  a frozen, pre-registered, eval-local promotion gate; the gap belongs to
+  context-repository. So **`memory-systems-v1` can now enter probe and produce Evidence,
+  and still cannot conclude.** It is **`incomplete`, not `concluded`**, and no surface may
+  say otherwise.
+- **Layer 4 publication guard is fail-closed**, enforced in `python -m integrity`. A
+  reader-facing lab page must declare `canon:publishes-results`; undeclared is refused;
+  declaring `true` needs a Decision that cannot currently exist. **No results page can
+  ship.** Intended, not a limitation.
+
+**🔴 The L1 canon spec is not under version control.** `spec/` is in
+context-repository's `.gitignore` (line 11). The highest truth source in this system —
+the contract all 275 envelopes across three repos bind to — cannot be diffed, reviewed,
+attributed, or reverted. It changed **0.1.0 → 0.2.0 in place on 2026-07-12** with no
+CHANGELOG entry, no ADR, no review artifact; the "frozen" 0.1.0 spec is unrecoverable.
+All 275 envelopes still validate (the bump is additive) so nothing is corrupt — *that
+was luck, not process*. `lab/canon/validate.py` now pins the schema set by digest
+(`bcc6d01315fed7f9`) so the next silent change fails a test loudly. Escalated:
+`runtime/.handoff/URGENT-context-repository-canon-spec-is-not-under-version-control.md`.
+**Synaplex will not adopt 0.2.0 semantics or treat that file edit as the canon-gap
+resolution** — inferring authorization from an untracked artifact is how the reverted
+`lab/campaign` kernel happened.
+
 ## One-line status
 
 Repo rebranded from `agentstack` → `synaplex` per ADR-0027. Layer 1
