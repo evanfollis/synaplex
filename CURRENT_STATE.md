@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-12T21:04Z
+updated: 2026-07-13T02:41Z
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (fresh prompt-eval release failed 14/14; opposing review forbidden and not run); Claim and frozen gate emitted; zero Evidence; probe entry forbidden
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (prompteval gate 14/14 failed; diagnosis needed — formatting vs. judgment; no opposing review run); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.0.0 deployed
 ---
 
 # synaplex — current state
@@ -531,15 +531,16 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 
 **Open, unfixed:**
 
-- **The 12h reflection loop is short-circuiting.** Every reflection since
-  2026-06-11 reads `Reflection skipped — no activity in window`; `reflect.sh`
-  short-circuits on repo inactivity and there were no commits for ~30 days. A quiet
-  repo therefore produces a *confidently stale* front door rather than a loud one.
-  The 2026-07-12 commits re-arm it.
-- **The prospective transfer population is intentionally only N=1.** A clean observation
-  can support only the launchpad-lint prediction, not causality, a rate estimate, or a
-  cross-service invariant. Widening the population post hoc is forbidden; a broader Claim
-  needs a new pre-registration.
+- ~~**The 12h reflection loop is short-circuiting.**~~ **RESOLVED 2026-07-13** — reflection
+  re-armed by the 2026-07-12 commits; this cycle produced a full reflection.
+- **`artifact-delivery-v2-method-review` prompteval gate: 14/14 cases failed** (aggregate
+  0.0, run `run-20260712T204705Z-867ae4`). Root cause unknown from artifacts alone — the run
+  record lacks raw model output per case. Two hypotheses: (A) formatting failure (verdict token
+  not on final line); (B) model judgment failures on synthetic scenarios. No opposing review
+  may run until a fresh accepted release exists. Diagnose before any next step.
+- **arxiv intake at 2 consecutive stuck events** (2026-07-12T20:18Z, 2026-07-13T00:18Z).
+  S3-P2 escalation fires at 3; next run ~04:18Z UTC. Recurring pattern; likely self-resolves
+  when upstream 3-day window repopulates. Watch for escalation event.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
   is documented, not repaired — the file is hash-bound and repairing it would break
@@ -691,10 +692,8 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
-3. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
-4. Latest reflections at `/opt/workspace/runtime/.meta/synaplex-reflection-2026-06-11T14-32-34Z.md` — pipeline healthy; arxiv Episode 7 closed (TimeoutError 04:18Z → backoff 08:18Z → recovery 12:19Z); **[SUPERSEDED 2026-07-12 — that reflection's "ANTHROPIC_API_KEY is the highest-leverage
-   unblock" line is WRONG and must not be revived. ADR-0036 (2026-06-11) closed it: the
-   heuristic scorer is the intended path, not a degraded one, and this is "a deliberate cost
-   decision, not a credential blocker." Any reflection or synthesis output still carrying it
-   is stale. Do not act on it; do not escalate it.]** M5 handoff (`general-m5-current-state-untouched-synaplex-2026-06-09T16-02-42Z.md`) still open (delete in next general session); reflection commit constraint ambiguity O1 unresolved (5 cycles); §4 file-lock race explicitly accepted risk.
-5. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
+3. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review; defines what the next legal action is.
+4. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-13T02-41-44Z.md` — this window's reflection; covers 15 commits, the two disposed evals, and the prompteval diagnosis gap.
+5. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
+6. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
+7. §4 file-lock race (concurrent manual invocation of intake ingest): explicitly accepted risk per adversarial review verdict.
