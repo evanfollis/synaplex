@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-13T02:41Z
+updated: 2026-07-14T14:32Z (reflection pass)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (prompteval gate 14/14 failed; diagnosis needed — formatting vs. judgment; no opposing review run); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.0.0 deployed
 ---
@@ -538,9 +538,9 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
   record lacks raw model output per case. Two hypotheses: (A) formatting failure (verdict token
   not on final line); (B) model judgment failures on synthetic scenarios. No opposing review
   may run until a fresh accepted release exists. Diagnose before any next step.
-- **arxiv intake at 2 consecutive stuck events** (2026-07-12T20:18Z, 2026-07-13T00:18Z).
-  S3-P2 escalation fires at 3; next run ~04:18Z UTC. Recurring pattern; likely self-resolves
-  when upstream 3-day window repopulates. Watch for escalation event.
+- ~~**arxiv intake stuck (2 consecutive events)**~~ **SELF-RESOLVED 2026-07-14T04:17Z** —
+  100 new items fetched; counter reset at 3 consecutive threshold (never reached).
+  Same pattern as prior episodes. No code change needed.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
   is documented, not repaired — the file is hash-bound and repairing it would break
@@ -693,7 +693,8 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 1. This file.
 2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
 3. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review; defines what the next legal action is.
-4. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-13T02-41-44Z.md` — this window's reflection; covers 15 commits, the two disposed evals, and the prompteval diagnosis gap.
+4. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-14T14-32-02Z.md` — latest reflection (2026-07-14 14:32Z); arxiv stuck self-resolved, prompteval diagnostic still pending.
+5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-13T02-41-44Z.md` — prior substantive reflection; covers 15 commits, the two disposed evals, and the prompteval diagnosis gap.
 5. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
 6. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
 7. §4 file-lock race (concurrent manual invocation of intake ingest): explicitly accepted risk per adversarial review verdict.
