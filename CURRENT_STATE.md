@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-14T14:32Z (reflection pass)
+updated: 2026-07-15T02:29Z (reflection pass)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (prompteval gate 14/14 failed; diagnosis needed — formatting vs. judgment; no opposing review run); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.0.0 deployed
 ---
@@ -527,20 +527,24 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    blocker; the heuristic scorer is the intended path. Do not re-open this.
 
 ## Known broken or degraded
-(updated 2026-07-12T01:45Z)
+(updated 2026-07-15T02:29Z)
 
 **Open, unfixed:**
 
 - ~~**The 12h reflection loop is short-circuiting.**~~ **RESOLVED 2026-07-13** — reflection
   re-armed by the 2026-07-12 commits; this cycle produced a full reflection.
 - **`artifact-delivery-v2-method-review` prompteval gate: 14/14 cases failed** (aggregate
-  0.0, run `run-20260712T204705Z-867ae4`). Root cause unknown from artifacts alone — the run
-  record lacks raw model output per case. Two hypotheses: (A) formatting failure (verdict token
-  not on final line); (B) model judgment failures on synthetic scenarios. No opposing review
-  may run until a fresh accepted release exists. Diagnose before any next step.
+  0.0, run `run-20260712T204705Z-867ae4`). Root cause unknown — two hypotheses: (A) formatting
+  failure (verdict token not on final line); (B) judgment failures. No opposing review may run
+  until a fresh accepted release. **URGENT handoff written 2026-07-15T02:29Z** (9 cycles,
+  carry-forward escalation rule breached). Diagnostic command:
+  `python -m prompteval run --no-cache --debug --eval artifact-delivery-v2-method-review --cases 1`
 - ~~**arxiv intake stuck (2 consecutive events)**~~ **SELF-RESOLVED 2026-07-14T04:17Z** —
   100 new items fetched; counter reset at 3 consecutive threshold (never reached).
   Same pattern as prior episodes. No code change needed.
+- **synthesis-translator emits `sourceType: ""` (empty, not "cron")** — S1-P2 violation;
+  persists across reflection cycles. Fix: add `export SYNAPLEX_SOURCE_TYPE=cron` in
+  `supervisor/scripts/lib/synthesis-translator.sh`. One-line fix.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
   is documented, not repaired — the file is hash-bound and repairing it would break
@@ -691,10 +695,11 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 ## What the next agent must read first
 
 1. This file.
-2. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Read before touching any adapter or friction emitter. Note: this is workspace-level, not repo-local.
-3. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review; defines what the next legal action is.
-4. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-14T14-32-02Z.md` — latest reflection (2026-07-14 14:32Z); arxiv stuck self-resolved, prompteval diagnostic still pending.
-5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-13T02-41-44Z.md` — prior substantive reflection; covers 15 commits, the two disposed evals, and the prompteval diagnosis gap.
+2. `/opt/workspace/runtime/.handoff/URGENT-synaplex-prompteval-diagnostic-overdue.md` — carry-forward
+   escalation breach; the one command to run first.
+3. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Note: workspace-level path.
+4. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review.
+5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-15T02-29-07Z.md` — this reflection (2026-07-15 02:29Z).
 5. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
 6. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
 7. §4 file-lock race (concurrent manual invocation of intake ingest): explicitly accepted risk per adversarial review verdict.
