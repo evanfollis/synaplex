@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-16T14:28Z (reflection pass)
+updated: 2026-07-17T02:31Z (reflection pass)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (prompteval gate 14/14 failed; diagnosis needed — formatting vs. judgment; no opposing review run); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.0.0 deployed
 ---
@@ -543,7 +543,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 - ~~**arxiv intake stuck (2 consecutive events)**~~ **SELF-RESOLVED 2026-07-14T04:17Z** —
   100 new items fetched; counter reset at 3 consecutive threshold (never reached).
   Same pattern as prior episodes. No code change needed.
-- **synthesis-translator emits no `sourceType` field** (4th observed window; 2026-07-16T03:31Z; escalation threshold passed in prior cycle, now in 5th-cycle breach) — S1-P2 violation.
+- **synthesis-translator emits no `sourceType` field** (5th consecutive window; last observed 2026-07-16T03:31Z; escalation threshold exceeded, dispatch obligation overdue) — S1-P2 violation.
   Fix: add `export SYNAPLEX_SOURCE_TYPE=cron` in `supervisor/scripts/lib/synthesis-translator.sh`. One-line fix. URGENT handoff creation required by general session: CANNOT from reflection job. Dispatch obligation per workspace §Dispatch obligation now overdue.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
@@ -700,7 +700,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    be created by a user session or the general session. Until it is created, this is a dead link.
 3. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Note: workspace-level path.
 4. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review.
-5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-16T14-28-56Z.md` — latest reflection (2026-07-16 14:28Z); synthesis-translator 4th violation, dispatch obligation overdue; RSS cap drop noted.
+5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-17T02-31-00Z.md` — latest reflection (2026-07-17 02:31Z); no user sessions, intake clean, synthesis-translator 5th window without fix, dispatch obligation overdue.
 5. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
 6. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
 7. §4 file-lock race (concurrent manual invocation of intake ingest): explicitly accepted risk per adversarial review verdict.
