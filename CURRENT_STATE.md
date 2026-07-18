@@ -527,7 +527,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    blocker; the heuristic scorer is the intended path. Do not re-open this.
 
 ## Known broken or degraded
-(updated 2026-07-17T14:33Z)
+(updated 2026-07-18T02:30Z — reflection pass)
 
 **Open, unfixed:**
 
@@ -543,7 +543,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 - ~~**arxiv intake stuck (2 consecutive events)**~~ **SELF-RESOLVED 2026-07-14T04:17Z** —
   100 new items fetched; counter reset at 3 consecutive threshold (never reached).
   Same pattern as prior episodes. No code change needed.
-- **synthesis-translator emits no `sourceType` field** (6th consecutive window; last observed 2026-07-17T03:26Z; escalation threshold exceeded, dispatch obligation overdue) — S1-P2 violation.
+- **synthesis-translator emits no `sourceType` field** (7th consecutive window; last observed 2026-07-17T15:30Z; dispatch obligation now formally overdue 7d+; no URGENT handoff created by general session) — S1-P2 violation.
   Fix: add `export SYNAPLEX_SOURCE_TYPE=cron` in `supervisor/scripts/lib/synthesis-translator.sh`. One-line fix. URGENT handoff creation required by general session: CANNOT from reflection job. Dispatch obligation per workspace §Dispatch obligation now overdue.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
@@ -700,7 +700,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    be created by a user session or the general session. Until it is created, this is a dead link.
 3. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Note: workspace-level path.
 4. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review.
-5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-17T14-33-38Z.md` — latest reflection (2026-07-17 14:33Z); no user sessions, intake clean, synthesis-translator 6th window without fix, dispatch obligation overdue.
+5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-18T02-30-15Z.md` — latest reflection (2026-07-18 02:30Z); no user sessions, intake clean, synthesis-translator 7th window without fix, dispatch obligation overdue 7d+.
 5. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
 6. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
 7. §4 file-lock race (concurrent manual invocation of intake ingest): explicitly accepted risk per adversarial review verdict.
