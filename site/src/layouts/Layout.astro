@@ -11,6 +11,8 @@ const { title, description } = Astro.props as Props;
 const siteTitle = 'synaplex — systematic discovery, exposed';
 const fullTitle = title === siteTitle ? title : `${title} · synaplex`;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const descriptionText = description ?? 'A public, inspectable system for disciplined discovery.';
+const socialImage = new URL('/social-card.svg', Astro.site).toString();
 ---
 
 <!doctype html>
@@ -19,8 +21,20 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
-    {description && <meta name="description" content={description} />}
+    <meta name="description" content={descriptionText} />
     <link rel="canonical" href={canonical} />
+    <meta name="author" content="Evan Follis" />
+    <meta name="theme-color" content="#f2f0e9" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="synaplex" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={descriptionText} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={descriptionText} />
+    <meta name="twitter:image" content={socialImage} />
     <meta name="generator" content={Astro.generator} />
   </head>
   <body>
@@ -34,8 +48,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
           <a href="/">Overview</a>
           <a href="/method/">Method</a>
           <a href="/research/">Research</a>
-          <a href="/insights/">Insights</a>
-          <a href="/artifacts/">Artifacts</a>
+          <a href="/case-studies/">Case studies</a>
+          <a href="/sources/">Sources</a>
+          <a href="/about/">About</a>
         </nav>
       </div>
     </header>
@@ -46,7 +61,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 
     <footer class="site-footer">
       <div class="shell footer-inner">
-        <p>Systematic discovery with explicit epistemic state.</p>
+        <p>Built by <a href="/about/">Evan Follis</a>. Explicit epistemic state.</p>
         <ProjectionStamp />
         <p><a href="/knowledge/public-projection.json">Machine-readable JSON</a></p>
       </div>

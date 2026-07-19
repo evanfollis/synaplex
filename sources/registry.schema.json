@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "sources"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "sources": {"type": "array", "minItems": 7, "items": {"$ref": "#/$defs/source"}}
+  },
+  "$defs": {"source": {
+    "type": "object", "additionalProperties": false,
+    "required": ["id", "title", "url", "retrieved_at", "source_class", "domain", "author_publisher", "content_digest", "access_license", "quality"],
+    "properties": {
+      "id": {"type": "string", "pattern": "^src:[a-f0-9]{16}$"}, "title": {"type": "string", "minLength": 4},
+      "url": {"type": "string", "pattern": "^https://"}, "retrieved_at": {"type": "string", "format": "date-time"},
+      "source_class": {"enum": ["peer_reviewed_paper", "preprint", "standard", "official_report", "official_archive"]},
+      "domain": {"enum": ["ai_systems", "distributed_systems", "control_cybernetics", "causal_scientific_method", "cognitive_science", "organization_economics", "security_safety"]},
+      "author_publisher": {"type": "string"}, "content_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+      "access_license": {"type": "string", "minLength": 4}, "quality": {"type": "number", "minimum": 0, "maximum": 1}
+    }
+  }}
+}

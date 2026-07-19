@@ -1,10 +1,13 @@
 {
-  "projection_version": "1.0.0",
-  "generated_at": "2026-07-12T20:47:05Z",
+  "projection_version": "1.1.0",
+  "generated_at": "2026-07-19T16:15:00Z",
   "counts": {
     "research": 4,
     "findings": 0,
-    "mechanisms": 3
+    "mechanisms": 3,
+    "engineering_cases": 4,
+    "sources": 18,
+    "conjectures": 4
   },
   "research": [
     {
@@ -106,5 +109,431 @@
       "public_artifact": "/method/#publication"
     }
   ],
-  "digest": "sha256:7c0ba7a7131637a7b6cfc33c98eee8d46c4bf2032eca8d3ce86d995eccdcad5a"
+  "engineering_cases": [
+    {
+      "id": "case:canon-publication-guard",
+      "slug": "canon-publication-guard",
+      "title": "The build refuses unsupported findings",
+      "summary": "Canon validation and publication guards run before every site build, rejecting results without a valid Decision-to-Evidence chain.",
+      "label": "engineering case study",
+      "status": "operational",
+      "learned": "Moving the epistemic rule into the build makes unsupported publication unavailable rather than merely discouraged.",
+      "limits": "The guard proves contract enforcement, not the truth of any future Evidence.",
+      "source_links": [
+        "https://github.com/evanfollis/synaplex/blob/main/lab/canon/guard.py",
+        "https://github.com/evanfollis/synaplex/blob/main/lab/canon/test_canon.py"
+      ]
+    },
+    {
+      "id": "case:immutable-public-release",
+      "slug": "immutable-public-release",
+      "title": "One digest, two public readers",
+      "summary": "A deterministic projection is generated once, consumed by human pages and JSON clients, and deployed as an immutable Pages release.",
+      "label": "engineering case study",
+      "status": "operational",
+      "learned": "Binding both readers to one digest turns disagreement into measurable drift.",
+      "limits": "This is an implementation result, not evidence that the knowledge methodology produces true findings.",
+      "source_links": [
+        "https://github.com/evanfollis/synaplex/commit/6579bb2",
+        "https://synaplex.ai/knowledge/public-projection.json"
+      ]
+    },
+    {
+      "id": "case:lossless-telemetry-fallback",
+      "slug": "lossless-telemetry-fallback",
+      "title": "Telemetry failure stays off the hot path",
+      "summary": "Primary telemetry append failure falls back to an ownership-checked spool while research execution continues.",
+      "label": "engineering case study",
+      "status": "operational",
+      "learned": "A receipt can preserve delivery degradation without turning optional observability into a system-wide stop condition.",
+      "limits": "Tests establish software behavior; they do not establish an empirical law about all telemetry systems.",
+      "source_links": [
+        "https://github.com/evanfollis/synaplex/blob/main/intake/friction.py",
+        "https://github.com/evanfollis/synaplex/blob/main/intake/test_friction_resilience.py"
+      ]
+    },
+    {
+      "id": "case:self-measuring-review-gate",
+      "slug": "self-measuring-review-gate",
+      "title": "A failed review gate remains visible",
+      "summary": "The system preserved a launcher failure, repaired the execution boundary, then stopped when the real no-cache gate failed 14 of 14 cases.",
+      "label": "engineering case study",
+      "status": "operational",
+      "learned": "Separating launcher failure from model evaluation prevents infrastructure noise from becoming a scientific verdict.",
+      "limits": "This retrospective receipt is not a prospective denominator and produced zero Evidence.",
+      "source_links": [
+        "https://github.com/evanfollis/synaplex/blob/main/lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "src:15706c04a748f182",
+      "title": "The Raft Consensus Algorithm",
+      "url": "https://raft.github.io/",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "official_archive",
+      "domain": "distributed_systems",
+      "author_publisher": "Ongaro and Ousterhout",
+      "content_digest": "sha256:15706c04a748f182964896c0e105ebea75212fee99a29a224ddaf5c211b3748c",
+      "access_license": "Public author-maintained paper archive",
+      "quality": 0.93
+    },
+    {
+      "id": "src:21c1cdce6ab0e550",
+      "title": "HTTP Semantics, RFC 9110",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "standard",
+      "domain": "distributed_systems",
+      "author_publisher": "IETF / RFC Editor",
+      "content_digest": "sha256:21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "access_license": "IETF Trust legal provisions",
+      "quality": 0.98
+    },
+    {
+      "id": "src:22a3e907ec8e8834",
+      "title": "Cross-validating causal discovery via Leave-One-Variable-Out",
+      "url": "https://proceedings.mlr.press/v275/schkoda25a.html",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "causal_scientific_method",
+      "author_publisher": "Schkoda et al. / PMLR",
+      "content_digest": "sha256:22a3e907ec8e88341e9073c7609d57a1ade5a2cb965d2dc14ae940467db1c7af",
+      "access_license": "PMLR open proceedings",
+      "quality": 0.94
+    },
+    {
+      "id": "src:3a7e24f19d4a81af",
+      "title": "Evaluating large language model agents for automation of atomic force microscopy",
+      "url": "https://www.nature.com/articles/s41467-025-64105-7",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "ai_systems",
+      "author_publisher": "Nature Communications",
+      "content_digest": "sha256:3a7e24f19d4a81afc0706bc13356a310f9549a1c9c21da6e8ab1999743c41aae",
+      "access_license": "Open-access article; publisher license on source page",
+      "quality": 0.94
+    },
+    {
+      "id": "src:3b70d9477106c9f1",
+      "title": "Expert-In-The-Loop Causal Discovery",
+      "url": "https://proceedings.mlr.press/v286/ankan25a.html",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "causal_scientific_method",
+      "author_publisher": "Ankan and Textor / PMLR",
+      "content_digest": "sha256:3b70d9477106c9f107b9bf3accaf82a873c2c5b1c208e3f57261c7799aad6a70",
+      "access_license": "PMLR open proceedings",
+      "quality": 0.94
+    },
+    {
+      "id": "src:78904823f90c89e5",
+      "title": "AutoLabs: cognitive multi-agent systems with self-correction for autonomous chemical experimentation",
+      "url": "https://www.nature.com/articles/s41598-026-45593-z",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "ai_systems",
+      "author_publisher": "Panapitiya et al. / Scientific Reports",
+      "content_digest": "sha256:78904823f90c89e5c56ace3428647634da1cf29cdfaf918a76226ea2d1633a32",
+      "access_license": "Open-access article; publisher license on source page",
+      "quality": 0.94
+    },
+    {
+      "id": "src:8efadf322e82ab31",
+      "title": "Economic governance: the organization of cooperation",
+      "url": "https://www.nobelprize.org/prizes/economic-sciences/2009/press-release/",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "official_report",
+      "domain": "organization_economics",
+      "author_publisher": "Nobel Prize Outreach",
+      "content_digest": "sha256:8efadf322e82ab31cf39021fe42e579a795ae67925cb4f8cc6e500485e7988cf",
+      "access_license": "Public official prize material",
+      "quality": 0.9
+    },
+    {
+      "id": "src:9324ca1dc67e70b8",
+      "title": "Artificial intelligence tools expand scientists' impact but contract science's focus",
+      "url": "https://www.nature.com/articles/s41586-025-09922-y",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "organization_economics",
+      "author_publisher": "Hao et al. / Nature",
+      "content_digest": "sha256:9324ca1dc67e70b89930d8268951e7d15688349968819fb2d9798940ae46b7f4",
+      "access_license": "Public abstract and article metadata; publisher terms apply",
+      "quality": 0.95
+    },
+    {
+      "id": "src:9476e0c0ce3e2c69",
+      "title": "Cost-aware Discovery of Contextual Failures using Bayesian Active Learning",
+      "url": "https://proceedings.mlr.press/v305/parashar25a.html",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "causal_scientific_method",
+      "author_publisher": "Parashar et al. / PMLR",
+      "content_digest": "sha256:9476e0c0ce3e2c69f0f832aaf936e7510c2090d7a4b0c8502de3654add9feef8",
+      "access_license": "PMLR open proceedings",
+      "quality": 0.94
+    },
+    {
+      "id": "src:94a6630c0ec4310a",
+      "title": "SLSA specification v1.0",
+      "url": "https://slsa.dev/spec/v1.0/",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "standard",
+      "domain": "security_safety",
+      "author_publisher": "OpenSSF / SLSA community",
+      "content_digest": "sha256:94a6630c0ec4310ad583a35c0d4576a35100a027e1e6dbdd6ba0c9484e593247",
+      "access_license": "Community standard; site license applies",
+      "quality": 0.94
+    },
+    {
+      "id": "src:ae3c8bff67059ca3",
+      "title": "MemBench: comprehensive evaluation of memory for LLM-based agents",
+      "url": "https://aclanthology.org/2025.findings-acl.989/",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "cognitive_science",
+      "author_publisher": "Tan et al. / ACL Anthology",
+      "content_digest": "sha256:ae3c8bff67059ca3161f947be4b14b68fd8325a1d60992a629ea2a2df9d1ed72",
+      "access_license": "ACL Anthology open paper; anthology terms apply",
+      "quality": 0.94
+    },
+    {
+      "id": "src:b389c07e47282088",
+      "title": "Working memory: theories, models, and controversies",
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2836213/",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "cognitive_science",
+      "author_publisher": "Alan Baddeley / NIH PMC",
+      "content_digest": "sha256:b389c07e472820888c02638974698c30066831a8f878493574c97faef8e65f4a",
+      "access_license": "Open full text in NIH PubMed Central",
+      "quality": 0.92
+    },
+    {
+      "id": "src:b4bee22a6d8992da",
+      "title": "Secure Software Development Framework 1.1",
+      "url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "standard",
+      "domain": "security_safety",
+      "author_publisher": "NIST",
+      "content_digest": "sha256:b4bee22a6d8992da0bf4743fff66c28998f56181794c8c95bc02471a8f0009f0",
+      "access_license": "US government publication",
+      "quality": 0.98
+    },
+    {
+      "id": "src:ba858aa321ee7bba",
+      "title": "Towards end-to-end automation of AI research",
+      "url": "https://www.nature.com/articles/s41586-026-10265-5",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "ai_systems",
+      "author_publisher": "Lu et al. / Nature",
+      "content_digest": "sha256:ba858aa321ee7bbad8e67cf9477632c2a2dd1f711ba3f2a314b7554e72c58e96",
+      "access_license": "Public abstract and article metadata; publisher terms apply",
+      "quality": 0.95
+    },
+    {
+      "id": "src:cbb9188f4f64ea57",
+      "title": "Exploring the capability and limits of the feedback mechanism",
+      "url": "https://arxiv.org/abs/math/0305011",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "preprint",
+      "domain": "control_cybernetics",
+      "author_publisher": "Lei Guo / arXiv",
+      "content_digest": "sha256:cbb9188f4f64ea57cafb972135a452ee155fc75736deb02d8d6082980dbc0ce3",
+      "access_license": "Public preprint; arXiv access terms",
+      "quality": 0.8
+    },
+    {
+      "id": "src:dbbfbcd83e2b0034",
+      "title": "Bayesian Active Learning for Bivariate Causal Discovery",
+      "url": "https://proceedings.mlr.press/v267/wang25bp.html",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "peer_reviewed_paper",
+      "domain": "causal_scientific_method",
+      "author_publisher": "Wang et al. / PMLR",
+      "content_digest": "sha256:dbbfbcd83e2b0034e320329ce315cc4b72cdb797b0512f76d30cc595b5b9e413",
+      "access_license": "PMLR open proceedings",
+      "quality": 0.94
+    },
+    {
+      "id": "src:e2671eb8dd4821d6",
+      "title": "Curiosity is Knowledge: active inference and no-regret optimization",
+      "url": "https://arxiv.org/abs/2602.06029",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "preprint",
+      "domain": "control_cybernetics",
+      "author_publisher": "Li et al. / arXiv",
+      "content_digest": "sha256:e2671eb8dd4821d666620e80a761493e6885af06c0f1246db66f2664de2b3b0d",
+      "access_license": "Public preprint; arXiv access terms",
+      "quality": 0.78
+    },
+    {
+      "id": "src:eddc2f90235dc513",
+      "title": "Cheating On AI Agent Evaluations",
+      "url": "https://www.nist.gov/blogs/caisi-research-blog/cheating-ai-agent-evaluations",
+      "retrieved_at": "2026-07-19T16:10:00Z",
+      "source_class": "official_report",
+      "domain": "security_safety",
+      "author_publisher": "NIST CAISI",
+      "content_digest": "sha256:eddc2f90235dc5138e44dd85cdfea5cc7e34fc2bd6321d3c54b50baee9d938fc",
+      "access_license": "US government public technical report",
+      "quality": 0.96
+    }
+  ],
+  "conjectures": [
+    {
+      "id": "conj:lov-for-systems",
+      "title": "Leave-one-variable-out tests may falsify diagnostic system models",
+      "source_ids": [
+        "src:22a3e907ec8e8834",
+        "src:15706c04a748f182"
+      ],
+      "source_mechanism": "LOVO tests whether a learned causal structure predicts relationships involving a withheld variable; replicated systems expose explicit state and transition relationships.",
+      "target_mechanism": "Withholding one telemetry variable or dependency edge can test whether a proposed failure account predicts the missing relation.",
+      "analogy_map": [
+        "causal variable → telemetry channel",
+        "withheld variable → hidden subsystem edge",
+        "cross-validation error → diagnostic-model prediction failure"
+      ],
+      "disanalogies": [
+        "Telemetry variables are selected, not naturally sampled",
+        "Distributed-system transitions may violate causal-discovery assumptions"
+      ],
+      "competing_explanations": [
+        "Failure comes from measurement sparsity",
+        "The withheld edge is redundant under the model"
+      ],
+      "falsifiers": [
+        "LOVO prediction performs no better than a topology-naive baseline across registered incidents"
+      ],
+      "preconditions": [
+        "Frozen graph hypothesis",
+        "Lossless event archive",
+        "Predeclared withheld variables"
+      ],
+      "expected_information_gain": "Medium-high: can reject an appealing diagnostic model without causal ground truth.",
+      "observation_route": "Replay immutable incident traces with predeclared telemetry masks; any Evidence requires a preregistered Claim and frozen gate.",
+      "diversity_score": 0.91,
+      "novelty_score": 0.86,
+      "redundancy_score": 0.08,
+      "source_quality_score": 0.94
+    },
+    {
+      "id": "conj:portfolio-collapse",
+      "title": "Closure pressure may collapse the hypothesis portfolio",
+      "source_ids": [
+        "src:9324ca1dc67e70b8",
+        "src:e2671eb8dd4821d6"
+      ],
+      "source_mechanism": "Optimization for visible impact can concentrate attention while curiosity policies allocate exploration against unresolved uncertainty.",
+      "target_mechanism": "An autonomous research loop optimizing closure alone may repeatedly select near-term tractable conjectures and narrow its source and hypothesis distribution.",
+      "analogy_map": [
+        "scientist topic choice → conjecture selection",
+        "citation impact → closure reward",
+        "field breadth → source-domain and mechanism diversity"
+      ],
+      "disanalogies": [
+        "Scientific careers have social incentives absent from a single research loop",
+        "Synaplex can explicitly measure and constrain its portfolio"
+      ],
+      "competing_explanations": [
+        "Narrowing reflects genuine source availability",
+        "Lower diversity is temporary specialization with higher later transfer"
+      ],
+      "falsifiers": [
+        "Source-domain and mechanism diversity stays stable or rises under increased closure pressure after controlling for available sources"
+      ],
+      "preconditions": [
+        "Versioned selection policy",
+        "Stable diversity metric",
+        "Comparable source-availability windows"
+      ],
+      "expected_information_gain": "High: separates productive focus from self-reinforcing epistemic collapse.",
+      "observation_route": "Retrospective shadow scoring of registered candidates under alternative attention policies; any Evidence requires a preregistered Claim and frozen gate.",
+      "diversity_score": 0.96,
+      "novelty_score": 0.82,
+      "redundancy_score": 0.12,
+      "source_quality_score": 0.87
+    },
+    {
+      "id": "conj:stage-capability",
+      "title": "Research-loop capability must be measured by stage, not prose quality",
+      "source_ids": [
+        "src:3a7e24f19d4a81af",
+        "src:78904823f90c89e5",
+        "src:cbb9188f4f64ea57"
+      ],
+      "source_mechanism": "Operational scientific agents can answer domain questions while failing at physical action, correction, or stage transitions; feedback analysis distinguishes local correction from whole-system capability.",
+      "target_mechanism": "A strong synthesis may conceal failures in retrieval, registration, execution, interpretation, or publication.",
+      "analogy_map": [
+        "laboratory stages → knowledge-loop stages",
+        "physical action failure → typed transition failure",
+        "feedback limits → bounded reflection and repair"
+      ],
+      "disanalogies": [
+        "Software stages are more replayable than physical experiments",
+        "Physical instruments introduce noise absent from deterministic validators"
+      ],
+      "competing_explanations": [
+        "Stage failures are interface defects rather than capability defects",
+        "End-to-end success is dominated by one bottleneck"
+      ],
+      "falsifiers": [
+        "Stage-specific scores add no predictive value over synthesis quality for end-to-end completion"
+      ],
+      "preconditions": [
+        "Typed stage events",
+        "Independent stage oracles",
+        "Held-out end-to-end tasks"
+      ],
+      "expected_information_gain": "High: locates whether fluent interpretation is masking broken transitions.",
+      "observation_route": "Score archived internal cycles stage by stage without changing outcomes; any Evidence requires a preregistered Claim and frozen gate.",
+      "diversity_score": 0.88,
+      "novelty_score": 0.76,
+      "redundancy_score": 0.18,
+      "source_quality_score": 0.94
+    },
+    {
+      "id": "conj:typed-expert-constraints",
+      "title": "Expert interventions should enter as typed graph constraints",
+      "source_ids": [
+        "src:3b70d9477106c9f1",
+        "src:b4bee22a6d8992da"
+      ],
+      "source_mechanism": "Expert-in-loop discovery makes domain constraints explicit; secure development frameworks require traceable decisions and provenance.",
+      "target_mechanism": "Principal corrections may be more reliable when represented as scoped, reviewable constraints instead of unstructured prompt residue.",
+      "analogy_map": [
+        "expert edge constraint → principal scope constraint",
+        "causal graph revision → Programme mechanism revision",
+        "decision provenance → constraint receipt"
+      ],
+      "disanalogies": [
+        "Principal authority is governance, not causal expertise",
+        "Some corrections concern values rather than graph structure"
+      ],
+      "competing_explanations": [
+        "Structured constraints add bureaucracy without reducing recurrence",
+        "Prompt-level examples are sufficient for durable behavior"
+      ],
+      "falsifiers": [
+        "Typed constraints do not reduce repeated requirement-invention or boundary-collapse regressions"
+      ],
+      "preconditions": [
+        "Constraint schema",
+        "Conflict and supersession rules",
+        "Regression-event baseline"
+      ],
+      "expected_information_gain": "High: tests whether governance corrections become durable machine-checkable state.",
+      "observation_route": "Shadow-classify historical corrections into typed constraints and compare recurrence detection; any Evidence requires a preregistered Claim and frozen gate.",
+      "diversity_score": 0.9,
+      "novelty_score": 0.8,
+      "redundancy_score": 0.15,
+      "source_quality_score": 0.96
+    }
+  ],
+  "digest": "sha256:1ff95a69809934d5bf80cfc7bc922753102fd3aa4b127ceaacdf990e01a798b8"
 }

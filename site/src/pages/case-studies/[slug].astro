@@ -1,0 +1,10 @@
+---
+import Layout from '../../layouts/Layout.astro'; import projection from '../../data/public-projection.json';
+export function getStaticPaths(){return projection.engineering_cases.map((item)=>({params:{slug:item.slug},props:{item}}));}
+const { item } = Astro.props;
+---
+<Layout title={item.title} description={item.summary}>
+  <p class="eyebrow">{item.label}</p><h1>{item.title}</h1><p class="lede">{item.summary}</p>
+  <div class="section prose"><h2>Operational lesson</h2><p>{item.learned}</p><h2>Epistemic limit</h2><p>{item.limits}</p><h2>Source artifacts</h2><ul>{item.source_links.map((link) => <li><a href={link}>{link} ↗</a></li>)}</ul></div>
+  <p class="section"><a href="/case-studies/">← All engineering case studies</a></p>
+</Layout>

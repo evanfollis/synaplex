@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">synaplex — systematic discovery, exposed</title><desc id="desc">A public research system with explicit epistemic state.</desc>
+  <rect width="1200" height="630" fill="#f2f0e9"/><path d="M0 470h1200M810 0v630" stroke="#c9cbc3"/>
+  <text x="84" y="115" fill="#214e3b" font-family="ui-monospace,monospace" font-size="22" letter-spacing="4">A DISCOVERY SYSTEM IN PUBLIC</text>
+  <text x="78" y="270" fill="#161916" font-family="Inter,system-ui,sans-serif" font-size="104" font-weight="650" letter-spacing="-7">synaplex<tspan fill="#214e3b">.</tspan></text>
+  <text x="84" y="350" fill="#5c625b" font-family="Inter,system-ui,sans-serif" font-size="32">Sources → conjectures → Claims → Evidence → Decisions</text>
+  <circle cx="1005" cy="220" r="91" fill="none" stroke="#214e3b" stroke-width="3"/><circle cx="1005" cy="220" r="12" fill="#214e3b"/>
+  <text x="892" y="395" fill="#161916" font-family="ui-monospace,monospace" font-size="19">EXPLICIT STATE</text><text x="892" y="428" fill="#5c625b" font-family="ui-monospace,monospace" font-size="16">ZERO FINDINGS MEANS ZERO</text>
+</svg>

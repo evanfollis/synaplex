@@ -15,10 +15,16 @@ METADATA = ROOT / "knowledge" / "public-metadata.json"
 STATUS = ROOT / "knowledge" / "public-status.json"
 STATUS_SCHEMA = ROOT / "knowledge" / "public-status.schema.json"
 PROJECTION_SCHEMA = ROOT / "knowledge" / "public-projection.schema.json"
+CASES = ROOT / "knowledge" / "engineering-cases.json"
+CASES_SCHEMA = ROOT / "knowledge" / "engineering-cases.schema.json"
+SOURCES = ROOT / "sources" / "registry.json"
+SOURCES_SCHEMA = ROOT / "sources" / "registry.schema.json"
+CONJECTURES = ROOT / "reasoning" / "conjectures" / "conjectures.json"
+CONJECTURES_SCHEMA = ROOT / "reasoning" / "conjectures" / "conjectures.schema.json"
 OUTPUT = ROOT / "knowledge" / "public-projection.json"
 SITE_OUTPUT = ROOT / "site" / "public" / "knowledge" / "public-projection.json"
 SITE_DATA = ROOT / "site" / "src" / "data" / "public-projection.json"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 DECISION_KINDS = {"promote", "kill", "continue", "pivot", "amend_policy", "rollback_policy"}
 ACCEPTING_DECISION_KINDS = {"promote"}
 
@@ -32,6 +38,15 @@ class ProjectionError(ValueError):
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
+
+
+def _validate_typed(source: Path, schema_path: Path, label: str) -> dict[str, Any]:
+    value = _read_json(source)
+    try:
+        Draft202012Validator(_read_json(schema_path), format_checker=Draft202012Validator.FORMAT_CHECKER).validate(value)
+    except Exception as exc:
+        raise ProjectionError(f"{label} schema violation: {exc.message}") from exc
+    return value
 
 
 def _records(kind: str) -> list[dict[str, Any]]:
@@ -144,7 +159,29 @@ def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: l
                 raise ProjectionError(f"result {claim['id']} lacks a valid Decision-to-Evidence chain")
             findings.append({"id": f"finding:{decision['id']}", "claim_id": claim["id"], "decision_id": decision["id"], "evidence_ids": cited, "statement": claim["statement"], "validity": "valid", "decided_at": decision["emitted_at"], "superseded_by": None})
     mechanisms = sorted(metadata.get("mechanisms", []), key=lambda item: item["id"])
-    projection: dict[str, Any] = {"projection_version": VERSION, "generated_at": max(timestamps), "counts": {"research": len(research), "findings": len(findings), "mechanisms": len(mechanisms)}, "research": research, "findings": findings, "mechanisms": mechanisms}
+    cases = sorted(_validate_typed(CASES, CASES_SCHEMA, "engineering cases")["cases"], key=lambda item: item["id"])
+    source_registry = _validate_typed(SOURCES, SOURCES_SCHEMA, "source registry")
+    sources = sorted(source_registry["sources"], key=lambda item: item["id"])
+    source_ids = {item["id"] for item in sources}
+    conjecture_source = _validate_typed(CONJECTURES, CONJECTURES_SCHEMA, "conjectures")
+    conjectures = sorted(conjecture_source["conjectures"], key=lambda item: item["id"])
+    for conjecture in conjectures:
+        unknown = set(conjecture["source_ids"]) - source_ids
+        if unknown:
+            raise ProjectionError(f"conjecture {conjecture['id']} cites unknown Sources: {sorted(unknown)}")
+        domains = {source["domain"] for source in sources if source["id"] in conjecture["source_ids"]}
+        if len(domains) < 2:
+            raise ProjectionError(f"conjecture {conjecture['id']} is not cross-domain")
+    timestamps.extend([source_registry["generated_at"], conjecture_source["generated_at"]])
+    counts = {
+        "research": len(research), "findings": len(findings), "mechanisms": len(mechanisms),
+        "engineering_cases": len(cases), "sources": len(sources), "conjectures": len(conjectures),
+    }
+    projection: dict[str, Any] = {
+        "projection_version": VERSION, "generated_at": max(timestamps), "counts": counts,
+        "research": research, "findings": findings, "mechanisms": mechanisms,
+        "engineering_cases": cases, "sources": sources, "conjectures": conjectures,
+    }
     _assert_public(projection)
     canonical = json.dumps(projection, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     projection["digest"] = "sha256:" + hashlib.sha256(canonical).hexdigest()

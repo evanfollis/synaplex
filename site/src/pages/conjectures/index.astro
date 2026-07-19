@@ -1,0 +1,8 @@
+---
+import Layout from '../../layouts/Layout.astro'; import projection from '../../data/public-projection.json';
+const sourceById = Object.fromEntries(projection.sources.map((item) => [item.id,item]));
+---
+<Layout title="Conjectures" description="Cross-domain mechanism conjectures awaiting registration and observation.">
+  <p class="eyebrow">Conjectural layer</p><h1>Interesting enough to criticize. Not true by being interesting.</h1><p class="lede">These transfers are upstream of Claims. Scores rank attention only; every route states that later Evidence requires preregistration and a frozen gate.</p>
+  <div class="section conjecture-list">{projection.conjectures.map((item) => <article id={item.id.replace(':','-')} class="conjecture-card"><div class="meta"><span class="status">conjecture</span><span>novelty {item.novelty_score.toFixed(2)}</span><span>diversity {item.diversity_score.toFixed(2)}</span><span>redundancy {item.redundancy_score.toFixed(2)}</span></div><h2>{item.title}</h2><p>{item.target_mechanism}</p><div class="two-col"><div><h3>Why the analogy may break</h3><ul>{item.disanalogies.map((x) => <li>{x}</li>)}</ul></div><div><h3>What would falsify it</h3><ul>{item.falsifiers.map((x) => <li>{x}</li>)}</ul></div></div><p class="route"><strong>Observation route:</strong> {item.observation_route}</p><p class="source-links"><strong>Source inputs:</strong> {item.source_ids.map((id, index) => <><a href={sourceById[id].url}>{sourceById[id].title}</a>{index < item.source_ids.length-1 ? ' · ' : ''}</>)}</p></article>)}</div>
+</Layout>

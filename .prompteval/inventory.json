@@ -11,6 +11,16 @@
       "file": "lab/evals/artifact-delivery-instrument-v2/review-prompt.md",
       "id": "artifact-delivery-v2-method-review",
       "status": "governed"
+    },
+    {
+      "file": "reasoning/conjectures/conjecture-prompt.md",
+      "id": "cross-domain-conjecture-v2",
+      "status": "governed"
+    },
+    {
+      "file": "reviews/public-evidence-surface-adversarial-review-2026-07-19.md",
+      "status": "not-a-prompt",
+      "note": "Immutable output receipt from a read-only adversarial review; it is never executed as model instructions."
     }
   ]
 }

@@ -1,0 +1,25 @@
+{
+  "id": "cross-domain-conjecture-v2",
+  "description": "V2 discriminated conjecture-or-rejection generator; production traces feed scheduled candidate capture.",
+  "owner": "synaplex",
+  "source": {
+    "type": "whole_file",
+    "file": "reasoning/conjectures/conjecture-prompt.md"
+  },
+  "model": "sonnet",
+  "params": {},
+  "executor": {
+    "type": "claude_cli",
+    "timeout": 45,
+    "user_template": "Classify this self-contained typed SourceObservation request. Return the discriminated result only.\\n\\n{scenario}"
+  },
+  "judge": {
+    "model": "opus"
+  },
+  "gate": {
+    "aggregate_floor_delta": 0.02,
+    "trials": 1,
+    "max_unknown_ratio": 0.2
+  },
+  "created": "2026-07-19T16:49:49Z"
+}

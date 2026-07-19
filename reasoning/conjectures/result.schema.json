@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","oneOf":[
+    {"$ref":"#/$defs/conjecture"},{"$ref":"#/$defs/rejection"}
+  ],"$defs":{
+    "strings":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1}},
+    "score":{"type":"number","minimum":0,"maximum":1},
+    "conjecture":{"type":"object","additionalProperties":false,"required":["kind","title","source_ids","source_mechanism","target_mechanism","analogy_map","disanalogies","competing_explanations","falsifiers","preconditions","expected_information_gain","observation_route","diversity_score","novelty_score","redundancy_score","source_quality_score"],"properties":{"kind":{"const":"conjecture"},"title":{"type":"string"},"source_ids":{"$ref":"#/$defs/strings"},"source_mechanism":{"type":"string"},"target_mechanism":{"type":"string"},"analogy_map":{"$ref":"#/$defs/strings"},"disanalogies":{"$ref":"#/$defs/strings"},"competing_explanations":{"$ref":"#/$defs/strings"},"falsifiers":{"$ref":"#/$defs/strings"},"preconditions":{"$ref":"#/$defs/strings"},"expected_information_gain":{"type":"string"},"observation_route":{"type":"string","pattern":"later Evidence requires a preregistered Claim and frozen gate"},"diversity_score":{"$ref":"#/$defs/score"},"novelty_score":{"$ref":"#/$defs/score"},"redundancy_score":{"$ref":"#/$defs/score"},"source_quality_score":{"$ref":"#/$defs/score"}}},
+    "rejection":{"type":"object","additionalProperties":false,"required":["kind","source_ids","failure_modes","rationale","remediation"],"properties":{"kind":{"const":"rejection"},"source_ids":{"type":"array","uniqueItems":true,"items":{"type":"string"}},"failure_modes":{"$ref":"#/$defs/strings"},"rationale":{"type":"string","minLength":1},"remediation":{"type":"string","minLength":1}}}
+  }
+}

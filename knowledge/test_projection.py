@@ -33,6 +33,21 @@ class ProjectionTests(unittest.TestCase):
         self.assertEqual(projection["findings"], [])
         self.assertEqual(projection["counts"]["findings"], 0)
 
+    def test_public_layers_remain_typed_and_separate(self):
+        projection = build_projection()
+        self.assertEqual(projection["counts"]["sources"], len(projection["sources"]))
+        self.assertEqual(projection["counts"]["conjectures"], len(projection["conjectures"]))
+        self.assertEqual(projection["counts"]["engineering_cases"], len(projection["engineering_cases"]))
+        self.assertTrue(all(case["label"] == "engineering case study" for case in projection["engineering_cases"]))
+        self.assertTrue(all("Evidence" not in source and "Decision" not in source for source in projection["sources"]))
+        self.assertTrue(all("preregistered Claim" in item["observation_route"] for item in projection["conjectures"]))
+        self.assertTrue(all("failure_modes" not in item and item["id"].startswith("conj:") for item in projection["conjectures"]))
+
+    def test_projection_counts_match_payloads(self):
+        projection = build_projection()
+        for name in ("research", "findings", "mechanisms", "engineering_cases", "sources", "conjectures"):
+            self.assertEqual(projection["counts"][name], len(projection[name]))
+
     def test_private_values_fail_closed(self):
         for value in ({"transcript_body": "private"}, {"x": "/opt/workspace/private"}, {"x": "file://lab/raw.json"}, {"x": "api_key=secret"}):
             with self.subTest(value=value), self.assertRaises(ProjectionError):

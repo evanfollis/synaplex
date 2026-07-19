@@ -1,0 +1,7 @@
+---
+import Layout from '../../layouts/Layout.astro'; import projection from '../../data/public-projection.json';
+---
+<Layout title="Engineering case studies" description="Operational Synaplex lessons, kept explicitly separate from scientific findings.">
+  <p class="eyebrow">Engineering track</p><h1>What the system has learned by being operated.</h1><p class="lede">These are implementation outcomes with source links and explicit limits. They are useful and inspectable; they are not Claims, Evidence, Decisions, or scientific findings.</p>
+  <div class="section case-grid">{projection.engineering_cases.map((item) => <a class="case-card" href={`/case-studies/${item.slug}/`}><span class="status status--operational">{item.label}</span><h2>{item.title}</h2><p>{item.summary}</p><span>Read evidence and limits →</span></a>)}</div>
+</Layout>

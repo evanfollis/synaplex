@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro'; import Status from '../../components/Status.astro'; import projection from '../../data/public-projection.json';
 ---
 <Layout title="Research" description="Every public research record, including blocked, invalidated, and withdrawn work.">
-  <p class="eyebrow">Research</p><h1>The full record, not a highlight reel.</h1><p class="lede">Every preregistered Claim is accounted for. Status comes from canon Decisions plus the reviewed public projection metadata.</p>
+  <p class="eyebrow">Registered research</p><h1>The full record, not a highlight reel.</h1><p class="lede">Every preregistered Claim is accounted for. Status comes from canon Decisions plus a typed, hash-bound public status source—not editorial inference.</p>
   <div class="section record-list">{projection.research.map((item) => <a class="record" href={`/research/${item.slug}/`}><Status value={item.status}/><div><h3>{item.title}</h3><p>{item.summary}</p></div><span aria-hidden="true">→</span></a>)}</div>
+  <section class="section"><p class="eyebrow">Before registration</p><h2>Cross-domain conjectures</h2><p class="lede small">These are directions for criticism, not Claims, Evidence, Decisions, or findings. Their public scores route attention; they do not confer truth.</p><div class="record-list">{projection.conjectures.map((item) => <a class="record" href={`/conjectures/#${item.id.replace(':','-')}`}><span class="status">conjecture</span><div><h3>{item.title}</h3><p>{item.target_mechanism}</p></div><span>→</span></a>)}</div></section>
 </Layout>

@@ -1,0 +1,11 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import projection from '../../data/public-projection.json';
+const groups = Object.groupBy(projection.sources, (item) => item.domain);
+const pretty = (value) => value.replaceAll('_',' ');
+---
+<Layout title="Sources" description="The typed, digest-bound source registry behind Synaplex cross-domain conjectures.">
+  <p class="eyebrow">Source registry</p><h1>Inputs with receipts, not borrowed authority.</h1>
+  <p class="lede">{projection.counts.sources} primary sources span {Object.keys(groups).length} domains. Every record carries a retrieval timestamp, content digest, source class, publisher, and access terms. A source can inspire a conjecture; it cannot become Synaplex Evidence.</p>
+  <div class="section source-groups">{Object.entries(groups).sort().map(([domain, items]) => <section><h2>{pretty(domain)}</h2>{items?.map((item) => <article class="source-card"><div><span class="status">{pretty(item.source_class)}</span><h3><a href={item.url}>{item.title} ↗</a></h3><p>{item.author_publisher}</p></div><dl><div><dt>Retrieved</dt><dd>{item.retrieved_at.slice(0,10)}</dd></div><div><dt>Digest</dt><dd class="mono">{item.content_digest.slice(7,19)}…</dd></div><div><dt>Access</dt><dd>{item.access_license}</dd></div></dl></article>)}</section>)}</div>
+</Layout>

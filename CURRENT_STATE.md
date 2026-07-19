@@ -1,40 +1,72 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-19T14:32Z (reflection pass)
+updated: 2026-07-19T17:20Z (public evidence surface and source layer)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (prompteval gate 14/14 failed; diagnosis needed — formatting vs. judgment; no opposing review run); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.0.0 deployed
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 release-ready
 ---
 
 # synaplex — current state
 
-## Public knowledge projection and reader surface (2026-07-12)
+## Public evidence surface and interdisciplinary source layer (2026-07-19)
 
-ADR-0046's public projection is implemented as a deterministic, versioned,
-default-deny contract under `knowledge/`. The Astro build generates and consumes
-the same `public-projection.json` served at
-`/knowledge/public-projection.json`; projection v1.0.0 currently contains four
-research records, zero Decision-backed findings, and three methodological
-mechanisms. The zero-findings state is intentional and explicit. Withdrawn,
-invalidated, and blocked work remain distinct and retain stable Claim/Decision
-lineage. Programme content cannot support a finding.
+Projection v1.1.0 extends ADR-0046 without weakening its default-deny boundary.
+The deterministic JSON contains 4 canon research records, **0 findings**, 3
+methodological mechanisms, 18 typed SourceObservations across 7 domains, 4
+curated cross-domain conjectures, and 4 explicitly non-scientific engineering
+case studies. Its digest is
+`sha256:1ff95a69809934d5bf80cfc7bc922753102fd3aa4b127ceaacdf990e01a798b8`.
+The zero-findings state remains intentional and prominent. Only
+`Decision(kind=promote)` with existing cited Evidence belonging to the same Claim
+can emit a finding; all other Decision kinds remain non-accepting.
 
-The site information architecture is now Overview, Method, Research, Insights,
-and Artifacts. Legacy promotional, directory, newsletter, and stale study routes
-were removed. Build-time generation fails closed on canon/metadata drift, private
-paths or fields, unstable identity, and any purported finding without a valid
-Decision-to-Evidence chain. The existing canon and publication guards still run
-before generation.
+`sources/registry.json` is schema-validated, digest-bound, URL-deduplicated, and
+measured for freshness, domain balance, redundancy, and quality. Sources are
+inputs, never local Evidence. Conjectures name analogy maps, disanalogies,
+competing explanations, falsifiers, preconditions, information gain, observation
+routes, and attention-only scores. Runtime generation returns a strict
+`conjecture | rejection` union; rejections raise at the curation choke point and
+cannot enter the public registry. Full runtime input/output traces append outside
+the public projection at mode 0600; telemetry remains non-blocking.
 
+The prompt is governed as `cross-domain-conjecture-v2`. Fresh no-cache release
+`run-20260719T171510Z-45e399` accepted prompt version
+`pv-38258c6e2891c210` at aggregate 1.0: 12/12 active cases and 2/2 newly sealed
+holdouts passed. The incompatible, never-baselined v1 loop was retired rather
+than edited green; its two failed runs and unchanged old holdout digest are
+preserved in `reviews/cross-domain-conjecture-v1-retirement-2026-07-19.md`.
+Claude subscription timeouts are now typed provider-availability failures in the
+shared harness, with provider/model/status/latency/fallback telemetry and Codex
+subscription fallback. True top-level key allowlists replace raw substring
+exclusion. No metered keys are visible to child CLIs.
+
+The public information architecture is now Overview, Method, Research, Case
+studies, Sources, and About, with a separate conjecture route, author/repository
+provenance, direct source links, Open Graph/Twitter metadata, and a social preview.
+Engineering outcomes are visibly kept outside the findings lane. An adversarial
+Codex review identified presentation drift as the main risk; page-copy boundary
+tests and the rejection curation choke point now enforce the response. Local
+Playwright verification covers desktop and mobile navigation, metadata, content,
+console/page errors, overlays, and horizontal overflow. All 21 routes build.
+
+Weekly production-trace capture is installed as
+`synaplex-conjecture-eval-capture.timer`; it uses absolute subscription CLI paths,
+is active, and its first no-trace service run exited successfully. The existing
+Phase B `BLOCKED_PRE_ENTRY` state and every frozen scientific artifact remain
+unchanged.
+
+## Public knowledge projection deployment history (2026-07-12)
+
+The v1.0.0 projection and original reader surface were deployed on 2026-07-12.
 Projection status semantics are typed rather than inferred from prose. Existing
 withdrawn and invalidated dispositions resolve from structured Decision
 correlation tags, never rationale prefixes. The blocked pre-entry state lives in
 the separately schema-validated `knowledge/public-status.json` and is hash-bound
-to its reviewed lab artifact; the build refuses authority-hash drift, unknown
-Claims, extra block fields, or a block that survives a terminal Decision. Only a
-canon `Decision(kind=promote)` may create a finding, and every cited Evidence id
-must exist and belong to the promoted Claim. Generated output is validated
-against `public-projection.schema.json` during tests and every build.
+to its reviewed lab artifact.
+
+The build refuses authority-hash drift, unknown Claims, extra block fields, or a
+block that survives a terminal Decision. Generated output is validated against
+`public-projection.schema.json` during tests and every build.
 
 Local acceptance is complete: all canon, conformance, runner, executor, intake,
 Programme, integrity, projection, and site-build checks pass; desktop and mobile

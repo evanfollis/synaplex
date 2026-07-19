@@ -3,22 +3,26 @@ import Layout from '../layouts/Layout.astro';
 import Status from '../components/Status.astro';
 import projection from '../data/public-projection.json';
 const moving = projection.research.filter((item) => ['active','blocked'].includes(item.status));
+const featuredCases = projection.engineering_cases.slice(0, 2);
 ---
 <Layout title="synaplex — systematic discovery, exposed" description="A systematic discovery methodology exposed as a public, inspectable system.">
   <section class="hero">
     <p class="eyebrow">A discovery system in public</p>
     <h1>Knowledge should show <strong>how it earned its status.</strong></h1>
-    <p class="lede">Synaplex turns signals into conjectures, subjects them to criticism and evidence, and publishes only what a valid Decision can support. The method, movement, failures, and empty spaces remain visible.</p>
+    <p class="lede">Synaplex is a working research system: it turns external sources into typed conjectures, registers falsifiable Claims before observation, and publishes findings only when Evidence and an accepting Decision exist.</p>
+    <div class="hero-actions"><a class="button" href="/method/">See how it works</a><a href="/research/">Inspect live research →</a></div>
   </section>
   <section class="grid" aria-label="Current projection counts">
     <div class="card"><p class="number">{projection.counts.findings}</p><h2>Findings</h2><p>No claim has yet completed the full Evidence-to-Decision standard. That is a result of the publication threshold, not missing page content.</p></div>
     <div class="card"><p class="number">{projection.counts.research}</p><h2>Research records</h2><p>Active, blocked, withdrawn, and invalidated work remains inspectable under stable identities.</p></div>
-    <div class="card"><p class="number">{projection.counts.mechanisms}</p><h2>Mechanisms</h2><p>Operational safeguards make preregistration, lineage, and publication constraints testable.</p></div>
+    <div class="card"><p class="number">{projection.counts.sources}</p><h2>Typed sources</h2><p>Primary material from seven disciplines, retained with retrieval time, digest, source class, and access terms.</p></div>
   </section>
+  <section class="section system-map"><p class="eyebrow">How the system moves</p><ol><li><strong>Source</strong><span>input, never Evidence</span></li><li><strong>Conjecture</strong><span>analogy plus disanalogy</span></li><li><strong>Claim</strong><span>registered before observation</span></li><li><strong>Evidence</strong><span>typed and claim-specific</span></li><li><strong>Decision</strong><span>accepts, continues, or disposes</span></li></ol></section>
   <section class="section">
     <div class="section-head"><p class="eyebrow">Current movement</p><div><h2>Research does not disappear when it stalls.</h2><p>A blocked study remains distinct from an invalidated one. A withdrawal is not a negative finding. Inline labels preserve those differences.</p></div></div>
     <div class="record-list">
       {moving.map((item) => <a class="record" href={`/research/${item.slug}/`}><Status value={item.status}/><div><h3>{item.title}</h3><p>{item.summary}</p></div><span aria-hidden="true">→</span></a>)}
     </div>
   </section>
+  <section class="section"><div class="section-head"><p class="eyebrow">What has been learned</p><div><h2>Engineering lessons, kept out of the findings lane.</h2><p>Operational outcomes are useful, but they are not scientific Evidence. Each case names its limits and links to its source artifacts.</p></div></div><div class="case-grid">{featuredCases.map((item) => <a class="case-card" href={`/case-studies/${item.slug}/`}><span class="status status--operational">{item.label}</span><h3>{item.title}</h3><p>{item.summary}</p><span>Read the case →</span></a>)}</div></section>
 </Layout>

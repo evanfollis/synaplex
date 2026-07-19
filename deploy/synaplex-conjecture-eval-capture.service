@@ -1,0 +1,7 @@
+[Unit]
+Description=Capture production Synaplex conjecture traces for prompt evaluation
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/workspace/projects/synaplex
+ExecStart=/bin/bash /opt/workspace/projects/synaplex/scripts/capture-conjecture-eval.sh
