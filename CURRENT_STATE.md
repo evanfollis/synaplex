@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-18T14:31Z (reflection pass)
+updated: 2026-07-19T02:29Z (reflection pass)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (prompteval gate 14/14 failed; diagnosis needed — formatting vs. judgment; no opposing review run); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.0.0 deployed
 ---
@@ -527,7 +527,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    blocker; the heuristic scorer is the intended path. Do not re-open this.
 
 ## Known broken or degraded
-(updated 2026-07-18T02:30Z — reflection pass)
+(updated 2026-07-19T02:30Z — reflection pass)
 
 **Open, unfixed:**
 
@@ -543,7 +543,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 - ~~**arxiv intake stuck (2 consecutive events)**~~ **SELF-RESOLVED 2026-07-14T04:17Z** —
   100 new items fetched; counter reset at 3 consecutive threshold (never reached).
   Same pattern as prior episodes. No code change needed.
-- **synthesis-translator emits no `sourceType` field** (8th consecutive window; last observed 2026-07-18T03:30Z; dispatch obligation overdue 7d+; no URGENT handoff created by general session despite 8 proposals) — S1-P2 violation. Fix: `export SYNAPLEX_SOURCE_TYPE=cron` in `supervisor/scripts/lib/synthesis-translator.sh`. One-line fix. URGENT handoff creation required by general session: CANNOT from reflection job.
+- **synthesis-translator emits no `sourceType` field** (9th consecutive window; last observed 2026-07-18T15:30Z; 161 total events without field; dispatch obligation overdue 7d+; no URGENT handoff created by general session despite 9 proposals) — S1-P2 violation. Fix: `export SYNAPLEX_SOURCE_TYPE=cron` in `supervisor/scripts/lib/synthesis-translator.sh`. One-line fix. URGENT handoff creation required by general session: CANNOT from reflection job.
 - **Doc drift in `methodology.md`**: references Claim `memory-systems-v1-h1` at a path
   that does not exist; the real id is `b7ff216f4eec6e58`. Per project CLAUDE.md, this
   is documented, not repaired — the file is hash-bound and repairing it would break
@@ -699,7 +699,7 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
    be created by a user session or the general session. Until it is created, this is a dead link.
 3. `/opt/workspace/runtime/friction/events.jsonl` — live evidence of what the pipeline is actually doing. Note: workspace-level path.
 4. `lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md` — exact state of the blocked pre-entry review.
-5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-18T14-31-12Z.md` — latest reflection (2026-07-18 14:31Z); no user sessions, intake clean, synthesis-translator 8th window without fix, dispatch obligation overdue 7d+.
+5. `/opt/workspace/runtime/.meta/synaplex-reflection-2026-07-19T02-29-58Z.md` — latest reflection (2026-07-19 02:30Z); no user sessions, intake clean, synthesis-translator 9th window without fix (161 events), dispatch obligation structurally broken.
 5. `intake/README.md` — Layer 1 boundary semantics; includes systemd enable instructions and data layout.
 6. **always-load cap collision**: RESOLVED 2026-04-25T15:50Z — `active-issues.md` trimmed to 3.8KB, aggregate 29.6KB (no truncation). URGENT archived.
 7. §4 file-lock race (concurrent manual invocation of intake ingest): explicitly accepted risk per adversarial review verdict.
