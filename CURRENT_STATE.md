@@ -1,9 +1,9 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-19T17:20Z (public evidence surface and source layer)
+updated: 2026-07-19T17:23Z (public evidence surface deployed and verified)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 release-ready
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 deployed
 ---
 
 # synaplex — current state
@@ -54,6 +54,18 @@ Weekly production-trace capture is installed as
 is active, and its first no-trace service run exited successfully. The existing
 Phase B `BLOCKED_PRE_ENTRY` state and every frozen scientific artifact remain
 unchanged.
+
+Release commit `2087815` is pushed to `origin/main` and deployed to the existing
+Cloudflare Pages project `synaplex`; immutable deployment URL:
+`https://aad126d9.synaplex.pages.dev`. External verification returned HTTP 200
+for the apex, Sources, Conjectures, Case studies, About, social preview, and
+machine-readable projection. The apex JSON reproduces projection v1.1.0, digest
+`sha256:1ff95a69809934d5bf80cfc7bc922753102fd3aa4b127ceaacdf990e01a798b8`,
+and counts `4 research / 0 findings / 3 mechanisms / 4 engineering cases / 18
+sources / 4 conjectures`. Open Graph and Twitter metadata point at the live
+social card. Public DNS still resolves through Cloudflare. The existing token at
+`runtime/.secrets/cloudflare_api_token` was loaded into `CLOUDFLARE_API_TOKEN`
+for Wrangler and was never printed.
 
 ## Public knowledge projection deployment history (2026-07-12)
 
