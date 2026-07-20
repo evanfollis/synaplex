@@ -12,7 +12,11 @@ from unittest import mock
 from datetime import datetime, timezone
 from pathlib import Path
 
-from intake.friction_classifier import MAX_SOURCE_EVENT_REFS, FrictionClassifier
+from intake.friction_classifier import (
+    MAX_SOURCE_EVENT_REFS,
+    FrictionClassifier,
+    class_key,
+)
 
 NOW = datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc)
 
@@ -203,6 +207,64 @@ class FrictionClassifierTests(unittest.TestCase):
         body = self.frs()[0].read_text()
         self.assertNotIn("\nStatus: resolved", body)
         self.assertNotIn("\n## forged", body)
+
+    def test_generated_fr_sanitizes_multiline_source(self) -> None:
+        self.write(_event("stuck", "queue stalled", source="fixture\n## forged"))
+        self.classifier().run()
+        body = self.frs()[0].read_text()
+        self.assertNotIn("\n## forged", body)
+        self.assertIn("Recurring stuck in validation/fixture ## forged", body)
+
+    def test_malformed_candidate_ref_is_pruned_without_blocking_runs(self) -> None:
+        fingerprint, encoded = class_key(_event("failure", "bad candidate"))
+        candidate = {
+            "version": 1,
+            "fingerprint": fingerprint,
+            "class": json.loads(encoded),
+            "source_event_refs": [{
+                "source_dev": 1,
+                "source_ino": 2,
+                "byte_start": 3,
+                "byte_end": 4,
+                "line_sha256": "abc",
+                "line": 1,
+                "ts": "not-a-date",
+                "reason": "bad candidate",
+                "ref": "fixture://bad",
+            }],
+            "representative_reasons": ["bad candidate"],
+            "promotion": {"status": "pending"},
+        }
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        (candidates / f"sha256-{fingerprint}.json").write_text(json.dumps(candidate))
+
+        with mock.patch("intake.friction_classifier.emit") as emit:
+            receipt = self.classifier().run()
+
+        self.assertEqual(receipt.malformed, 1)
+        self.assertEqual(receipt.candidates, 0)
+        self.assertFalse((candidates / f"sha256-{fingerprint}.json").exists())
+        emit.assert_called_once()
+
+    def test_candidate_file_count_is_capped_by_oldest_last_seen(self) -> None:
+        self.write(
+            _event("failure", "old", source="old", ts="2026-07-20T08:00:00Z"),
+            _event("failure", "new", source="new", ts="2026-07-20T09:00:00Z"),
+        )
+        with (
+            mock.patch("intake.friction_classifier.MAX_CANDIDATE_COUNT", 1),
+            mock.patch("intake.friction_classifier.emit") as emit,
+        ):
+            receipt = self.classifier().run()
+
+        self.assertEqual(receipt.candidates, 1)
+        remaining = [json.loads(path.read_text()) for path in (self.runtime / "candidates").glob("*.json")]
+        self.assertEqual(len(remaining), 1)
+        self.assertEqual(remaining[0]["class"]["source"], "new")
+        emit.assert_called_once()
+        self.assertEqual(emit.call_args.kwargs["eventType"], "throttled")
 
     def test_state_and_candidate_outputs_are_atomic_and_permission_safe(self) -> None:
         self.write(_event("failure", "first"))

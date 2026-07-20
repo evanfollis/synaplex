@@ -25,6 +25,7 @@ from .friction import emit
 WINDOW_DAYS = 7
 FAILURE_THRESHOLD = 3
 MAX_SOURCE_EVENT_REFS = 256
+MAX_CANDIDATE_COUNT = 1024
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 IMMEDIATE_TYPES = frozenset({"stuck", "escalated"})
 NON_PROMOTING_TYPES = frozenset({"success", "throttled"})
@@ -33,6 +34,7 @@ VALID_LAYERS = frozenset({"intake", "reasoning", "validation", "presentation", "
 MAX_REASON_CHARS = 160
 MAX_REF_CHARS = 512
 MAX_REPRESENTATIVE_REASONS = 5
+CLASS_TEXT_LIMIT = 96
 
 DEFAULT_EVENT_LOG = Path("/opt/workspace/runtime/friction/events.jsonl")
 DEFAULT_RUNTIME_ROOT = Path("/opt/workspace/runtime/friction")
@@ -73,6 +75,12 @@ def normalize_reason(reason: str) -> str:
 def display_text(value: str, limit: int = MAX_REASON_CHARS) -> str:
     """Collapse control and Markdown-shaping whitespace in generated prose."""
     return re.sub(r"\s+", " ", value).strip()[:limit]
+
+
+def class_display_text(value: object) -> str:
+    if not isinstance(value, str):
+        return "unknown"
+    return display_text(value, CLASS_TEXT_LIMIT) or "unknown"
 
 
 def _validate_event(value: object, *, now: datetime) -> dict[str, Any]:
@@ -211,6 +219,74 @@ class FrictionClassifier:
                 values[fingerprint] = value
         return values
 
+    def _emit_malformed_candidate(self, *, fingerprint: str, reason: str) -> None:
+        try:
+            emit(
+                layer="friction",
+                source="friction-classifier",
+                eventType="failure",
+                reason=f"malformed candidate {fingerprint}: {reason}"[:MAX_REASON_CHARS],
+                ref=str(self.candidates_root / f"sha256-{fingerprint}.json"),
+                sourceType="system",
+            )
+        except Exception:
+            # Candidate repair must not depend on optional telemetry delivery.
+            pass
+
+    def _candidate_ref_timestamp(
+        self, *, fingerprint: str, ref: dict[str, Any]
+    ) -> datetime | None:
+        try:
+            return _parse_ts(ref["ts"])
+        except (KeyError, TypeError, ValueError) as error:
+            self._emit_malformed_candidate(
+                fingerprint=fingerprint,
+                reason=f"invalid source_event_ref ts: {type(error).__name__}",
+            )
+            return None
+
+    def _candidate_last_seen(self, candidate: dict[str, Any]) -> datetime:
+        window = candidate.get("window", {})
+        if isinstance(window, dict):
+            try:
+                return _parse_ts(window.get("last_seen"))
+            except ValueError:
+                pass
+        timestamps = [
+            timestamp
+            for ref in candidate.get("source_event_refs", [])
+            if isinstance(ref, dict)
+            for timestamp in [self._candidate_ref_timestamp(
+                fingerprint=str(candidate.get("fingerprint", "unknown")),
+                ref=ref,
+            )]
+            if timestamp is not None
+        ]
+        return max(timestamps, default=datetime.min.replace(tzinfo=timezone.utc))
+
+    def _enforce_candidate_count(self, candidates: dict[str, dict[str, Any]]) -> None:
+        active = [
+            (fingerprint, candidate)
+            for fingerprint, candidate in candidates.items()
+            if candidate.get("source_event_refs")
+        ]
+        excess = len(active) - MAX_CANDIDATE_COUNT
+        if excess <= 0:
+            return
+        evicted = sorted(active, key=lambda item: self._candidate_last_seen(item[1]))[:excess]
+        for fingerprint, _candidate in evicted:
+            (self.candidates_root / f"sha256-{fingerprint}.json").unlink(missing_ok=True)
+            candidates.pop(fingerprint, None)
+        emit(
+            layer="friction",
+            source="friction-classifier",
+            eventType="throttled",
+            reason=f"evicted {len(evicted)} old candidates above cap {MAX_CANDIDATE_COUNT}",
+            ref=str(self.candidates_root),
+            sourceType="system",
+            extra={"evicted": len(evicted), "candidate_limit": MAX_CANDIDATE_COUNT},
+        )
+
     def _read_new(self, state: dict[str, Any], receipt: RunReceipt) -> list[tuple[dict[str, Any], dict[str, Any]]]:
         accepted: list[tuple[dict[str, Any], dict[str, Any]]] = []
         with self.event_log.open("rb") as handle:
@@ -275,9 +351,10 @@ class FrictionClassifier:
                         return path, False
                 except (OSError, UnicodeDecodeError):
                     continue
-            event_type = candidate["class"]["eventType"]
-            source = candidate["class"]["source"]
-            title = f"Recurring {event_type} in {candidate['class']['layer']}/{source}"
+            event_type = class_display_text(candidate["class"]["eventType"])
+            source = class_display_text(candidate["class"]["source"])
+            layer = class_display_text(candidate["class"]["layer"])
+            title = f"Recurring {event_type} in {layer}/{source}"
             refs = "\n".join(
                 f"- `{self.event_log}` bytes {ref['byte_start']}-{ref['byte_end']} "
                 f"(line {ref['line']}, sha256:{ref['line_sha256']})"
@@ -310,10 +387,10 @@ The deterministic Layer-5 classifier observed a promotable recurring class.
 
 ## Root cause / failure class
 
-- Layer: `{candidate['class']['layer']}`
+- Layer: `{layer}`
 - Source: `{source}`
 - Event type: `{event_type}`
-- Normalized reason: `{candidate['class']['reason']}`
+- Normalized reason: `{display_text(candidate['class']['reason'])}`
 
 ## Representative reasons
 
@@ -424,26 +501,45 @@ Do not infer resolution from this automated promotion alone.
                         ref["byte_start"], ref["byte_end"], ref["line_sha256"],
                     )
                     unique_refs[identity] = ref
-                all_refs = sorted(
-                    (
-                        ref
-                        for ref in unique_refs.values()
-                        if cutoff <= _parse_ts(ref["ts"]) <= self.now + MAX_FUTURE_SKEW
-                    ),
-                    key=lambda ref: (
-                        _parse_ts(ref["ts"]),
-                        ref.get("source_dev", 0),
-                        ref.get("source_ino", 0),
-                        ref["byte_start"],
-                    ),
-                )
+                dated_refs = []
+                for ref in unique_refs.values():
+                    timestamp = self._candidate_ref_timestamp(
+                        fingerprint=fingerprint,
+                        ref=ref,
+                    )
+                    if timestamp is None:
+                        receipt.malformed += 1
+                        continue
+                    if cutoff <= timestamp <= self.now + MAX_FUTURE_SKEW:
+                        dated_refs.append((timestamp, ref))
+                all_refs = [
+                    ref for _timestamp, ref in sorted(
+                        dated_refs,
+                        key=lambda item: (
+                            item[0],
+                            item[1].get("source_dev", 0),
+                            item[1].get("source_ino", 0),
+                            item[1]["byte_start"],
+                        ),
+                    )
+                ]
                 truncated = len(all_refs) > MAX_SOURCE_EVENT_REFS
                 candidate["source_event_refs"] = all_refs[-MAX_SOURCE_EVENT_REFS:]
                 refs = candidate["source_event_refs"]
                 if not refs:
                     (self.candidates_root / f"sha256-{fingerprint}.json").unlink(missing_ok=True)
                     continue
-                timestamps = sorted(_parse_ts(ref["ts"]) for ref in refs)
+                timestamps = sorted(
+                    timestamp
+                    for ref in refs
+                    for timestamp in [
+                        self._candidate_ref_timestamp(fingerprint=fingerprint, ref=ref)
+                    ]
+                    if timestamp is not None
+                )
+                if not timestamps:
+                    (self.candidates_root / f"sha256-{fingerprint}.json").unlink(missing_ok=True)
+                    continue
                 candidate["window"] = {
                     "days": WINDOW_DAYS,
                     "threshold": 1 if candidate["class"]["eventType"] in IMMEDIATE_TYPES else FAILURE_THRESHOLD,
@@ -466,7 +562,10 @@ Do not infer resolution from this automated promotion alone.
                         receipt.promoted += 1
                     else:
                         receipt.deduplicated += 1
-                _atomic_json(self.candidates_root / f"sha256-{fingerprint}.json", candidate)
+            self._enforce_candidate_count(candidates)
+            for fingerprint, candidate in candidates.items():
+                if candidate.get("source_event_refs"):
+                    _atomic_json(self.candidates_root / f"sha256-{fingerprint}.json", candidate)
             receipt.candidates = sum(1 for c in candidates.values() if c.get("source_event_refs"))
             _atomic_json(self.state_path, state)
         return receipt

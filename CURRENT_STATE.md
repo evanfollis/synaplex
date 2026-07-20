@@ -1,12 +1,24 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-20T10:09Z (Layer-5 friction classifier deployed and observed)
+updated: 2026-07-20T10:49Z (Layer-5 friction classifier independent review follow-ups landed)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 deployed
 ---
 
 # synaplex — current state
+
+## Layer-5 friction classifier review closure (2026-07-20)
+
+Independent opposing review found no deployment blockers and identified bounded
+follow-ups. The review hardening is landed: malformed persisted candidate refs
+are pruned instead of crashing future runs, candidate files have a hard count cap
+with oldest-last-seen eviction telemetry, generated FR markdown now sanitizes
+class fields such as source/layer/event type, and the shared friction `Layer`
+type includes the live `friction` and `lab` layers. Focused regressions cover
+malformed candidate refs, source-field markdown injection, and candidate-count
+eviction. `python3 -m unittest intake.test_friction_classifier` passes 16 tests;
+`python3 -m unittest discover` passes all 38 tests.
 
 ## Layer-5 friction promotion (2026-07-20)
 

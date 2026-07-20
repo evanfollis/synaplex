@@ -30,7 +30,7 @@ from typing import Literal
 
 from .paths import FRICTION_LOG
 
-Layer = Literal["intake", "reasoning", "validation", "presentation"]
+Layer = Literal["intake", "reasoning", "validation", "presentation", "friction", "lab"]
 # `throttled` is a non-failure health signal for rate-limit/cap enforcement —
 # separate from `failure` so meta-scan + adversarial review don't treat
 # designed truncation as an incident. Added 2026-04-24 per reflection OBS-C.
