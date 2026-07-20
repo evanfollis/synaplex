@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-20T10:49Z (Layer-5 friction classifier independent review follow-ups landed)
+updated: 2026-07-20T11:23Z (Layer-5 corruption recovery reviewed and production-observed)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 deployed
 ---
@@ -10,15 +10,27 @@ phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-c
 
 ## Layer-5 friction classifier review closure (2026-07-20)
 
-Independent opposing review found no deployment blockers and identified bounded
-follow-ups. The review hardening is landed: malformed persisted candidate refs
-are pruned instead of crashing future runs, candidate files have a hard count cap
-with oldest-last-seen eviction telemetry, generated FR markdown now sanitizes
-class fields such as source/layer/event type, and the shared friction `Layer`
-type includes the live `friction` and `lab` layers. Focused regressions cover
-malformed candidate refs, source-field markdown injection, and candidate-count
-eviction. `python3 -m unittest intake.test_friction_classifier` passes 16 tests;
-`python3 -m unittest discover` passes all 38 tests.
+Independent opposing review found blocking corruption-path weaknesses and the
+implementation was iterated until those failure classes were explicit and
+tested. Malformed candidate containers and refs can no longer stop healthy
+promotion. Complete corrupt projections move atomically into private cold
+quarantine; symlinks become inert metadata rather than live links. A durable
+prepared-record queue makes crashes before or after the artifact move
+recoverable, fsyncs the affected directories, caps executable recovery work,
+and retires a record into a non-executable failed lane after three unsuccessful
+attempts. Candidate bytes, reference counts, active candidate cardinality, and
+recovery-record bytes are bounded. An active-directory trust-envelope breach
+fails before the event watermark advances rather than silently dropping source
+events. Generated FR markdown sanitizes class fields, and the shared friction
+`Layer` type includes the live `friction` and `lab` layers.
+
+Focused regressions now cover malformed containers and refs, quarantine-storage
+failure, stable-inode replacement, symlink inerting, crashes on both sides of
+the artifact move, bounded recovery retirement, directory overload, source-field
+Markdown injection, and candidate-count eviction. `python3 -m unittest
+intake.test_friction_classifier` passes 25 tests; `python3 -m unittest discover`
+passes all 47 tests. The final pushed implementation is `cdaca6a`; all raw
+opposing-review transcripts remain under `runtime/.meta/`.
 
 ## Layer-5 friction promotion (2026-07-20)
 
@@ -53,9 +65,13 @@ of `1.1 OK`.
 Executive adversarial inspection found and fixed no-clobber publication,
 rotation/provenance, replay overcounting, unbounded projection, generated-Markdown,
 future-time, schema, and service-sandbox weaknesses before the final live run.
-Independent Claude review remains availability-blocked until its subscription
-window resets at 10:40 UTC; this is explicitly pending, not represented as passed.
-Phase B and all frozen scientific artifacts remain untouched.
+The independent Claude review and successive read-only Codex reviews are complete;
+their valid findings drove the corruption-recovery design above. The updated timer
+source is installed byte-for-byte, enabled, and active without the incorrect
+service `Requires=` coupling. A production run of the exact pushed code exited
+`0/SUCCESS` at 11:22:43Z with two candidates, one newly consumed event, no new
+promotion, no malformed input, and `quarantine_deferred=0`. Phase B and all frozen
+scientific artifacts remain untouched.
 
 ## Public evidence surface and interdisciplinary source layer (2026-07-19)
 
