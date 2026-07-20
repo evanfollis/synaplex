@@ -31,10 +31,12 @@ snapshot: 3,023 lines, 5 malformed legacy timestamps, two current candidates, an
 one promoted class—4 arxiv `stuck` events with fingerprint
 `a8bbb631aeb1cdd3b06e9560a8c8a70a7a90e57bd60bfb6b0051ac9db80f6807`.
 It wrote `supervisor/friction/FR-0046-recurring-stuck-in-intake-arxiv.md`
-with exact source references. Two subsequent runs consumed only their preceding
-classifier event; the hardened run emitted zero promotions and zero deduplication
+with exact source references. Subsequent validation runs consumed only their
+preceding classifier event and emitted zero promotions and zero deduplication
 noise. `synaplex-friction-classifier.timer` is enabled and waiting on its hourly
-schedule; the oneshot last exited `0/SUCCESS`.
+schedule; the oneshot last exited `0/SUCCESS`. The installed service has an empty
+Linux capability set, no network, strict write paths, and a systemd exposure score
+of `1.1 OK`.
 
 Executive adversarial inspection found and fixed no-clobber publication,
 rotation/provenance, replay overcounting, unbounded projection, generated-Markdown,
