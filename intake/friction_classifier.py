@@ -302,8 +302,10 @@ class FrictionClassifier:
         _safe_directory(failed, 0o700)
         pending_paths: list[Path] = []
         with os.scandir(pending) as entries:
-            for position, entry in enumerate(entries):
-                if position >= MAX_PENDING_RECOVERIES_PER_RUN:
+            for entry in entries:
+                if not entry.name.endswith(".json"):
+                    continue
+                if len(pending_paths) >= MAX_PENDING_RECOVERIES_PER_RUN:
                     receipt.quarantine_deferred += 1
                     self._emit_malformed_candidate(
                         fingerprint="aggregate",
@@ -311,17 +313,33 @@ class FrictionClassifier:
                                 "additional records deferred"),
                     )
                     break
-                if entry.name.endswith(".json"):
-                    pending_paths.append(pending / entry.name)
+                pending_paths.append(pending / entry.name)
         for record_path in pending_paths:
             record: object = {}
             try:
-                info = os.lstat(record_path)
+                record_fd = os.open(record_path, os.O_RDONLY | os.O_NOFOLLOW)
+                try:
+                    info = os.fstat(record_fd)
+                    if (not stat.S_ISREG(info.st_mode)
+                            or info.st_uid != os.geteuid()
+                            or info.st_size > MAX_QUARANTINE_RECORD_BYTES):
+                        raise ValueError("unsafe prepared quarantine record")
+                    raw = bytearray()
+                    while len(raw) <= MAX_QUARANTINE_RECORD_BYTES:
+                        chunk = os.read(
+                            record_fd,
+                            min(64_000, MAX_QUARANTINE_RECORD_BYTES + 1 - len(raw)),
+                        )
+                        if not chunk:
+                            break
+                        raw.extend(chunk)
+                finally:
+                    os.close(record_fd)
                 if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
                         or info.st_uid != os.geteuid()
-                        or info.st_size > MAX_QUARANTINE_RECORD_BYTES):
+                        or len(raw) > MAX_QUARANTINE_RECORD_BYTES):
                     raise ValueError("unsafe prepared quarantine record")
-                record = json.loads(record_path.read_text(encoding="utf-8"))
+                record = json.loads(raw.decode("utf-8"))
                 if not isinstance(record, dict):
                     raise ValueError("prepared quarantine record is not an object")
                 source = Path(record["source"])
@@ -433,13 +451,14 @@ class FrictionClassifier:
             return values
         paths: list[Path] = []
         with os.scandir(self.candidates_root) as entries:
-            for position, entry in enumerate(entries):
-                if position >= MAX_CANDIDATE_DIRECTORY_ENTRIES:
+            for entry in entries:
+                if not re.fullmatch(r"sha256-[0-9a-f]{64}\.json", entry.name):
+                    continue
+                if len(paths) >= MAX_CANDIDATE_DIRECTORY_ENTRIES:
                     raise RuntimeError(
                         "candidate directory exceeds the bounded trust envelope"
                     )
-                if re.fullmatch(r"sha256-[0-9a-f]{64}\.json", entry.name):
-                    paths.append(self.candidates_root / entry.name)
+                paths.append(self.candidates_root / entry.name)
         for path in paths:
             source_fd = None
             source_info = None
