@@ -270,15 +270,15 @@ class FrictionClassifierTests(unittest.TestCase):
         self.assertFalse(corrupt.exists())
         quarantine = self.runtime / "quarantine" / "candidates"
         artifacts = list(quarantine.glob("*.raw"))
-        manifests = list(
-            (self.runtime / "quarantine" / "manifests").glob("*.json")
+        records = list(
+            (self.runtime / "quarantine" / "candidates" / "records").glob("*.json")
         )
         self.assertEqual(len(artifacts), 1)
         self.assertEqual(artifacts[0].read_text(), "{not json}\n")
-        self.assertEqual(len(manifests), 1)
+        self.assertEqual(len(records), 1)
         self.assertIn(
             "JSONDecodeError",
-            json.loads(manifests[0].read_text())["records"][0]["reason"],
+            json.loads(records[0].read_text())["reason"],
         )
         emit.assert_called_once()
 
@@ -408,10 +408,10 @@ class FrictionClassifierTests(unittest.TestCase):
             (self.runtime / "quarantine" / "candidates").glob("*.raw")
         )
         self.assertEqual(quarantined, [])
-        manifests = list(
-            (self.runtime / "quarantine" / "manifests").glob("*.json")
+        records = list(
+            (self.runtime / "quarantine" / "candidates" / "records").glob("*.json")
         )
-        record = json.loads(manifests[0].read_text())["records"][0]
+        record = json.loads(records[0].read_text())
         self.assertEqual(record["disposition"], "symlink-metadata")
         self.assertEqual(record["symlink_target"], str(target))
         self.assertIsNone(record["artifact"])

@@ -29,6 +29,7 @@ MAX_SOURCE_EVENT_REFS = 256
 MAX_CANDIDATE_COUNT = 1024
 MAX_CANDIDATE_BYTES = 2_000_000
 MAX_CANDIDATE_SCAN = 2048
+MAX_CANDIDATE_DIRECTORY_ENTRIES = 4096
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 IMMEDIATE_TYPES = frozenset({"stuck", "escalated"})
 NON_PROMOTING_TYPES = frozenset({"success", "throttled"})
@@ -208,7 +209,6 @@ class FrictionClassifier:
         self.now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
         self._candidate_source_info: dict[str, os.stat_result] = {}
         self._quarantined_candidates: set[str] = set()
-        self._quarantine_records: list[dict[str, Any]] = []
 
     def _state(self) -> dict[str, Any]:
         if not self.state_path.exists():
@@ -228,6 +228,7 @@ class FrictionClassifier:
         if (current.st_dev, current.st_ino) != (source_info.st_dev, source_info.st_ino):
             raise ValueError("candidate path changed before quarantine")
         timestamp = _iso(self.now).replace(":", "").replace("-", "")
+        token = secrets.token_hex(8)
         record: dict[str, Any] = {
             "version": 1,
             "quarantined_at": _iso(self.now),
@@ -246,32 +247,25 @@ class FrictionClassifier:
                 "artifact": None,
                 "content_hash_status": "not-applicable",
             })
+            record_path = quarantine / "records" / f"{timestamp}.{token}.json"
+            _atomic_json(record_path, record)
             path.unlink()
         else:
             destination = quarantine / (
-                f"{path.name}.{timestamp}.{secrets.token_hex(8)}.raw"
+                f"{path.name}.{timestamp}.{token}.raw"
             )
-            os.rename(path, destination)
-            os.chmod(destination, 0o600)
             record.update({
                 "disposition": "atomic-move",
                 "artifact": str(destination),
                 "content_hash_status": "pending-cold-path",
             })
-        self._quarantine_records.append(record)
-
-    def _flush_quarantine_manifest(self) -> None:
-        """Write one cold-path manifest after promotion state is committed."""
-        if not self._quarantine_records:
-            return
-        manifests = self.runtime_root / "quarantine" / "manifests"
-        timestamp = _iso(self.now).replace(":", "").replace("-", "")
-        path = manifests / f"{timestamp}.{secrets.token_hex(8)}.json"
-        _atomic_json(path, {
-            "version": 1,
-            "created_at": _iso(self.now),
-            "records": self._quarantine_records,
-        })
+            # This write-ahead record is durable before the source moves. A
+            # crash leaves either source or destination plus the exact recovery
+            # coordinates; it never leaves an unidentifiable raw orphan.
+            record_path = quarantine / "records" / f"{timestamp}.{token}.json"
+            _atomic_json(record_path, record)
+            os.rename(path, destination)
+            os.chmod(destination, 0o600)
 
     def _validated_candidate(self, path: Path, value: object) -> dict[str, Any]:
         if not isinstance(value, dict) or value.get("version") != 1:
@@ -313,27 +307,41 @@ class FrictionClassifier:
         values: dict[str, dict[str, Any]] = {}
         if not self.candidates_root.exists():
             return values
-        paths = sorted(self.candidates_root.glob("sha256-*.json"))
-        cursor = state.get("candidate_scan_cursor", 0)
-        if type(cursor) is not int or cursor < 0:
-            cursor = 0
-        if paths:
-            cursor %= len(paths)
-            ordered_paths = paths[cursor:] + paths[:cursor]
-        else:
-            ordered_paths = []
-        selected_paths = ordered_paths[:MAX_CANDIDATE_SCAN]
-        state["candidate_scan_cursor"] = (
-            (cursor + len(selected_paths)) % len(paths) if paths else 0
-        )
-        if len(paths) > MAX_CANDIDATE_SCAN:
-            receipt.candidate_scan_deferred = len(paths) - MAX_CANDIDATE_SCAN
+        indexed = state.get("candidate_index", [])
+        if not isinstance(indexed, list) or any(
+            not isinstance(item, str) or not re.fullmatch(r"[0-9a-f]{64}", item)
+            for item in indexed
+        ):
+            raise ValueError("candidate_index must contain lowercase sha256 values")
+        fingerprints = set(indexed)
+        index_complete = state.get("candidate_index_complete") is True
+        if not index_complete:
+            exhausted = True
+            discovered = 0
+            with os.scandir(self.candidates_root) as entries:
+                for position, entry in enumerate(entries):
+                    if position >= MAX_CANDIDATE_DIRECTORY_ENTRIES:
+                        exhausted = False
+                        receipt.candidate_scan_deferred = 1
+                        break
+                    match = re.fullmatch(r"sha256-([0-9a-f]{64})\.json", entry.name)
+                    if match and match.group(1) not in fingerprints:
+                        fingerprints.add(match.group(1))
+                        discovered += 1
+                        if discovered >= MAX_CANDIDATE_SCAN:
+                            exhausted = False
+                            receipt.candidate_scan_deferred = 1
+                            break
+            state["candidate_index_complete"] = exhausted
+        state["candidate_index"] = sorted(fingerprints)
+        if receipt.candidate_scan_deferred:
             self._emit_malformed_candidate(
                 fingerprint="aggregate",
-                reason=(f"candidate scan capped at {MAX_CANDIDATE_SCAN}; "
-                        f"deferred={receipt.candidate_scan_deferred}"),
+                reason=(f"candidate discovery capped at {MAX_CANDIDATE_SCAN}; "
+                        "at least one directory entry deferred"),
             )
-        for path in selected_paths:
+        for fingerprint in sorted(fingerprints):
+            path = self.candidates_root / f"sha256-{fingerprint}.json"
             source_fd = None
             source_info = None
             try:
@@ -368,6 +376,9 @@ class FrictionClassifier:
                         self._quarantine_candidate(
                             path, f"{type(error).__name__}: {error}",
                             source_info,
+                        )
+                        self._quarantined_candidates.add(
+                            path.stem.removeprefix("sha256-")
                         )
                         self._emit_malformed_candidate(
                             fingerprint=path.stem.removeprefix("sha256-"),
@@ -690,7 +701,6 @@ Do not infer resolution from this automated promotion alone.
         receipt = RunReceipt()
         self._candidate_source_info.clear()
         self._quarantined_candidates.clear()
-        self._quarantine_records.clear()
         _safe_directory(self.runtime_root, 0o700)
         _safe_directory(self.candidates_root, 0o700)
         with _lock(self.run_lock):
@@ -704,6 +714,8 @@ Do not infer resolution from this automated promotion alone.
                     continue
                 fingerprint, encoded = class_key(event)
                 structural = json.loads(encoded)
+                if fingerprint not in candidates:
+                    state.setdefault("candidate_index", []).append(fingerprint)
                 candidate = candidates.setdefault(fingerprint, {
                     "version": 1,
                     "fingerprint": fingerprint,
@@ -794,14 +806,19 @@ Do not infer resolution from this automated promotion alone.
                 if fingerprint not in repair_deferred and candidate.get("source_event_refs"):
                     _atomic_json(self.candidates_root / f"sha256-{fingerprint}.json", candidate)
             receipt.candidates = sum(1 for c in candidates.values() if c.get("source_event_refs"))
+            surviving_fingerprints = {
+                fingerprint
+                for fingerprint, candidate in candidates.items()
+                if candidate.get("source_event_refs")
+            }
+            for fingerprint in state.get("candidate_index", []):
+                try:
+                    os.lstat(self.candidates_root / f"sha256-{fingerprint}.json")
+                except OSError:
+                    continue
+                surviving_fingerprints.add(fingerprint)
+            state["candidate_index"] = sorted(surviving_fingerprints)
             _atomic_json(self.state_path, state)
-        try:
-            self._flush_quarantine_manifest()
-        except Exception as manifest_error:
-            self._emit_malformed_candidate(
-                fingerprint="aggregate",
-                reason=f"quarantine manifest failed: {type(manifest_error).__name__}",
-            )
         return receipt
 
 
