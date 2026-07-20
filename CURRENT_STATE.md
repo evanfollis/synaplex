@@ -1,12 +1,47 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-19T17:23Z (public evidence surface deployed and verified)
+updated: 2026-07-20T10:09Z (Layer-5 friction classifier deployed and observed)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 deployed
 ---
 
 # synaplex — current state
+
+## Layer-5 friction promotion (2026-07-20)
+
+**Implemented, installed, enabled, and production-observed.**
+`intake/friction_classifier.py` provides the missing deterministic ADR-0029 path:
+incremental atomic watermarking, strict per-line validation with malformed-line
+continuation, transparent structural fingerprints, a rolling seven-day candidate
+projection, failure promotion at 3 occurrences, immediate stuck/escalated promotion,
+and cross-repo FR creation under filesystem locks with fingerprint deduplication.
+Candidate files are owner-only, capped at 256 retained references per class, and
+trace each occurrence to the immutable source stream by device/inode, byte range,
+line number, and line hash. Success and throttled events remain non-promoting
+evidence. The classifier emits typed summary/failure telemetry only from its
+scheduled CLI boundary.
+
+Thirteen deterministic classifier tests and all 35 repository tests pass, including
+concurrent processes, an uncoordinated FR-name collision, malformed-line recovery,
+replay after an interrupted candidate/watermark transaction, rotation-safe
+descriptor provenance, bounded hot state, future-time rejection, atomic modes, and
+exact-once promotion. The first production run processed the 833,062-byte live
+snapshot: 3,023 lines, 5 malformed legacy timestamps, two current candidates, and
+one promoted class—4 arxiv `stuck` events with fingerprint
+`a8bbb631aeb1cdd3b06e9560a8c8a70a7a90e57bd60bfb6b0051ac9db80f6807`.
+It wrote `supervisor/friction/FR-0046-recurring-stuck-in-intake-arxiv.md`
+with exact source references. Two subsequent runs consumed only their preceding
+classifier event; the hardened run emitted zero promotions and zero deduplication
+noise. `synaplex-friction-classifier.timer` is enabled and waiting on its hourly
+schedule; the oneshot last exited `0/SUCCESS`.
+
+Executive adversarial inspection found and fixed no-clobber publication,
+rotation/provenance, replay overcounting, unbounded projection, generated-Markdown,
+future-time, schema, and service-sandbox weaknesses before the final live run.
+Independent Claude review remains availability-blocked until its subscription
+window resets at 10:40 UTC; this is explicitly pending, not represented as passed.
+Phase B and all frozen scientific artifacts remain untouched.
 
 ## Public evidence surface and interdisciplinary source layer (2026-07-19)
 
@@ -574,6 +609,11 @@ Resolved this turn (three <30min fixes from reflection's P1–P3):
 (updated 2026-07-19T14:32Z — reflection pass)
 
 **Open, unfixed:**
+
+- **Layer-5 opposing-model review pending subscription reset.** Implementation,
+  installation, runtime observation, and executive adversarial review are complete.
+  Claude's subscription window resets at 10:40 UTC; rerun the exact read-only review
+  then and fix any valid finding. Do not represent this independent gate as passed yet.
 
 - ~~**The 12h reflection loop is short-circuiting.**~~ **RESOLVED 2026-07-13** — reflection
   re-armed by the 2026-07-12 commits; this cycle produced a full reflection.

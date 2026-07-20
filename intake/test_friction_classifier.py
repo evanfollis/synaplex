@@ -102,6 +102,15 @@ class FrictionClassifierTests(unittest.TestCase):
         self.assertEqual(receipt.promoted, 0)
         self.assertEqual(self.frs(), [])
 
+    def test_rotated_event_file_restarts_from_descriptor_zero(self) -> None:
+        self.write(_event("success", "old file"))
+        self.classifier().run()
+        replacement = self.root / "replacement.jsonl"
+        replacement.write_text(json.dumps(_event("stuck", "new file")) + "\n")
+        os.replace(replacement, self.events)
+        receipt = self.classifier().run()
+        self.assertEqual((receipt.start_offset, receipt.processed, receipt.promoted), (0, 1, 1))
+
     def test_malformed_json_does_not_block_later_events(self) -> None:
         self.events.write_bytes(b"{not json}\n" + json.dumps(_event("stuck", "later valid event")).encode() + b"\n")
         receipt = self.classifier().run()

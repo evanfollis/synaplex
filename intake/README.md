@@ -169,8 +169,9 @@ The classifier is inspectable and has no model or network path:
 ```
 
 It preserves an atomic watermark at `runtime/friction/classifier-state.json`,
-keeps a rolling seven-day projection under `runtime/friction/candidates/`, and
-never rewrites the append-only source. Three matching `failure` events promote;
+keeps a rolling seven-day projection capped at 256 source references per class
+under `runtime/friction/candidates/`, and never rewrites the append-only source.
+Three matching `failure` events promote;
 `stuck` and `escalated` promote immediately; `success` and designed `throttled`
 events remain non-promoting evidence. Every source reference carries the exact
 byte range and line hash needed to recover the raw event.
