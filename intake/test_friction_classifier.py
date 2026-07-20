@@ -246,7 +246,175 @@ class FrictionClassifierTests(unittest.TestCase):
         self.assertEqual(receipt.malformed, 1)
         self.assertEqual(receipt.candidates, 0)
         self.assertFalse((candidates / f"sha256-{fingerprint}.json").exists())
+        quarantined = list(
+            (self.runtime / "quarantine" / "candidates").glob("*.raw")
+        )
+        self.assertEqual(len(quarantined), 1)
+        self.assertEqual(
+            json.loads(quarantined[0].read_text())["source_event_refs"][0]["ts"],
+            "not-a-date",
+        )
         emit.assert_called_once()
+
+    def test_corrupt_candidate_container_is_quarantined_without_stalling(self) -> None:
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        corrupt = candidates / f"sha256-{'a' * 64}.json"
+        corrupt.write_text("{not json}\n")
+
+        with mock.patch("intake.friction_classifier.emit") as emit:
+            receipt = self.classifier().run()
+
+        self.assertEqual(receipt.malformed, 1)
+        self.assertFalse(corrupt.exists())
+        quarantine = self.runtime / "quarantine" / "candidates"
+        artifacts = list(quarantine.glob("*.raw"))
+        manifests = list(
+            (self.runtime / "quarantine" / "manifests").glob("*.json")
+        )
+        self.assertEqual(len(artifacts), 1)
+        self.assertEqual(artifacts[0].read_text(), "{not json}\n")
+        self.assertEqual(len(manifests), 1)
+        self.assertIn(
+            "JSONDecodeError",
+            json.loads(manifests[0].read_text())["records"][0]["reason"],
+        )
+        emit.assert_called_once()
+
+    def test_quarantine_failure_cannot_block_a_classifier_run(self) -> None:
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        corrupt = candidates / f"sha256-{'a' * 64}.json"
+        corrupt.write_text("{not json}\n")
+
+        with (
+            mock.patch.object(
+                FrictionClassifier,
+                "_quarantine_candidate",
+                side_effect=OSError("cold storage unavailable"),
+            ),
+            mock.patch("intake.friction_classifier.emit") as emit,
+        ):
+            receipt = self.classifier().run()
+
+        self.assertEqual(receipt.malformed, 1)
+        self.assertTrue(corrupt.exists())
+        self.assertEqual(emit.call_count, 2)
+        self.assertTrue(any(
+            "quarantine failed" in call.kwargs["reason"]
+            for call in emit.call_args_list
+        ))
+
+    def test_bounded_scan_rotates_when_poison_cannot_be_dispositioned(self) -> None:
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        corrupt = [
+            candidates / f"sha256-{'a' * 63}{suffix}.json"
+            for suffix in ("1", "2")
+        ]
+        for path in corrupt:
+            path.write_text("{not json}\n")
+
+        attempted: list[str] = []
+
+        def unavailable(_self, path, _reason, _source_info):
+            attempted.append(path.name)
+            raise OSError("cold storage unavailable")
+
+        with (
+            mock.patch("intake.friction_classifier.MAX_CANDIDATE_SCAN", 1),
+            mock.patch.object(
+                FrictionClassifier, "_quarantine_candidate", new=unavailable
+            ),
+            mock.patch("intake.friction_classifier.emit"),
+        ):
+            first = self.classifier().run()
+            second = self.classifier().run()
+
+        self.assertEqual(first.candidate_scan_deferred, 1)
+        self.assertEqual(second.candidate_scan_deferred, 1)
+        self.assertEqual(set(attempted), {path.name for path in corrupt})
+        self.assertTrue(all(path.exists() for path in corrupt))
+
+    def test_candidate_replacement_is_not_deleted_during_quarantine(self) -> None:
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        candidate = candidates / f"sha256-{'a' * 64}.json"
+        candidate.write_text("original invalid projection\n")
+        source_info = os.lstat(candidate)
+        replacement = self.root / "replacement.json"
+        replacement.write_text("replacement projection\n")
+        os.replace(replacement, candidate)
+
+        with self.assertRaisesRegex(ValueError, "path changed"):
+            with mock.patch("intake.friction_classifier.emit"):
+                self.classifier()._quarantine_candidate(
+                    candidate, "test replacement", source_info
+                )
+
+        self.assertEqual(candidate.read_text(), "replacement projection\n")
+        self.assertEqual(list((self.runtime / "quarantine" / "candidates").glob("*.raw")), [])
+
+    def test_malformed_ref_quarantine_failure_is_non_blocking(self) -> None:
+        fingerprint, encoded = class_key(_event("failure", "bad candidate"))
+        candidate = {
+            "version": 1,
+            "fingerprint": fingerprint,
+            "class": json.loads(encoded),
+            "source_event_refs": [{"not": "a valid reference"}],
+            "representative_reasons": ["bad candidate"],
+            "promotion": {"status": "pending"},
+        }
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        path = candidates / f"sha256-{fingerprint}.json"
+        path.write_text(json.dumps(candidate))
+
+        with (
+            mock.patch.object(
+                FrictionClassifier,
+                "_quarantine_candidate",
+                side_effect=OSError("cold storage unavailable"),
+            ),
+            mock.patch("intake.friction_classifier.emit") as emit,
+        ):
+            receipt = self.classifier().run()
+
+        self.assertEqual(receipt.malformed, 1)
+        self.assertTrue(path.exists())
+        emit.assert_called_once()
+        self.assertIn("quarantine failed", emit.call_args.kwargs["reason"])
+
+    def test_unopenable_symlink_candidate_is_dispositioned_once(self) -> None:
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        target = self.root / "outside.json"
+        target.write_text("outside remains untouched\n")
+        poison = candidates / f"sha256-{'a' * 64}.json"
+        poison.symlink_to(target)
+
+        with mock.patch("intake.friction_classifier.emit"):
+            receipt = self.classifier().run()
+
+        self.assertEqual(receipt.malformed, 1)
+        self.assertFalse(poison.exists())
+        self.assertEqual(target.read_text(), "outside remains untouched\n")
+        quarantined = list(
+            (self.runtime / "quarantine" / "candidates").glob("*.raw")
+        )
+        self.assertEqual(quarantined, [])
+        manifests = list(
+            (self.runtime / "quarantine" / "manifests").glob("*.json")
+        )
+        record = json.loads(manifests[0].read_text())["records"][0]
+        self.assertEqual(record["disposition"], "symlink-metadata")
+        self.assertEqual(record["symlink_target"], str(target))
+        self.assertIsNone(record["artifact"])
 
     def test_candidate_file_count_is_capped_by_oldest_last_seen(self) -> None:
         self.write(

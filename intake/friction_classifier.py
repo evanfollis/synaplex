@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import stat
 import tempfile
 from dataclasses import dataclass
@@ -26,6 +27,8 @@ WINDOW_DAYS = 7
 FAILURE_THRESHOLD = 3
 MAX_SOURCE_EVENT_REFS = 256
 MAX_CANDIDATE_COUNT = 1024
+MAX_CANDIDATE_BYTES = 2_000_000
+MAX_CANDIDATE_SCAN = 2048
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 IMMEDIATE_TYPES = frozenset({"stuck", "escalated"})
 NON_PROMOTING_TYPES = frozenset({"success", "throttled"})
@@ -154,7 +157,9 @@ def _atomic_json(path: Path, value: object, mode: int = 0o600) -> None:
 
 
 def _lock(path: Path):
-    _safe_directory(path.parent, 0o700 if "runtime" in str(path) else 0o755)
+    # Both classifier locks live under the private runtime root. Do not infer a
+    # trust boundary from a path substring; alternate roots must retain 0700.
+    _safe_directory(path.parent, 0o700)
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     handle = os.fdopen(fd, "w", encoding="utf-8")
     fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
@@ -175,6 +180,8 @@ class RunReceipt:
     deduplicated: int = 0
     start_offset: int = 0
     end_offset: int = 0
+    candidate_scan_deferred: int = 0
+    quarantine_deferred: int = 0
 
     def as_dict(self) -> dict[str, int]:
         return dict(vars(self))
@@ -199,6 +206,9 @@ class FrictionClassifier:
         # dirty the supervisor repository merely by acquiring a lock.
         self.fr_lock = runtime_root / ".fr-write.lock"
         self.now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+        self._candidate_source_info: dict[str, os.stat_result] = {}
+        self._quarantined_candidates: set[str] = set()
+        self._quarantine_records: list[dict[str, Any]] = []
 
     def _state(self) -> dict[str, Any]:
         if not self.state_path.exists():
@@ -208,15 +218,186 @@ class FrictionClassifier:
             raise ValueError("unsupported classifier state")
         return value
 
-    def _load_candidates(self) -> dict[str, dict[str, Any]]:
+    def _quarantine_candidate(
+        self, path: Path, reason: str, source_info: os.stat_result
+    ) -> None:
+        """Move a complete derivative projection off the hot path in O(1)."""
+        quarantine = self.runtime_root / "quarantine" / "candidates"
+        _safe_directory(quarantine, 0o700)
+        current = os.lstat(path)
+        if (current.st_dev, current.st_ino) != (source_info.st_dev, source_info.st_ino):
+            raise ValueError("candidate path changed before quarantine")
+        timestamp = _iso(self.now).replace(":", "").replace("-", "")
+        record: dict[str, Any] = {
+            "version": 1,
+            "quarantined_at": _iso(self.now),
+            "source": str(path),
+            "reason": reason,
+            "source_bytes": source_info.st_size,
+            "source_dev": source_info.st_dev,
+            "source_ino": source_info.st_ino,
+        }
+        if stat.S_ISLNK(current.st_mode):
+            # Store only inert metadata. A live symlink in quarantine would be a
+            # latent arbitrary-read capability for a future hash/index worker.
+            record.update({
+                "disposition": "symlink-metadata",
+                "symlink_target": os.readlink(path),
+                "artifact": None,
+                "content_hash_status": "not-applicable",
+            })
+            path.unlink()
+        else:
+            destination = quarantine / (
+                f"{path.name}.{timestamp}.{secrets.token_hex(8)}.raw"
+            )
+            os.rename(path, destination)
+            os.chmod(destination, 0o600)
+            record.update({
+                "disposition": "atomic-move",
+                "artifact": str(destination),
+                "content_hash_status": "pending-cold-path",
+            })
+        self._quarantine_records.append(record)
+
+    def _flush_quarantine_manifest(self) -> None:
+        """Write one cold-path manifest after promotion state is committed."""
+        if not self._quarantine_records:
+            return
+        manifests = self.runtime_root / "quarantine" / "manifests"
+        timestamp = _iso(self.now).replace(":", "").replace("-", "")
+        path = manifests / f"{timestamp}.{secrets.token_hex(8)}.json"
+        _atomic_json(path, {
+            "version": 1,
+            "created_at": _iso(self.now),
+            "records": self._quarantine_records,
+        })
+
+    def _validated_candidate(self, path: Path, value: object) -> dict[str, Any]:
+        if not isinstance(value, dict) or value.get("version") != 1:
+            raise ValueError("candidate must be a version-1 object")
+        fingerprint = value.get("fingerprint")
+        if not isinstance(fingerprint, str) or not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
+            raise ValueError("candidate fingerprint must be lowercase sha256")
+        if path.name != f"sha256-{fingerprint}.json":
+            raise ValueError("candidate fingerprint does not match filename")
+        structural = value.get("class")
+        if not isinstance(structural, dict):
+            raise ValueError("candidate class must be an object")
+        if structural.get("layer") not in VALID_LAYERS:
+            raise ValueError("candidate class has invalid layer")
+        if structural.get("eventType") not in VALID_TYPES - NON_PROMOTING_TYPES:
+            raise ValueError("candidate class has non-promoting eventType")
+        for field in ("source", "reason"):
+            if not isinstance(structural.get(field), str) or not structural[field].strip():
+                raise ValueError(f"candidate class has invalid {field}")
+        encoded = json.dumps(structural, sort_keys=True, separators=(",", ":"))
+        if hashlib.sha256(encoded.encode()).hexdigest() != fingerprint:
+            raise ValueError("candidate fingerprint does not match class")
+        refs = value.get("source_event_refs")
+        if not isinstance(refs, list) or len(refs) > MAX_SOURCE_EVENT_REFS:
+            raise ValueError("candidate source_event_refs must be a list")
+        reasons = value.get("representative_reasons")
+        if not isinstance(reasons, list) or len(reasons) > MAX_REPRESENTATIVE_REASONS \
+                or any(not isinstance(item, str) or len(item) > MAX_REASON_CHARS
+                       for item in reasons):
+            raise ValueError("candidate representative_reasons must be strings")
+        promotion = value.get("promotion")
+        if not isinstance(promotion, dict) or promotion.get("status") not in {"pending", "promoted"}:
+            raise ValueError("candidate promotion must be an object")
+        return value
+
+    def _load_candidates(
+        self, receipt: RunReceipt, state: dict[str, Any]
+    ) -> dict[str, dict[str, Any]]:
         values: dict[str, dict[str, Any]] = {}
         if not self.candidates_root.exists():
             return values
-        for path in self.candidates_root.glob("sha256-*.json"):
-            value = json.loads(path.read_text(encoding="utf-8"))
-            fingerprint = value.get("fingerprint")
-            if isinstance(fingerprint, str):
-                values[fingerprint] = value
+        paths = sorted(self.candidates_root.glob("sha256-*.json"))
+        cursor = state.get("candidate_scan_cursor", 0)
+        if type(cursor) is not int or cursor < 0:
+            cursor = 0
+        if paths:
+            cursor %= len(paths)
+            ordered_paths = paths[cursor:] + paths[:cursor]
+        else:
+            ordered_paths = []
+        selected_paths = ordered_paths[:MAX_CANDIDATE_SCAN]
+        state["candidate_scan_cursor"] = (
+            (cursor + len(selected_paths)) % len(paths) if paths else 0
+        )
+        if len(paths) > MAX_CANDIDATE_SCAN:
+            receipt.candidate_scan_deferred = len(paths) - MAX_CANDIDATE_SCAN
+            self._emit_malformed_candidate(
+                fingerprint="aggregate",
+                reason=(f"candidate scan capped at {MAX_CANDIDATE_SCAN}; "
+                        f"deferred={receipt.candidate_scan_deferred}"),
+            )
+        for path in selected_paths:
+            source_fd = None
+            source_info = None
+            try:
+                source_fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+                source_info = os.fstat(source_fd)
+                if not stat.S_ISREG(source_info.st_mode):
+                    raise ValueError("candidate is not a regular non-symlink file")
+                if source_info.st_size > MAX_CANDIDATE_BYTES:
+                    raise ValueError("candidate exceeds byte-size bound")
+                raw = bytearray()
+                while len(raw) <= MAX_CANDIDATE_BYTES:
+                    chunk = os.read(
+                        source_fd, min(1024 * 1024, MAX_CANDIDATE_BYTES + 1 - len(raw))
+                    )
+                    if not chunk:
+                        break
+                    raw.extend(chunk)
+                if len(raw) > MAX_CANDIDATE_BYTES:
+                    raise ValueError("candidate grew beyond byte-size bound while reading")
+                value = self._validated_candidate(
+                    path, json.loads(raw.decode("utf-8"))
+                )
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+                receipt.malformed += 1
+                if source_info is None:
+                    try:
+                        source_info = os.lstat(path)
+                    except OSError:
+                        source_info = None
+                if source_info is not None:
+                    try:
+                        self._quarantine_candidate(
+                            path, f"{type(error).__name__}: {error}",
+                            source_info,
+                        )
+                        self._emit_malformed_candidate(
+                            fingerprint=path.stem.removeprefix("sha256-"),
+                            reason=("quarantined candidate: "
+                                    f"{type(error).__name__}: {error}"),
+                        )
+                    except Exception as quarantine_error:
+                        receipt.quarantine_deferred += 1
+                        self._emit_malformed_candidate(
+                            fingerprint=path.stem.removeprefix("sha256-"),
+                            reason=("quarantine failed: "
+                                    f"{type(quarantine_error).__name__}"),
+                        )
+                else:
+                    self._emit_malformed_candidate(
+                        fingerprint=path.stem.removeprefix("sha256-"),
+                        reason=f"candidate open failed: {type(error).__name__}",
+                    )
+                continue
+            finally:
+                if source_fd is not None:
+                    os.close(source_fd)
+            self._candidate_source_info[value["fingerprint"]] = source_info
+            values[value["fingerprint"]] = value
+        if receipt.quarantine_deferred:
+            self._emit_malformed_candidate(
+                fingerprint="aggregate",
+                reason=("candidate quarantine unavailable; "
+                        f"deferred={receipt.quarantine_deferred}"),
+            )
         return values
 
     def _emit_malformed_candidate(self, *, fingerprint: str, reason: str) -> None:
@@ -233,17 +414,64 @@ class FrictionClassifier:
             # Candidate repair must not depend on optional telemetry delivery.
             pass
 
-    def _candidate_ref_timestamp(
-        self, *, fingerprint: str, ref: dict[str, Any]
-    ) -> datetime | None:
-        try:
-            return _parse_ts(ref["ts"])
-        except (KeyError, TypeError, ValueError) as error:
+    def _validated_candidate_ref(
+        self, ref: object
+    ) -> tuple[tuple[object, ...], datetime]:
+        """Validate a saved source reference without performing remediation."""
+        if not isinstance(ref, dict):
+            raise ValueError("source_event_ref is not an object")
+        required_ints = ("byte_start", "byte_end", "line")
+        if any(type(ref.get(field)) is not int or ref[field] < 0 for field in required_ints):
+            raise ValueError("source_event_ref has invalid offsets")
+        if ref["byte_end"] < ref["byte_start"]:
+            raise ValueError("source_event_ref byte range is reversed")
+        for field in ("source_dev", "source_ino"):
+            value = ref.get(field)
+            if value is not None and (type(value) is not int or value < 0):
+                raise ValueError(f"source_event_ref has invalid {field}")
+        digest = ref.get("line_sha256")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError("source_event_ref has invalid line_sha256")
+        reason = ref.get("reason")
+        if not isinstance(reason, str) or not reason or len(reason) > MAX_REASON_CHARS:
+            raise ValueError("source_event_ref has invalid reason")
+        source_ref = ref.get("ref")
+        if not isinstance(source_ref, str) or len(source_ref) > MAX_REF_CHARS:
+            raise ValueError("source_event_ref has invalid ref")
+        timestamp = _parse_ts(ref.get("ts"))
+        identity = (
+            ref.get("source_dev"), ref.get("source_ino"),
+            ref["byte_start"], ref["byte_end"], digest,
+        )
+        return identity, timestamp
+
+    def _record_malformed_ref(
+        self, *, fingerprint: str, ref: object, reason: str, receipt: RunReceipt
+    ) -> bool:
+        """Preserve the original container once; repair remains non-blocking."""
+        if fingerprint in self._quarantined_candidates:
+            self._emit_malformed_candidate(fingerprint=fingerprint, reason=reason)
+            return True
+        path = self.candidates_root / f"sha256-{fingerprint}.json"
+        source_info = self._candidate_source_info.get(fingerprint)
+        if source_info is None:
+            receipt.quarantine_deferred += 1
             self._emit_malformed_candidate(
-                fingerprint=fingerprint,
-                reason=f"invalid source_event_ref ts: {type(error).__name__}",
+                fingerprint=fingerprint, reason=f"{reason}; source identity unavailable"
             )
-            return None
+            return False
+        try:
+            self._quarantine_candidate(path, reason, source_info)
+            self._quarantined_candidates.add(fingerprint)
+            self._emit_malformed_candidate(
+                fingerprint=fingerprint, reason=f"quarantined candidate: {reason}"
+            )
+        except Exception as quarantine_error:
+            receipt.quarantine_deferred += 1
+            reason = f"{reason}; quarantine failed: {type(quarantine_error).__name__}"
+            self._emit_malformed_candidate(fingerprint=fingerprint, reason=reason)
+            return False
+        return True
 
     def _candidate_last_seen(self, candidate: dict[str, Any]) -> datetime:
         window = candidate.get("window", {})
@@ -252,23 +480,26 @@ class FrictionClassifier:
                 return _parse_ts(window.get("last_seen"))
             except ValueError:
                 pass
-        timestamps = [
-            timestamp
-            for ref in candidate.get("source_event_refs", [])
-            if isinstance(ref, dict)
-            for timestamp in [self._candidate_ref_timestamp(
-                fingerprint=str(candidate.get("fingerprint", "unknown")),
-                ref=ref,
-            )]
-            if timestamp is not None
-        ]
+        timestamps = []
+        for ref in candidate.get("source_event_refs", []):
+            try:
+                _identity, timestamp = self._validated_candidate_ref(ref)
+            except (TypeError, ValueError):
+                continue
+            timestamps.append(timestamp)
         return max(timestamps, default=datetime.min.replace(tzinfo=timezone.utc))
 
-    def _enforce_candidate_count(self, candidates: dict[str, dict[str, Any]]) -> None:
+    def _enforce_candidate_count(
+        self,
+        candidates: dict[str, dict[str, Any]],
+        *,
+        protected: set[str] | None = None,
+    ) -> None:
+        protected = protected or set()
         active = [
             (fingerprint, candidate)
             for fingerprint, candidate in candidates.items()
-            if candidate.get("source_event_refs")
+            if candidate.get("source_event_refs") and fingerprint not in protected
         ]
         excess = len(active) - MAX_CANDIDATE_COUNT
         if excess <= 0:
@@ -457,11 +688,14 @@ Do not infer resolution from this automated promotion alone.
 
     def run(self) -> RunReceipt:
         receipt = RunReceipt()
+        self._candidate_source_info.clear()
+        self._quarantined_candidates.clear()
+        self._quarantine_records.clear()
         _safe_directory(self.runtime_root, 0o700)
         _safe_directory(self.candidates_root, 0o700)
         with _lock(self.run_lock):
             state = self._state()
-            candidates = self._load_candidates()
+            candidates = self._load_candidates(receipt, state)
             new_events = self._read_new(state, receipt)
             cutoff = self.now - timedelta(days=WINDOW_DAYS)
 
@@ -489,31 +723,34 @@ Do not infer resolution from this automated promotion alone.
                     candidate["representative_reasons"].append(display_reason)
                     candidate["representative_reasons"] = candidate["representative_reasons"][:MAX_REPRESENTATIVE_REASONS]
 
+            repair_deferred: set[str] = set()
             for fingerprint, candidate in candidates.items():
                 # Candidate files are written before the watermark.  If a process
                 # dies between those atomic writes, the next run deliberately
                 # replays the source lines.  Deduplicate their immutable location
                 # identity so that crash recovery cannot inflate a class count.
-                unique_refs: dict[tuple[object, ...], dict[str, Any]] = {}
+                unique_refs: dict[tuple[object, ...], tuple[datetime, dict[str, Any]]] = {}
                 for ref in candidate["source_event_refs"]:
-                    identity = (
-                        ref.get("source_dev"), ref.get("source_ino"),
-                        ref["byte_start"], ref["byte_end"], ref["line_sha256"],
-                    )
-                    unique_refs[identity] = ref
-                dated_refs = []
-                for ref in unique_refs.values():
-                    timestamp = self._candidate_ref_timestamp(
-                        fingerprint=fingerprint,
-                        ref=ref,
-                    )
-                    if timestamp is None:
+                    try:
+                        identity, timestamp = self._validated_candidate_ref(ref)
+                    except (TypeError, ValueError) as error:
                         receipt.malformed += 1
+                        if not self._record_malformed_ref(
+                            fingerprint=fingerprint,
+                            ref=ref,
+                            reason=str(error),
+                            receipt=receipt,
+                        ):
+                            repair_deferred.add(fingerprint)
                         continue
+                    unique_refs[identity] = (timestamp, ref)
+                if fingerprint in repair_deferred:
+                    continue
+                dated_refs: list[tuple[datetime, dict[str, Any]]] = []
+                for timestamp, ref in unique_refs.values():
                     if cutoff <= timestamp <= self.now + MAX_FUTURE_SKEW:
                         dated_refs.append((timestamp, ref))
-                all_refs = [
-                    ref for _timestamp, ref in sorted(
+                all_dated_refs = sorted(
                         dated_refs,
                         key=lambda item: (
                             item[0],
@@ -522,24 +759,14 @@ Do not infer resolution from this automated promotion alone.
                             item[1]["byte_start"],
                         ),
                     )
-                ]
-                truncated = len(all_refs) > MAX_SOURCE_EVENT_REFS
-                candidate["source_event_refs"] = all_refs[-MAX_SOURCE_EVENT_REFS:]
+                truncated = len(all_dated_refs) > MAX_SOURCE_EVENT_REFS
+                retained = all_dated_refs[-MAX_SOURCE_EVENT_REFS:]
+                candidate["source_event_refs"] = [ref for _timestamp, ref in retained]
                 refs = candidate["source_event_refs"]
                 if not refs:
                     (self.candidates_root / f"sha256-{fingerprint}.json").unlink(missing_ok=True)
                     continue
-                timestamps = sorted(
-                    timestamp
-                    for ref in refs
-                    for timestamp in [
-                        self._candidate_ref_timestamp(fingerprint=fingerprint, ref=ref)
-                    ]
-                    if timestamp is not None
-                )
-                if not timestamps:
-                    (self.candidates_root / f"sha256-{fingerprint}.json").unlink(missing_ok=True)
-                    continue
+                timestamps = [timestamp for timestamp, _ref in retained]
                 candidate["window"] = {
                     "days": WINDOW_DAYS,
                     "threshold": 1 if candidate["class"]["eventType"] in IMMEDIATE_TYPES else FAILURE_THRESHOLD,
@@ -562,12 +789,19 @@ Do not infer resolution from this automated promotion alone.
                         receipt.promoted += 1
                     else:
                         receipt.deduplicated += 1
-            self._enforce_candidate_count(candidates)
+            self._enforce_candidate_count(candidates, protected=repair_deferred)
             for fingerprint, candidate in candidates.items():
-                if candidate.get("source_event_refs"):
+                if fingerprint not in repair_deferred and candidate.get("source_event_refs"):
                     _atomic_json(self.candidates_root / f"sha256-{fingerprint}.json", candidate)
             receipt.candidates = sum(1 for c in candidates.values() if c.get("source_event_refs"))
             _atomic_json(self.state_path, state)
+        try:
+            self._flush_quarantine_manifest()
+        except Exception as manifest_error:
+            self._emit_malformed_candidate(
+                fingerprint="aggregate",
+                reason=f"quarantine manifest failed: {type(manifest_error).__name__}",
+            )
         return receipt
 
 
@@ -601,12 +835,16 @@ def main(argv: list[str] | None = None) -> int:
         eventType="success",
         reason=(f"processed={counts['processed']} malformed={counts['malformed']} "
                 f"candidates={counts['candidates']} promoted={counts['promoted']} "
-                f"deduplicated={counts['deduplicated']}"),
+                f"deduplicated={counts['deduplicated']} "
+                f"scan_deferred={counts['candidate_scan_deferred']} "
+                f"quarantine_deferred={counts['quarantine_deferred']}"),
         ref=str(args.runtime_root / "classifier-state.json"),
         extra={
             "processed": counts["processed"], "malformed": counts["malformed"],
             "candidate": counts["candidates"], "promoted": counts["promoted"],
             "deduplicated": counts["deduplicated"],
+            "candidate_scan_deferred": counts["candidate_scan_deferred"],
+            "quarantine_deferred": counts["quarantine_deferred"],
         },
     )
     print(json.dumps(counts, sort_keys=True))
