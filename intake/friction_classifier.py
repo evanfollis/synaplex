@@ -28,8 +28,6 @@ FAILURE_THRESHOLD = 3
 MAX_SOURCE_EVENT_REFS = 256
 MAX_CANDIDATE_COUNT = 1024
 MAX_CANDIDATE_BYTES = 2_000_000
-MAX_CANDIDATE_SCAN = 2048
-MAX_CANDIDATE_DIRECTORY_ENTRIES = 4096
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 IMMEDIATE_TYPES = frozenset({"stuck", "escalated"})
 NON_PROMOTING_TYPES = frozenset({"success", "throttled"})
@@ -157,6 +155,14 @@ def _atomic_json(path: Path, value: object, mode: int = 0o600) -> None:
         raise
 
 
+def _fsync_directory(path: Path) -> None:
+    directory_fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 def _lock(path: Path):
     # Both classifier locks live under the private runtime root. Do not infer a
     # trust boundary from a path substring; alternate roots must retain 0700.
@@ -181,7 +187,6 @@ class RunReceipt:
     deduplicated: int = 0
     start_offset: int = 0
     end_offset: int = 0
-    candidate_scan_deferred: int = 0
     quarantine_deferred: int = 0
 
     def as_dict(self) -> dict[str, int]:
@@ -224,6 +229,10 @@ class FrictionClassifier:
         """Move a complete derivative projection off the hot path in O(1)."""
         quarantine = self.runtime_root / "quarantine" / "candidates"
         _safe_directory(quarantine, 0o700)
+        pending = quarantine / "pending"
+        records = quarantine / "records"
+        _safe_directory(pending, 0o700)
+        _safe_directory(records, 0o700)
         current = os.lstat(path)
         if (current.st_dev, current.st_ino) != (source_info.st_dev, source_info.st_ino):
             raise ValueError("candidate path changed before quarantine")
@@ -237,6 +246,7 @@ class FrictionClassifier:
             "source_bytes": source_info.st_size,
             "source_dev": source_info.st_dev,
             "source_ino": source_info.st_ino,
+            "source_mode": source_info.st_mode,
         }
         if stat.S_ISLNK(current.st_mode):
             # Store only inert metadata. A live symlink in quarantine would be a
@@ -247,10 +257,11 @@ class FrictionClassifier:
                 "artifact": None,
                 "content_hash_status": "not-applicable",
             })
-            record_path = quarantine / "records" / f"{timestamp}.{token}.json"
-            _atomic_json(record_path, record)
+            pending_path = pending / f"{timestamp}.{token}.json"
+            _atomic_json(pending_path, record)
             path.unlink()
-        else:
+            _fsync_directory(path.parent)
+        elif stat.S_ISREG(current.st_mode):
             destination = quarantine / (
                 f"{path.name}.{timestamp}.{token}.raw"
             )
@@ -262,10 +273,76 @@ class FrictionClassifier:
             # This write-ahead record is durable before the source moves. A
             # crash leaves either source or destination plus the exact recovery
             # coordinates; it never leaves an unidentifiable raw orphan.
-            record_path = quarantine / "records" / f"{timestamp}.{token}.json"
-            _atomic_json(record_path, record)
+            pending_path = pending / f"{timestamp}.{token}.json"
+            _atomic_json(pending_path, record)
             os.rename(path, destination)
             os.chmod(destination, 0o600)
+            _fsync_directory(path.parent)
+            _fsync_directory(destination.parent)
+        else:
+            raise ValueError("unsupported non-regular candidate entry")
+        os.rename(pending_path, records / pending_path.name)
+        _fsync_directory(pending)
+        _fsync_directory(records)
+
+    def _recover_quarantine(self, receipt: RunReceipt) -> None:
+        """Complete prepared dispositions before reading active candidates."""
+        quarantine = self.runtime_root / "quarantine" / "candidates"
+        pending = quarantine / "pending"
+        records = quarantine / "records"
+        if not pending.exists():
+            return
+        _safe_directory(pending, 0o700)
+        _safe_directory(records, 0o700)
+        for record_path in pending.glob("*.json"):
+            try:
+                record = json.loads(record_path.read_text(encoding="utf-8"))
+                source = Path(record["source"])
+                if source.parent.resolve() != self.candidates_root.resolve():
+                    raise ValueError("prepared quarantine source escapes candidates")
+                expected = (record["source_dev"], record["source_ino"])
+                disposition = record["disposition"]
+                try:
+                    current = os.lstat(source)
+                except FileNotFoundError:
+                    current = None
+                if disposition == "atomic-move":
+                    artifact = Path(record["artifact"])
+                    if artifact.parent.resolve() != quarantine.resolve():
+                        raise ValueError("prepared quarantine artifact escapes root")
+                    try:
+                        artifact_info = os.lstat(artifact)
+                    except FileNotFoundError:
+                        artifact_info = None
+                    if artifact_info is not None:
+                        if current is not None:
+                            raise ValueError("prepared quarantine has source and artifact")
+                    elif current is not None and (current.st_dev, current.st_ino) == expected:
+                        os.rename(source, artifact)
+                        os.chmod(artifact, 0o600)
+                        _fsync_directory(source.parent)
+                        _fsync_directory(artifact.parent)
+                    else:
+                        raise ValueError("prepared quarantine lost source and artifact")
+                elif disposition == "symlink-metadata":
+                    if current is not None:
+                        if ((current.st_dev, current.st_ino) != expected
+                                or not stat.S_ISLNK(current.st_mode)
+                                or os.readlink(source) != record["symlink_target"]):
+                            raise ValueError("prepared symlink identity changed")
+                        source.unlink()
+                        _fsync_directory(source.parent)
+                else:
+                    raise ValueError("unknown prepared quarantine disposition")
+                os.rename(record_path, records / record_path.name)
+                _fsync_directory(pending)
+                _fsync_directory(records)
+            except Exception as error:
+                receipt.quarantine_deferred += 1
+                self._emit_malformed_candidate(
+                    fingerprint="aggregate",
+                    reason=f"quarantine recovery failed: {type(error).__name__}",
+                )
 
     def _validated_candidate(self, path: Path, value: object) -> dict[str, Any]:
         if not isinstance(value, dict) or value.get("version") != 1:
@@ -301,54 +378,19 @@ class FrictionClassifier:
             raise ValueError("candidate promotion must be an object")
         return value
 
-    def _load_candidates(
-        self, receipt: RunReceipt, state: dict[str, Any]
-    ) -> dict[str, dict[str, Any]]:
+    def _load_candidates(self, receipt: RunReceipt) -> dict[str, dict[str, Any]]:
         values: dict[str, dict[str, Any]] = {}
         if not self.candidates_root.exists():
             return values
-        indexed = state.get("candidate_index", [])
-        if not isinstance(indexed, list) or any(
-            not isinstance(item, str) or not re.fullmatch(r"[0-9a-f]{64}", item)
-            for item in indexed
-        ):
-            raise ValueError("candidate_index must contain lowercase sha256 values")
-        fingerprints = set(indexed)
-        index_complete = state.get("candidate_index_complete") is True
-        if not index_complete:
-            exhausted = True
-            discovered = 0
-            with os.scandir(self.candidates_root) as entries:
-                for position, entry in enumerate(entries):
-                    if position >= MAX_CANDIDATE_DIRECTORY_ENTRIES:
-                        exhausted = False
-                        receipt.candidate_scan_deferred = 1
-                        break
-                    match = re.fullmatch(r"sha256-([0-9a-f]{64})\.json", entry.name)
-                    if match and match.group(1) not in fingerprints:
-                        fingerprints.add(match.group(1))
-                        discovered += 1
-                        if discovered >= MAX_CANDIDATE_SCAN:
-                            exhausted = False
-                            receipt.candidate_scan_deferred = 1
-                            break
-            state["candidate_index_complete"] = exhausted
-        state["candidate_index"] = sorted(fingerprints)
-        if receipt.candidate_scan_deferred:
-            self._emit_malformed_candidate(
-                fingerprint="aggregate",
-                reason=(f"candidate discovery capped at {MAX_CANDIDATE_SCAN}; "
-                        "at least one directory entry deferred"),
-            )
-        for fingerprint in sorted(fingerprints):
-            path = self.candidates_root / f"sha256-{fingerprint}.json"
+        for path in self.candidates_root.glob("sha256-*.json"):
             source_fd = None
             source_info = None
             try:
-                source_fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-                source_info = os.fstat(source_fd)
+                source_info = os.lstat(path)
                 if not stat.S_ISREG(source_info.st_mode):
                     raise ValueError("candidate is not a regular non-symlink file")
+                source_fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+                source_info = os.fstat(source_fd)
                 if source_info.st_size > MAX_CANDIDATE_BYTES:
                     raise ValueError("candidate exceeds byte-size bound")
                 raw = bytearray()
@@ -705,7 +747,8 @@ Do not infer resolution from this automated promotion alone.
         _safe_directory(self.candidates_root, 0o700)
         with _lock(self.run_lock):
             state = self._state()
-            candidates = self._load_candidates(receipt, state)
+            self._recover_quarantine(receipt)
+            candidates = self._load_candidates(receipt)
             new_events = self._read_new(state, receipt)
             cutoff = self.now - timedelta(days=WINDOW_DAYS)
 
@@ -714,8 +757,6 @@ Do not infer resolution from this automated promotion alone.
                     continue
                 fingerprint, encoded = class_key(event)
                 structural = json.loads(encoded)
-                if fingerprint not in candidates:
-                    state.setdefault("candidate_index", []).append(fingerprint)
                 candidate = candidates.setdefault(fingerprint, {
                     "version": 1,
                     "fingerprint": fingerprint,
@@ -806,18 +847,6 @@ Do not infer resolution from this automated promotion alone.
                 if fingerprint not in repair_deferred and candidate.get("source_event_refs"):
                     _atomic_json(self.candidates_root / f"sha256-{fingerprint}.json", candidate)
             receipt.candidates = sum(1 for c in candidates.values() if c.get("source_event_refs"))
-            surviving_fingerprints = {
-                fingerprint
-                for fingerprint, candidate in candidates.items()
-                if candidate.get("source_event_refs")
-            }
-            for fingerprint in state.get("candidate_index", []):
-                try:
-                    os.lstat(self.candidates_root / f"sha256-{fingerprint}.json")
-                except OSError:
-                    continue
-                surviving_fingerprints.add(fingerprint)
-            state["candidate_index"] = sorted(surviving_fingerprints)
             _atomic_json(self.state_path, state)
         return receipt
 
@@ -853,14 +882,12 @@ def main(argv: list[str] | None = None) -> int:
         reason=(f"processed={counts['processed']} malformed={counts['malformed']} "
                 f"candidates={counts['candidates']} promoted={counts['promoted']} "
                 f"deduplicated={counts['deduplicated']} "
-                f"scan_deferred={counts['candidate_scan_deferred']} "
                 f"quarantine_deferred={counts['quarantine_deferred']}"),
         ref=str(args.runtime_root / "classifier-state.json"),
         extra={
             "processed": counts["processed"], "malformed": counts["malformed"],
             "candidate": counts["candidates"], "promoted": counts["promoted"],
             "deduplicated": counts["deduplicated"],
-            "candidate_scan_deferred": counts["candidate_scan_deferred"],
             "quarantine_deferred": counts["quarantine_deferred"],
         },
     )

@@ -307,37 +307,83 @@ class FrictionClassifierTests(unittest.TestCase):
             for call in emit.call_args_list
         ))
 
-    def test_bounded_scan_rotates_when_poison_cannot_be_dispositioned(self) -> None:
+    def test_prepared_quarantine_recovers_crash_before_artifact_move(self) -> None:
         self.events.write_text("")
         candidates = self.runtime / "candidates"
         candidates.mkdir(parents=True)
-        corrupt = [
-            candidates / f"sha256-{'a' * 63}{suffix}.json"
-            for suffix in ("1", "2")
-        ]
-        for path in corrupt:
-            path.write_text("{not json}\n")
+        corrupt = candidates / f"sha256-{'a' * 64}.json"
+        corrupt.write_text("{not json}\n")
+        original_rename = os.rename
+        calls = 0
 
-        attempted: list[str] = []
-
-        def unavailable(_self, path, _reason, _source_info):
-            attempted.append(path.name)
-            raise OSError("cold storage unavailable")
+        def crash_before_move(source, target):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise OSError("simulated crash before artifact move")
+            original_rename(source, target)
 
         with (
-            mock.patch("intake.friction_classifier.MAX_CANDIDATE_SCAN", 1),
-            mock.patch.object(
-                FrictionClassifier, "_quarantine_candidate", new=unavailable
+            mock.patch("intake.friction_classifier.os.rename", new=crash_before_move),
+            mock.patch("intake.friction_classifier.emit"),
+        ):
+            first = self.classifier().run()
+
+        self.assertTrue(corrupt.exists())
+        self.assertEqual(first.quarantine_deferred, 1)
+        pending = self.runtime / "quarantine" / "candidates" / "pending"
+        self.assertEqual(len(list(pending.glob("*.json"))), 1)
+
+        with mock.patch("intake.friction_classifier.emit"):
+            second = self.classifier().run()
+
+        self.assertEqual(second.quarantine_deferred, 0)
+        self.assertFalse(corrupt.exists())
+        self.assertEqual(list(pending.glob("*.json")), [])
+        self.assertEqual(
+            len(list((pending.parent / "records").glob("*.json"))), 1
+        )
+        self.assertEqual(len(list(pending.parent.glob("*.raw"))), 1)
+
+    def test_prepared_quarantine_recovers_crash_after_artifact_move(self) -> None:
+        self.events.write_text("")
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        corrupt = candidates / f"sha256-{'a' * 64}.json"
+        corrupt.write_text("{not json}\n")
+        original_rename = os.rename
+        calls = 0
+
+        def crash_before_record_finalize(source, target):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError("simulated crash before record finalize")
+            original_rename(source, target)
+
+        with (
+            mock.patch(
+                "intake.friction_classifier.os.rename",
+                new=crash_before_record_finalize,
             ),
             mock.patch("intake.friction_classifier.emit"),
         ):
             first = self.classifier().run()
+
+        self.assertFalse(corrupt.exists())
+        self.assertEqual(first.quarantine_deferred, 1)
+        pending = self.runtime / "quarantine" / "candidates" / "pending"
+        self.assertEqual(len(list(pending.glob("*.json"))), 1)
+
+        with mock.patch("intake.friction_classifier.emit"):
             second = self.classifier().run()
 
-        self.assertEqual(first.candidate_scan_deferred, 1)
-        self.assertEqual(second.candidate_scan_deferred, 1)
-        self.assertEqual(set(attempted), {path.name for path in corrupt})
-        self.assertTrue(all(path.exists() for path in corrupt))
+        self.assertEqual(second.quarantine_deferred, 0)
+        self.assertEqual(list(pending.glob("*.json")), [])
+        self.assertEqual(
+            len(list((pending.parent / "records").glob("*.json"))), 1
+        )
+        self.assertEqual(len(list(pending.parent.glob("*.raw"))), 1)
 
     def test_candidate_replacement_is_not_deleted_during_quarantine(self) -> None:
         candidates = self.runtime / "candidates"
