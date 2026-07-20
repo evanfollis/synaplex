@@ -17,6 +17,8 @@ Three adapters, one beat, one digest:
 - `digest.py` — daily per-beat markdown.
 - `friction.py` — typed events emitted to `runtime/friction/events.jsonl`
   (ADR-0029 §Layer 5).
+- `friction_classifier.py` — deterministic incremental Layer-5 promotion into
+  content-addressed runtime candidates and locked supervisor FR records.
 - `hashing.py` — the one shared dedup contract (S1-P3).
 - `beats.py` — beat definitions. First pass ships `agent-platforms`;
   `systematic-trading` + `venture-discovery` follow in subsequent waves.
@@ -159,3 +161,16 @@ Every adapter call emits at least one friction event:
 Failure paths emit `eventType=failure` with the exception summary.
 Empty-result paths emit `eventType=stuck` per S3-P2 (a silent layer is
 indistinguishable from a stuck one).
+
+The classifier is inspectable and has no model or network path:
+
+```bash
+.venv/bin/python -m intake.friction_classifier
+```
+
+It preserves an atomic watermark at `runtime/friction/classifier-state.json`,
+keeps a rolling seven-day projection under `runtime/friction/candidates/`, and
+never rewrites the append-only source. Three matching `failure` events promote;
+`stuck` and `escalated` promote immediately; `success` and designed `throttled`
+events remain non-promoting evidence. Every source reference carries the exact
+byte range and line hash needed to recover the raw event.
