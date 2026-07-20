@@ -385,6 +385,40 @@ class FrictionClassifierTests(unittest.TestCase):
         )
         self.assertEqual(len(list(pending.parent.glob("*.raw"))), 1)
 
+    def test_candidate_directory_overload_fails_before_watermark_advances(self) -> None:
+        self.write(_event("stuck", "must remain unread"))
+        candidates = self.runtime / "candidates"
+        candidates.mkdir(parents=True)
+        for suffix in ("1", "2", "3"):
+            (candidates / f"sha256-{'a' * 63}{suffix}.json").write_text("{}")
+
+        with mock.patch(
+            "intake.friction_classifier.MAX_CANDIDATE_DIRECTORY_ENTRIES", 2
+        ):
+            with self.assertRaisesRegex(RuntimeError, "bounded trust envelope"):
+                self.classifier().run()
+
+        self.assertFalse((self.runtime / "classifier-state.json").exists())
+        self.assertEqual(self.frs(), [])
+
+    def test_invalid_recovery_record_is_retired_after_bounded_attempts(self) -> None:
+        self.events.write_text("")
+        pending = self.runtime / "quarantine" / "candidates" / "pending"
+        pending.mkdir(parents=True)
+        poison = pending / "poison.json"
+        poison.write_text("{not json}\n")
+
+        with mock.patch("intake.friction_classifier.emit"):
+            receipts = [self.classifier().run() for _ in range(3)]
+
+        self.assertTrue(all(receipt.quarantine_deferred == 1 for receipt in receipts))
+        self.assertFalse(poison.exists())
+        failed = pending.parent / "failed" / poison.name
+        self.assertTrue(failed.exists())
+        retired = json.loads(failed.read_text())
+        self.assertEqual(retired["recovery_attempts"], 3)
+        self.assertEqual(retired["last_recovery_error"], "KeyError")
+
     def test_candidate_replacement_is_not_deleted_during_quarantine(self) -> None:
         candidates = self.runtime / "candidates"
         candidates.mkdir(parents=True)

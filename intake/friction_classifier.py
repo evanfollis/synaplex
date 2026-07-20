@@ -28,6 +28,10 @@ FAILURE_THRESHOLD = 3
 MAX_SOURCE_EVENT_REFS = 256
 MAX_CANDIDATE_COUNT = 1024
 MAX_CANDIDATE_BYTES = 2_000_000
+MAX_CANDIDATE_DIRECTORY_ENTRIES = 2048
+MAX_PENDING_RECOVERIES_PER_RUN = 64
+MAX_RECOVERY_ATTEMPTS = 3
+MAX_QUARANTINE_RECORD_BYTES = 64_000
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 IMMEDIATE_TYPES = frozenset({"stuck", "escalated"})
 NON_PROMOTING_TYPES = frozenset({"success", "throttled"})
@@ -290,13 +294,36 @@ class FrictionClassifier:
         quarantine = self.runtime_root / "quarantine" / "candidates"
         pending = quarantine / "pending"
         records = quarantine / "records"
+        failed = quarantine / "failed"
         if not pending.exists():
             return
         _safe_directory(pending, 0o700)
         _safe_directory(records, 0o700)
-        for record_path in pending.glob("*.json"):
+        _safe_directory(failed, 0o700)
+        pending_paths: list[Path] = []
+        with os.scandir(pending) as entries:
+            for position, entry in enumerate(entries):
+                if position >= MAX_PENDING_RECOVERIES_PER_RUN:
+                    receipt.quarantine_deferred += 1
+                    self._emit_malformed_candidate(
+                        fingerprint="aggregate",
+                        reason=("pending quarantine recovery capped; "
+                                "additional records deferred"),
+                    )
+                    break
+                if entry.name.endswith(".json"):
+                    pending_paths.append(pending / entry.name)
+        for record_path in pending_paths:
+            record: object = {}
             try:
+                info = os.lstat(record_path)
+                if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
+                        or info.st_uid != os.geteuid()
+                        or info.st_size > MAX_QUARANTINE_RECORD_BYTES):
+                    raise ValueError("unsafe prepared quarantine record")
                 record = json.loads(record_path.read_text(encoding="utf-8"))
+                if not isinstance(record, dict):
+                    raise ValueError("prepared quarantine record is not an object")
                 source = Path(record["source"])
                 if source.parent.resolve() != self.candidates_root.resolve():
                     raise ValueError("prepared quarantine source escapes candidates")
@@ -339,9 +366,31 @@ class FrictionClassifier:
                 _fsync_directory(records)
             except Exception as error:
                 receipt.quarantine_deferred += 1
+                try:
+                    retry = dict(record) if isinstance(record, dict) else {}
+                    attempts = retry.get("recovery_attempts", 0)
+                    if type(attempts) is not int or attempts < 0:
+                        attempts = MAX_RECOVERY_ATTEMPTS
+                    attempts += 1
+                    retry.update({
+                        "recovery_attempts": attempts,
+                        "last_recovery_error": type(error).__name__,
+                        "last_recovery_at": _iso(self.now),
+                        "record_source": str(record_path),
+                    })
+                    _atomic_json(record_path, retry)
+                    if attempts >= MAX_RECOVERY_ATTEMPTS:
+                        os.rename(record_path, failed / record_path.name)
+                        _fsync_directory(pending)
+                        _fsync_directory(failed)
+                except Exception:
+                    # Recovery bookkeeping is also cold-path evidence. Its own
+                    # failure must not prevent active classification.
+                    pass
                 self._emit_malformed_candidate(
                     fingerprint="aggregate",
-                    reason=f"quarantine recovery failed: {type(error).__name__}",
+                    reason=(f"quarantine recovery failed for {record_path.name}: "
+                            f"{type(error).__name__}"),
                 )
 
     def _validated_candidate(self, path: Path, value: object) -> dict[str, Any]:
@@ -382,7 +431,16 @@ class FrictionClassifier:
         values: dict[str, dict[str, Any]] = {}
         if not self.candidates_root.exists():
             return values
-        for path in self.candidates_root.glob("sha256-*.json"):
+        paths: list[Path] = []
+        with os.scandir(self.candidates_root) as entries:
+            for position, entry in enumerate(entries):
+                if position >= MAX_CANDIDATE_DIRECTORY_ENTRIES:
+                    raise RuntimeError(
+                        "candidate directory exceeds the bounded trust envelope"
+                    )
+                if re.fullmatch(r"sha256-[0-9a-f]{64}\.json", entry.name):
+                    paths.append(self.candidates_root / entry.name)
+        for path in paths:
             source_fd = None
             source_info = None
             try:
