@@ -83,6 +83,7 @@ class FrictionClassifierTests(unittest.TestCase):
         second = self.classifier().run()
         self.assertEqual(first.promoted, 1)
         self.assertEqual(second.promoted, 0)
+        self.assertEqual(second.deduplicated, 0)
         self.assertEqual(second.processed, 0)
         self.assertEqual(len(self.frs()), 1)
         body = self.frs()[0].read_text()

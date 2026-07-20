@@ -361,6 +361,23 @@ Do not infer resolution from this automated promotion alone.
                         pass
                     raise
 
+    def _promotion_is_present(self, candidate: dict[str, Any]) -> bool:
+        """Fast-path a previously promoted candidate without hourly FR scans."""
+        promotion = candidate.get("promotion", {})
+        if promotion.get("status") != "promoted" or not promotion.get("fr"):
+            return False
+        path = Path(promotion["fr"])
+        try:
+            if path.parent.resolve() != self.supervisor_friction.resolve():
+                return False
+            info = os.lstat(path)
+            if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+                return False
+            marker = f"Fingerprint: `{candidate['fingerprint']}`"
+            return marker in path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return False
+
     def run(self) -> RunReceipt:
         receipt = RunReceipt()
         _safe_directory(self.runtime_root, 0o700)
@@ -438,7 +455,7 @@ Do not infer resolution from this automated promotion alone.
                     "evaluated_at": _iso(self.now),
                 }
                 eligible = len(refs) >= candidate["window"]["threshold"]
-                if eligible:
+                if eligible and not self._promotion_is_present(candidate):
                     path, created = self._mint_or_find(candidate)
                     candidate["promotion"] = {
                         "status": "promoted",
