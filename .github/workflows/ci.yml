@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Set up Node
-        uses: actions/setup-node@1e60f620b9541d7c243d3c7a1e0b846c098d7555
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: "22"
           cache: npm
