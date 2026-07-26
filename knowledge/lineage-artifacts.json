@@ -11,7 +11,7 @@
       "source_commit": "c6345dd3bb17d1f65cc61a543e080bc2669b9af4",
       "snapshot_digest": "sha256:e4d98769f0073380d05026ff1b534bda31b25719dbb477dd0d34e36b54726b6c",
       "license_status": "missing",
-      "lifecycle": "archive-planned",
+      "lifecycle": "archived",
       "summary": "An earlier implementation vocabulary for agent substrates, worlds, lenses, and evolutionary operators; retained as superseded design lineage.",
       "verification": {
         "status": "partial",
@@ -43,7 +43,7 @@
       "source_commit": "94f69d4f667946dd3192d0da5f0df276330ea56a",
       "snapshot_digest": "sha256:0faec44fd977503bcb4d183d33a2cd6f01ffa388c34677ac1f08e69a78bfc85c",
       "license_status": "missing",
-      "lifecycle": "archive-planned",
+      "lifecycle": "archived",
       "summary": "A conceptual scaffold for an AI-native operating model and multi-agent kernel; retained for vocabulary and design-history inspection.",
       "verification": {
         "status": "failed",
@@ -75,7 +75,7 @@
       "source_commit": "24483b9ad0a4ec7101585be6579139104c9460bd",
       "snapshot_digest": "sha256:032bae600dbc281cd05610d29395bc952c4242366b2bf12763c592b744061f0e",
       "license_status": "MIT",
-      "lifecycle": "archive-planned",
+      "lifecycle": "archived",
       "summary": "An experimental simulation of kernels, distortions, and social dynamics; retained as mathematical and implementation lineage, not as a validated alignment result.",
       "verification": {
         "status": "partial",
@@ -107,7 +107,7 @@
       "source_commit": "be110e2644ca5c9ba089e1784cfbb1226a1a167d",
       "snapshot_digest": "sha256:eb247dc9485908ab480a6641906f6c18bb541cec809b615ac767cf6dc7f5566d",
       "license_status": "missing",
-      "lifecycle": "archive-planned",
+      "lifecycle": "archived",
       "summary": "A speculative theory, schema, and service-contract scaffold for transport and holonomy across epistemic lenses.",
       "verification": {
         "status": "partial",
