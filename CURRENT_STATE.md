@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-26T23:40Z (July repository and typed-lineage migration deployed)
+updated: 2026-07-26T23:52Z (CodeQL v4 workflow verified)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; public projection v1.2.0 live with archived lineage; zero findings
 ---
@@ -11,8 +11,9 @@ phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifa
 ## ADR-0050 repository and lineage migration — complete (2026-07-26)
 
 PR [#1](https://github.com/evanfollis/synaplex/pull/1) merged as
-`fb939fdea0ab8048b4611d09d5b6ec2dec6f29e4`. The final lifecycle and security
-closure is `acd717c2035c302fe0e57752ed0606ae3cb76cdd`. `repo.toml` conforms to the
+`fb939fdea0ab8048b4611d09d5b6ec2dec6f29e4`. The lifecycle and security
+closure is `acd717c2035c302fe0e57752ed0606ae3cb76cdd`; the verified CodeQL v4 pin
+is `efda1256623cb1e505411a49faacbf6f26a24a0f`. `repo.toml` conforms to the
 accepted central schema and honestly profiles Synaplex as an active, agentic
 monorepo. Stable `make` front doors, architecture documentation, Ruff, mypy,
 tests, prompt gates, deployment checks, pinned least-privilege CI, weekly
@@ -50,13 +51,14 @@ canon guards, 10 launcher assertions, Ruff, mypy, strict JSON Schema
 validation, two accepted active prompt baselines, deploy-contract validation,
 and a 23-page Astro build. GitHub Actions receipts are also green:
 `repository-contract` run
-[30225673440](https://github.com/evanfollis/synaplex/actions/runs/30225673440)
+[30226094283](https://github.com/evanfollis/synaplex/actions/runs/30226094283)
 and CodeQL run
-[30225673463](https://github.com/evanfollis/synaplex/actions/runs/30225673463).
+[30226094305](https://github.com/evanfollis/synaplex/actions/runs/30226094305).
 CI checks out the public canon conformance owner read-only at exact
 context-repository commit `96850d3f44e998e774eb67d3af1aa566ab710d57`
 through `SYNAPLEX_CONTEXT_REPOSITORY_ROOT`; canon was not copied or moved.
-Repository-native CodeQL and Dependabot configuration is complete. Account-level
+Repository-native CodeQL uses checkout v7.0.1 and CodeQL Action v4.37.3 at
+immutable verified SHAs; Dependabot configuration is complete. Account-level
 vulnerability alerts/security updates, secret scanning with push protection,
 and the deploy-compatible `main` branch rule are not claimed without primary
 settings receipts; the completion handoff gives executive the exact remaining
