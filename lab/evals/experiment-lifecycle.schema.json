@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synaplex.ai/lab/experiment-lifecycle.schema.json",
+  "title": "Synaplex experiment lifecycle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "study_id",
+    "claim_id",
+    "policy_id",
+    "lifecycle",
+    "disposition",
+    "controls",
+    "frozen_inputs",
+    "prompt_eval",
+    "review_receipts",
+    "authority"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "study_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "claim_id": {"type": "string", "pattern": "^[a-f0-9]{16}$"},
+    "policy_id": {"type": "string", "pattern": "^[a-f0-9]{16}$"},
+    "lifecycle": {"const": "BLOCKED_PRE_ENTRY"},
+    "disposition": {"const": "quarantined"},
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "review_route",
+        "review_unit",
+        "public_projection",
+        "evidence_emission"
+      ],
+      "properties": {
+        "executable": {"const": false},
+        "review_route": {"const": "inactive"},
+        "review_unit": {"const": "inactive"},
+        "public_projection": {"const": "excluded"},
+        "evidence_emission": {"const": "prohibited"}
+      }
+    },
+    "frozen_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "content_hash"],
+      "properties": {
+        "manifest": {
+          "const": "lab/evals/artifact-delivery-instrument-v2/frozen-inputs.json"
+        },
+        "content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    },
+    "prompt_eval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "quarantined_spec",
+        "spec_hash",
+        "baseline"
+      ],
+      "properties": {
+        "id": {"const": "artifact-delivery-v2-method-review-v2"},
+        "status": {"const": "quarantined"},
+        "quarantined_spec": {
+          "const": ".prompteval/artifact-delivery-v2-method-review-v2/spec.quarantined.json"
+        },
+        "spec_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "baseline": {"const": "absent"}
+      }
+    },
+    "review_receipts": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "content_hash"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^lab/evals/artifact-delivery-instrument-v2/reviews/"
+          },
+          "content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "decided_at", "receipt", "content_hash"],
+      "properties": {
+        "kind": {"const": "principal_direct_instruction"},
+        "decided_at": {"type": "string", "format": "date-time"},
+        "receipt": {
+          "const": "lab/evals/artifact-delivery-instrument-v2/reviews/quarantine-disposition-2026-07-26.md"
+        },
+        "content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

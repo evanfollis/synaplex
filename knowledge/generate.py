@@ -23,6 +23,7 @@ SOURCES = ROOT / "sources" / "registry.json"
 SOURCES_SCHEMA = ROOT / "sources" / "registry.schema.json"
 CONJECTURES = ROOT / "reasoning" / "conjectures" / "conjectures.json"
 CONJECTURES_SCHEMA = ROOT / "reasoning" / "conjectures" / "conjectures.schema.json"
+LIFECYCLE_SCHEMA = ROOT / "lab" / "evals" / "experiment-lifecycle.schema.json"
 OUTPUT = ROOT / "knowledge" / "public-projection.json"
 VERSION = "1.2.0"
 DECISION_KINDS = {"promote", "kill", "continue", "pivot", "amend_policy", "rollback_policy"}
@@ -51,6 +52,25 @@ def _validate_typed(source: Path, schema_path: Path, label: str) -> dict[str, An
 
 def _records(kind: str) -> list[dict[str, Any]]:
     return [_read_json(path) for path in sorted((CANON / kind).glob("*.json"))]
+
+
+def _validated_lifecycles() -> list[dict[str, Any]]:
+    schema = _read_json(LIFECYCLE_SCHEMA)
+    records: list[dict[str, Any]] = []
+    for path in sorted((ROOT / "lab" / "evals").glob("*/lifecycle.json")):
+        value = _read_json(path)
+        try:
+            Draft202012Validator(
+                schema,
+                format_checker=Draft202012Validator.FORMAT_CHECKER,
+            ).validate(value)
+        except ValidationError as exc:
+            raise ProjectionError(
+                f"experiment lifecycle schema violation at {path.relative_to(ROOT)}: "
+                f"{exc.message}"
+            ) from exc
+        records.append(value)
+    return records
 
 
 def _assert_public(value: Any, path: str = "$") -> None:
@@ -112,36 +132,59 @@ def _validated_blocks(status_source: dict[str, Any] | None = None) -> dict[str, 
     return blocks
 
 
-def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: list[dict[str, Any]] | None = None, evidence: list[dict[str, Any]] | None = None, metadata: dict[str, Any] | None = None, status_source: dict[str, Any] | None = None) -> dict[str, Any]:
-    claims = _records("claims") if claims is None else claims
-    decisions = _records("decisions") if decisions is None else decisions
-    evidence = _records("evidence") if evidence is None and (CANON / "evidence").exists() else (evidence or [])
+def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: list[dict[str, Any]] | None = None, evidence: list[dict[str, Any]] | None = None, metadata: dict[str, Any] | None = None, status_source: dict[str, Any] | None = None, lifecycles: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    repository_claims = claims is None
+    claim_records = _records("claims") if claims is None else claims
+    decision_records = _records("decisions") if decisions is None else decisions
+    evidence_records = _records("evidence") if evidence is None and (CANON / "evidence").exists() else (evidence or [])
     metadata = _read_json(METADATA) if metadata is None else metadata
+    lifecycle_records = _validated_lifecycles() if lifecycles is None and repository_claims else (lifecycles or [])
     public_meta = metadata.get("research", {})
     blocks = _validated_blocks(status_source)
-    claim_ids = {claim["id"] for claim in claims}
-    if claim_ids != set(public_meta):
-        raise ProjectionError(f"metadata/canon drift: missing={sorted(claim_ids - set(public_meta))}, unknown={sorted(set(public_meta) - claim_ids)}")
+    claim_ids = {claim["id"] for claim in claim_records}
+    excluded_claim_ids = {
+        item["claim_id"]
+        for item in lifecycle_records
+        if item["controls"]["public_projection"] == "excluded"
+    }
+    unknown_exclusions = excluded_claim_ids - claim_ids
+    if unknown_exclusions:
+        raise ProjectionError(
+            f"experiment lifecycle references unknown Claims: {sorted(unknown_exclusions)}"
+        )
+    visible_claim_ids = claim_ids - excluded_claim_ids
+    if visible_claim_ids != set(public_meta):
+        raise ProjectionError(f"metadata/canon drift: missing={sorted(visible_claim_ids - set(public_meta))}, unknown={sorted(set(public_meta) - visible_claim_ids)}")
     unknown_blocks = set(blocks) - claim_ids
     if unknown_blocks:
         raise ProjectionError(f"block status references unknown Claims: {sorted(unknown_blocks)}")
     decisions_by_claim: dict[str, list[dict[str, Any]]] = {}
-    for decision_record in decisions:
+    for decision_record in decision_records:
         decisions_by_claim.setdefault(
             decision_record["chosen_claim_id"], []
         ).append(decision_record)
     decision_by_claim = {claim_id: sorted(items, key=lambda item: (item["emitted_at"], item["id"]))[-1] for claim_id, items in decisions_by_claim.items()}
-    evidence_by_id = {item["id"]: item for item in evidence}
+    evidence_by_id = {item["id"]: item for item in evidence_records}
     research: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
     timestamps: list[str] = []
-    for claim in sorted(claims, key=lambda item: item["id"]):
-        meta = public_meta[claim["id"]]
+    for claim in sorted(claim_records, key=lambda item: item["id"]):
         decision: dict[str, Any] | None = decision_by_claim.get(claim["id"])
         status, validity, superseded_by = _decision_status(decision)
         block = blocks.get(claim["id"])
         if block and decision is not None:
             raise ProjectionError(f"block status for {claim['id']} drifted past terminal Decision {decision['id']}")
+        if claim["id"] in excluded_claim_ids:
+            if block is None:
+                raise ProjectionError(
+                    f"quarantined Claim {claim['id']} lacks typed blocked status"
+                )
+            if decision is not None:
+                raise ProjectionError(
+                    f"quarantined Claim {claim['id']} has terminal Decision {decision['id']}"
+                )
+            continue
+        meta = public_meta[claim["id"]]
         if block:
             status = "blocked"
         updated = decision["emitted_at"] if decision else (block["since"] if block else claim["emitted_at"])

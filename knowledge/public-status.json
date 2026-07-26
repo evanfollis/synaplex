@@ -2,13 +2,13 @@
   "schema_version": "1.0.0",
   "blocks": {
     "e1c51ab0d83be772": {
-      "code": "prompt-eval-release-failed",
-      "since": "2026-07-12T20:47:05Z",
-      "summary": "Fresh no-cache prompt-eval release failed 14 of 14 must-pass cases; opposing review was not run, with no probe entry and no Evidence.",
+      "code": "methodologically-not-ready",
+      "since": "2026-07-26T23:11:07Z",
+      "summary": "Opposing review found substantive defects in the frozen Phase A contract. The experiment is quarantined BLOCKED_PRE_ENTRY, non-executable, and excluded from publication.",
       "authority": {
         "kind": "review_artifact",
-        "path": "lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md",
-        "content_hash": "sha256:44b061f0aaee67c9c026e8ac240c166c91cf3130ff88ee9371a86f869faacc71"
+        "path": "lab/evals/artifact-delivery-instrument-v2/reviews/quarantine-disposition-2026-07-26.md",
+        "content_hash": "sha256:cced0bce9fcb96dbab8971b87541b88b55501530828c638e1825caf7b0d3c67c"
       }
     }
   }

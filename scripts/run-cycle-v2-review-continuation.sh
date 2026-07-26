@@ -7,6 +7,10 @@ CONFIG="$REPO_ROOT/deploy/subscription-cli-paths.env"
 TASK="$RUNTIME_ROOT/reviews/synaplex-cycle-v2-review-continuation-task.md"
 LOG="$RUNTIME_ROOT/reviews/synaplex-cycle-v2-review-continuation-codex.log"
 
+PYTHONPATH="$REPO_ROOT" "$REPO_ROOT/.venv/bin/python" \
+  "$REPO_ROOT/scripts/check_blocked_experiments.py" \
+  --require-executable artifact-delivery-instrument-v2
+
 # shellcheck disable=SC1090
 source "$CONFIG"
 [[ "$CODEX_BIN" = /* && -x "$CODEX_BIN" ]] || {

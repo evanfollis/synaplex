@@ -2,10 +2,10 @@
   "projection_version": "1.2.0",
   "generated_at": "2026-07-26T20:15:00Z",
   "counts": {
-    "research": 4,
+    "research": 3,
     "findings": 0,
     "mechanisms": 3,
-    "engineering_cases": 4,
+    "engineering_cases": 3,
     "sources": 18,
     "conjectures": 4,
     "lineage": 4
@@ -60,29 +60,6 @@
         "claim_id": "bda4396c7638e63f",
         "decision_id": "c40c91e1d1b56853",
         "evidence_ids": []
-      }
-    },
-    {
-      "id": "e1c51ab0d83be772",
-      "slug": "artifact-delivery-instrument-v2",
-      "title": "Artifact delivery instrument v2",
-      "summary": "A controlled instrument-validation study preregistered but blocked before probe entry because the required opposing review produced no verdict.",
-      "status": "blocked",
-      "validity": "pending",
-      "registered_at": "2026-07-12T19:06:22Z",
-      "updated_at": "2026-07-12T20:47:05Z",
-      "superseded_by": null,
-      "public_artifact": "/artifacts/artifact-delivery-instrument-v2/",
-      "provenance": {
-        "claim_id": "e1c51ab0d83be772",
-        "decision_id": null,
-        "evidence_ids": []
-      },
-      "block": {
-        "code": "prompt-eval-release-failed",
-        "since": "2026-07-12T20:47:05Z",
-        "summary": "Fresh no-cache prompt-eval release failed 14 of 14 must-pass cases; opposing review was not run, with no probe entry and no Evidence.",
-        "source_digest": "sha256:44b061f0aaee67c9c026e8ac240c166c91cf3130ff88ee9371a86f869faacc71"
       }
     }
   ],
@@ -151,19 +128,6 @@
       "source_links": [
         "https://github.com/evanfollis/synaplex/blob/main/intake/friction.py",
         "https://github.com/evanfollis/synaplex/blob/main/intake/test_friction_resilience.py"
-      ]
-    },
-    {
-      "id": "case:self-measuring-review-gate",
-      "slug": "self-measuring-review-gate",
-      "title": "A failed review gate remains visible",
-      "summary": "The system preserved a launcher failure, repaired the execution boundary, then stopped when the real no-cache gate failed 14 of 14 cases.",
-      "label": "engineering case study",
-      "status": "operational",
-      "learned": "Separating launcher failure from model evaluation prevents infrastructure noise from becoming a scientific verdict.",
-      "limits": "This retrospective receipt is not a prospective denominator and produced zero Evidence.",
-      "source_links": [
-        "https://github.com/evanfollis/synaplex/blob/main/lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md"
       ]
     }
   ],
@@ -690,5 +654,5 @@
       }
     }
   ],
-  "digest": "sha256:9eb6e1af64c657f5550a979b5b02cc9321e9bc6aa617ca9d27c57acd454ef885"
+  "digest": "sha256:eb1ebc07b7cd4eed73acdebb589b0420f610f4d9c07caedae4d50c0cae93f788"
 }

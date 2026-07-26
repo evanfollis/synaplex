@@ -11,6 +11,7 @@ check: lint typecheck test eval build deploy-check ## Run every merge gate witho
 
 test: ## Run deterministic Python, canon, and site-copy tests.
 	PYTHONPATH=. $(PYTHON) -m unittest discover -s . -p 'test_*.py'
+	PYTHONPATH=. $(PYTHON) scripts/check_blocked_experiments.py
 	PYTHONPATH=. $(PYTHON) scripts/test_subscription_cli_launcher.py
 	PYTHONPATH=. $(PYTHON) lab/canon/test_conformance.py
 	PYTHONPATH=. $(PYTHON) reasoning/check_programmes.py --self-test

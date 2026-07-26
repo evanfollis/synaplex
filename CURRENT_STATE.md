@@ -1,14 +1,14 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-26T23:02Z (subscription capacity recovered; scientific prompt gate remains red)
+updated: 2026-07-26T23:15Z (blocked experiment quarantined; repository/lineage gate green)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 remains deployed; v1.2.0 lineage migration blocked before public delivery
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 remains deployed; v1.2.0 lineage migration merge-ready
 ---
 
 # synaplex — current state
 
-## ADR-0050 repository and lineage migration — implementation ready, delivery blocked (2026-07-26)
+## ADR-0050 repository and lineage migration — gates green, delivery pending (2026-07-26)
 
 The reversible migration implementation is complete on a non-main delivery
 branch, but it is not promoted or deployed. `repo.toml` now conforms to the
@@ -20,8 +20,8 @@ and deployment gates are present. Runtime, supervisor, context-repository,
 canon-schema, and conformance locations have compatible environment overrides.
 
 The public projection implementation is v1.2.0 with digest
-`sha256:9eb6e1af64c657f5550a979b5b02cc9321e9bc6aa617ca9d27c57acd454ef885`
-and counts 4 research / 0 findings / 3 mechanisms / 4 engineering cases /
+`sha256:eb1ebc07b7cd4eed73acdebb589b0420f610f4d9c07caedae4d50c0cae93f788`
+and counts 3 research / 0 findings / 3 mechanisms / 3 engineering cases /
 18 sources / 4 conjectures / 4 lineage records. A strict typed
 `LineageArtifact` source pins the inspected commits and reproducible
 `git archive` SHA-256 digests for geometric-agent-primitives, ai-native,
@@ -30,14 +30,14 @@ verification limits, retained assets, excluded claims, and a schema-enforced
 not-Claim/Evidence/finding/current-study boundary. The records remain honestly
 `archive-planned`. `knowledge/public-projection.json` is the sole tracked
 projection; ignored site copies are verified byte-identical packaging outputs.
-The local Astro build produces 26 pages including `/lineage/` and four detail
+The local Astro build produces 23 pages including `/lineage/` and four detail
 routes.
 
-Deterministic gates are green through the prompt boundary: 53 unittest cases,
-19/19 external canon
-conformance fixtures, Programme and canon guards, launcher assertions, Ruff,
-mypy, strict JSON Schema validation, deploy-contract validation, and the
-26-page site build. Versioned systemd unit sources use configurable paths,
+Deterministic gates are green: 54 unittest cases, typed blocked-experiment
+lifecycle validation, 19/19 external canon conformance fixtures, Programme and
+canon guards, 10 launcher assertions, Ruff, mypy, strict JSON Schema
+validation, two accepted active prompt baselines, deploy-contract validation,
+and the 23-page site build. Versioned systemd unit sources use configurable paths,
 absolute subscription CLIs, owner-only umask, capability removal, and
 least-privilege sandboxes. The capture unit passed its live canary and is the
 scheduled timer target (systemd exposure 2.6 OK); the review unit is installed
@@ -51,20 +51,25 @@ version remains `pv-38258c6e2891c210`. `synaplex-charter` passed 14/14,
 including both holdouts, in `run-20260726T223736Z-d8648e`; its accepted prompt
 version remains `pv-672b0c68035e587d`.
 
-Public delivery remains blocked by the mandatory artifact-delivery methodology
-gate. The never-baselined incompatible v1 eval contract is retired byte-for-byte
-with its old holdout digest preserved. Its v2 replacement uses self-contained
-Phase A records and discriminating final-token checks. The exact frozen Phase A
-record was rejected in active-only release
+The mandatory artifact-delivery review correctly rejected the exact frozen
+Phase A record in active-only release
 `run-20260726T221835Z-864f2c` (9/10) because the frozen artifact contract permits
 classified samples in an aborted run, does not enforce bijective archive
 acknowledgement coverage or mandatory raw-stream coverage, and leaves the
 provisioner/executor monotonic clock domain ambiguous. Those are substantive
-scientific-input defects, not provider or formatting failures. The migration
-has no authority to edit frozen Phase A inputs, so no baseline was accepted.
-`prompteval check .` and `make check` fail closed only on the missing
-`artifact-delivery-v2-method-review-v2` baseline. See
-`reviews/repository-migration-prompt-baselines-blocked-2026-07-26.md`.
+scientific-input defects, not provider or formatting failures.
+
+The principal therefore accepted an explicit quarantine disposition. A strict
+`lifecycle.json` now fixes the experiment at `BLOCKED_PRE_ENTRY`, with execution
+false, review route/unit inactive, Evidence prohibited, and public projection
+excluded. The checker verifies the schema, frozen-input and review-receipt
+digests, canon identities, absent baseline, quarantined eval spec, prompt
+inventory state, launcher refusal, unit non-installability, and absence from
+public metadata/projection/case lanes. The launcher exits 78 before loading a
+subscription CLI. The installed review service is static and inactive. All
+failed receipts and frozen bytes remain intact; no evaluator or criterion was
+weakened. `prompteval check .` now gates the two active prompts and passes with
+zero warnings, and `make check` is fully green.
 
 The corrected canon-path handoff dated `2026-07-26T20-50-08Z` is implemented
 without moving canon or changing the schema digest: shared configuration now
@@ -73,7 +78,7 @@ the sibling `schemas/` and `conformance/` layout, four path-configuration tests
 pass, and all 19 external conformance fixtures remain green. The quarantined
 malformed predecessor handoff remains preserved under `runtime/.handoff/REJECTED/`.
 
-Consequently v1.1.0 remains live, predecessor READMEs/homepages and archive
+Until the staged deployment, v1.1.0 remains live, predecessor READMEs/homepages and archive
 flags are untouched, and GitHub metadata/security settings are unchanged. No
 pre-existing cross-domain or charter holdout content, frozen input, canon
 envelope, subject, Evidence, or Phase B state was touched. The new

@@ -36,6 +36,15 @@ class ProjectionTests(unittest.TestCase):
         ids = [item["id"] for item in projection["research"]]
         self.assertEqual(ids, sorted(ids))
         self.assertEqual(len(ids), len(set(ids)))
+        self.assertNotIn("e1c51ab0d83be772", ids)
+
+    def test_blocked_experiment_is_excluded_from_every_public_lane(self):
+        projection = build_projection()
+        encoded = json.dumps(projection)
+        self.assertNotIn("artifact-delivery-instrument-v2", encoded)
+        self.assertNotIn("e1c51ab0d83be772", encoded)
+        self.assertEqual(projection["counts"]["research"], 3)
+        self.assertEqual(projection["counts"]["engineering_cases"], 3)
 
     def test_zero_findings_is_truthful(self):
         projection = build_projection()
