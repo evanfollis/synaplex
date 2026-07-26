@@ -14,7 +14,7 @@
   "description": "synaplex.ai \u2014 the system. Publication + evaluation lab for the structure of AI systems.",
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",
-    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/sitemap": "^3.7.3",
     "@astrojs/tailwind": "^6.0.2",
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^5.18.1",
