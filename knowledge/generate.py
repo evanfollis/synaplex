@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
 CANON = ROOT / "lab" / ".canon"
@@ -17,14 +17,15 @@ STATUS_SCHEMA = ROOT / "knowledge" / "public-status.schema.json"
 PROJECTION_SCHEMA = ROOT / "knowledge" / "public-projection.schema.json"
 CASES = ROOT / "knowledge" / "engineering-cases.json"
 CASES_SCHEMA = ROOT / "knowledge" / "engineering-cases.schema.json"
+LINEAGE = ROOT / "knowledge" / "lineage-artifacts.json"
+LINEAGE_SCHEMA = ROOT / "knowledge" / "lineage-artifacts.schema.json"
 SOURCES = ROOT / "sources" / "registry.json"
 SOURCES_SCHEMA = ROOT / "sources" / "registry.schema.json"
 CONJECTURES = ROOT / "reasoning" / "conjectures" / "conjectures.json"
 CONJECTURES_SCHEMA = ROOT / "reasoning" / "conjectures" / "conjectures.schema.json"
+LIFECYCLE_SCHEMA = ROOT / "lab" / "evals" / "experiment-lifecycle.schema.json"
 OUTPUT = ROOT / "knowledge" / "public-projection.json"
-SITE_OUTPUT = ROOT / "site" / "public" / "knowledge" / "public-projection.json"
-SITE_DATA = ROOT / "site" / "src" / "data" / "public-projection.json"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 DECISION_KINDS = {"promote", "kill", "continue", "pivot", "amend_policy", "rollback_policy"}
 ACCEPTING_DECISION_KINDS = {"promote"}
 
@@ -44,13 +45,32 @@ def _validate_typed(source: Path, schema_path: Path, label: str) -> dict[str, An
     value = _read_json(source)
     try:
         Draft202012Validator(_read_json(schema_path), format_checker=Draft202012Validator.FORMAT_CHECKER).validate(value)
-    except Exception as exc:
+    except ValidationError as exc:
         raise ProjectionError(f"{label} schema violation: {exc.message}") from exc
     return value
 
 
 def _records(kind: str) -> list[dict[str, Any]]:
     return [_read_json(path) for path in sorted((CANON / kind).glob("*.json"))]
+
+
+def _validated_lifecycles() -> list[dict[str, Any]]:
+    schema = _read_json(LIFECYCLE_SCHEMA)
+    records: list[dict[str, Any]] = []
+    for path in sorted((ROOT / "lab" / "evals").glob("*/lifecycle.json")):
+        value = _read_json(path)
+        try:
+            Draft202012Validator(
+                schema,
+                format_checker=Draft202012Validator.FORMAT_CHECKER,
+            ).validate(value)
+        except ValidationError as exc:
+            raise ProjectionError(
+                f"experiment lifecycle schema violation at {path.relative_to(ROOT)}: "
+                f"{exc.message}"
+            ) from exc
+        records.append(value)
+    return records
 
 
 def _assert_public(value: Any, path: str = "$") -> None:
@@ -98,7 +118,7 @@ def _validated_blocks(status_source: dict[str, Any] | None = None) -> dict[str, 
     schema = _read_json(STATUS_SCHEMA)
     try:
         Draft202012Validator(schema, format_checker=Draft202012Validator.FORMAT_CHECKER).validate(source)
-    except Exception as exc:
+    except ValidationError as exc:
         raise ProjectionError(f"public status schema violation: {exc.message}") from exc
     blocks = source["blocks"]
     for claim_id, block in blocks.items():
@@ -112,34 +132,59 @@ def _validated_blocks(status_source: dict[str, Any] | None = None) -> dict[str, 
     return blocks
 
 
-def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: list[dict[str, Any]] | None = None, evidence: list[dict[str, Any]] | None = None, metadata: dict[str, Any] | None = None, status_source: dict[str, Any] | None = None) -> dict[str, Any]:
-    claims = _records("claims") if claims is None else claims
-    decisions = _records("decisions") if decisions is None else decisions
-    evidence = _records("evidence") if evidence is None and (CANON / "evidence").exists() else (evidence or [])
+def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: list[dict[str, Any]] | None = None, evidence: list[dict[str, Any]] | None = None, metadata: dict[str, Any] | None = None, status_source: dict[str, Any] | None = None, lifecycles: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    repository_claims = claims is None
+    claim_records = _records("claims") if claims is None else claims
+    decision_records = _records("decisions") if decisions is None else decisions
+    evidence_records = _records("evidence") if evidence is None and (CANON / "evidence").exists() else (evidence or [])
     metadata = _read_json(METADATA) if metadata is None else metadata
+    lifecycle_records = _validated_lifecycles() if lifecycles is None and repository_claims else (lifecycles or [])
     public_meta = metadata.get("research", {})
     blocks = _validated_blocks(status_source)
-    claim_ids = {claim["id"] for claim in claims}
-    if claim_ids != set(public_meta):
-        raise ProjectionError(f"metadata/canon drift: missing={sorted(claim_ids - set(public_meta))}, unknown={sorted(set(public_meta) - claim_ids)}")
+    claim_ids = {claim["id"] for claim in claim_records}
+    excluded_claim_ids = {
+        item["claim_id"]
+        for item in lifecycle_records
+        if item["controls"]["public_projection"] == "excluded"
+    }
+    unknown_exclusions = excluded_claim_ids - claim_ids
+    if unknown_exclusions:
+        raise ProjectionError(
+            f"experiment lifecycle references unknown Claims: {sorted(unknown_exclusions)}"
+        )
+    visible_claim_ids = claim_ids - excluded_claim_ids
+    if visible_claim_ids != set(public_meta):
+        raise ProjectionError(f"metadata/canon drift: missing={sorted(visible_claim_ids - set(public_meta))}, unknown={sorted(set(public_meta) - visible_claim_ids)}")
     unknown_blocks = set(blocks) - claim_ids
     if unknown_blocks:
         raise ProjectionError(f"block status references unknown Claims: {sorted(unknown_blocks)}")
     decisions_by_claim: dict[str, list[dict[str, Any]]] = {}
-    for decision in decisions:
-        decisions_by_claim.setdefault(decision["chosen_claim_id"], []).append(decision)
+    for decision_record in decision_records:
+        decisions_by_claim.setdefault(
+            decision_record["chosen_claim_id"], []
+        ).append(decision_record)
     decision_by_claim = {claim_id: sorted(items, key=lambda item: (item["emitted_at"], item["id"]))[-1] for claim_id, items in decisions_by_claim.items()}
-    evidence_by_id = {item["id"]: item for item in evidence}
+    evidence_by_id = {item["id"]: item for item in evidence_records}
     research: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
     timestamps: list[str] = []
-    for claim in sorted(claims, key=lambda item: item["id"]):
-        meta = public_meta[claim["id"]]
-        decision = decision_by_claim.get(claim["id"])
+    for claim in sorted(claim_records, key=lambda item: item["id"]):
+        decision: dict[str, Any] | None = decision_by_claim.get(claim["id"])
         status, validity, superseded_by = _decision_status(decision)
         block = blocks.get(claim["id"])
         if block and decision is not None:
             raise ProjectionError(f"block status for {claim['id']} drifted past terminal Decision {decision['id']}")
+        if claim["id"] in excluded_claim_ids:
+            if block is None:
+                raise ProjectionError(
+                    f"quarantined Claim {claim['id']} lacks typed blocked status"
+                )
+            if decision is not None:
+                raise ProjectionError(
+                    f"quarantined Claim {claim['id']} has terminal Decision {decision['id']}"
+                )
+            continue
+        meta = public_meta[claim["id"]]
         if block:
             status = "blocked"
         updated = decision["emitted_at"] if decision else (block["since"] if block else claim["emitted_at"])
@@ -150,6 +195,7 @@ def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: l
             "provenance": {"claim_id": claim["id"], "decision_id": decision["id"] if decision else None, "evidence_ids": list(decision.get("cited_evidence", [])) if decision else []},
         }
         if status == "blocked":
+            assert block is not None
             item["block"] = {"code": block["code"], "since": block["since"], "summary": block["summary"], "source_digest": block["authority"]["content_hash"]}
         research.append(item)
         timestamps.extend([claim["emitted_at"], updated])
@@ -160,6 +206,8 @@ def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: l
             findings.append({"id": f"finding:{decision['id']}", "claim_id": claim["id"], "decision_id": decision["id"], "evidence_ids": cited, "statement": claim["statement"], "validity": "valid", "decided_at": decision["emitted_at"], "superseded_by": None})
     mechanisms = sorted(metadata.get("mechanisms", []), key=lambda item: item["id"])
     cases = sorted(_validate_typed(CASES, CASES_SCHEMA, "engineering cases")["cases"], key=lambda item: item["id"])
+    lineage_source = _validate_typed(LINEAGE, LINEAGE_SCHEMA, "lineage artifacts")
+    lineage = sorted(lineage_source["artifacts"], key=lambda item: item["id"])
     source_registry = _validate_typed(SOURCES, SOURCES_SCHEMA, "source registry")
     sources = sorted(source_registry["sources"], key=lambda item: item["id"])
     source_ids = {item["id"] for item in sources}
@@ -172,22 +220,28 @@ def build_projection(*, claims: list[dict[str, Any]] | None = None, decisions: l
         domains = {source["domain"] for source in sources if source["id"] in conjecture["source_ids"]}
         if len(domains) < 2:
             raise ProjectionError(f"conjecture {conjecture['id']} is not cross-domain")
-    timestamps.extend([source_registry["generated_at"], conjecture_source["generated_at"]])
+    timestamps.extend([
+        source_registry["generated_at"],
+        conjecture_source["generated_at"],
+        lineage_source["generated_at"],
+    ])
     counts = {
         "research": len(research), "findings": len(findings), "mechanisms": len(mechanisms),
         "engineering_cases": len(cases), "sources": len(sources), "conjectures": len(conjectures),
+        "lineage": len(lineage),
     }
     projection: dict[str, Any] = {
         "projection_version": VERSION, "generated_at": max(timestamps), "counts": counts,
         "research": research, "findings": findings, "mechanisms": mechanisms,
         "engineering_cases": cases, "sources": sources, "conjectures": conjectures,
+        "lineage": lineage,
     }
     _assert_public(projection)
     canonical = json.dumps(projection, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     projection["digest"] = "sha256:" + hashlib.sha256(canonical).hexdigest()
     try:
         Draft202012Validator(_read_json(PROJECTION_SCHEMA), format_checker=Draft202012Validator.FORMAT_CHECKER).validate(projection)
-    except Exception as exc:
+    except ValidationError as exc:
         raise ProjectionError(f"public projection schema violation: {exc.message}") from exc
     return projection
 
@@ -196,10 +250,6 @@ def write_projection() -> dict[str, Any]:
     projection = build_projection()
     rendered = json.dumps(projection, indent=2, ensure_ascii=False) + "\n"
     OUTPUT.write_text(rendered)
-    SITE_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    SITE_OUTPUT.write_text(rendered)
-    SITE_DATA.parent.mkdir(parents=True, exist_ok=True)
-    SITE_DATA.write_text(rendered)
     return projection
 
 

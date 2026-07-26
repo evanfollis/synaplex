@@ -18,12 +18,6 @@
       "title": "Artifact coherence transfer study v1",
       "summary": "A prospective study invalidated before measurement after a protocol deviation and an independently identified detector defect.",
       "public_artifact": "/artifacts/artifact-coherence-transfer-v1/"
-    },
-    "e1c51ab0d83be772": {
-      "slug": "artifact-delivery-instrument-v2",
-      "title": "Artifact delivery instrument v2",
-      "summary": "A controlled instrument-validation study preregistered but blocked before probe entry because the required opposing review produced no verdict.",
-      "public_artifact": "/artifacts/artifact-delivery-instrument-v2/"
     }
   },
   "mechanisms": [

@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "artifact-delivery-instrument-v2",
+  "claim_id": "e1c51ab0d83be772",
+  "policy_id": "7628c88b8f08c7e8",
+  "lifecycle": "BLOCKED_PRE_ENTRY",
+  "disposition": "quarantined",
+  "controls": {
+    "executable": false,
+    "review_route": "inactive",
+    "review_unit": "inactive",
+    "public_projection": "excluded",
+    "evidence_emission": "prohibited"
+  },
+  "frozen_inputs": {
+    "manifest": "lab/evals/artifact-delivery-instrument-v2/frozen-inputs.json",
+    "content_hash": "sha256:e8de6366bc33a3f21fbf4f27b508f41ad9d51ad8133692d9f8ce8b3e64428c14"
+  },
+  "prompt_eval": {
+    "id": "artifact-delivery-v2-method-review-v2",
+    "status": "quarantined",
+    "quarantined_spec": ".prompteval/artifact-delivery-v2-method-review-v2/spec.quarantined.json",
+    "spec_hash": "sha256:e0806bae9f2a8e97c31ab8f0e976ebe2d775ad3087ab05db66f1bdc8d723f5a3",
+    "baseline": "absent"
+  },
+  "review_receipts": [
+    {
+      "path": "lab/evals/artifact-delivery-instrument-v2/reviews/claude-methodological-review-blocked-2026-07-12.md",
+      "content_hash": "sha256:37f5ed92c486b95520fb4b008388a2965cd62ae423752bd88121c9407ce8e321"
+    },
+    {
+      "path": "lab/evals/artifact-delivery-instrument-v2/reviews/codex-review-retry-execution-boundary-2026-07-12.md",
+      "content_hash": "sha256:f076d963124e271f2f9c03b81e22364482f0be63411ddab5752dfbfb36ae1cc9"
+    },
+    {
+      "path": "lab/evals/artifact-delivery-instrument-v2/reviews/pre-entry-review-continuation-blocked-2026-07-12.md",
+      "content_hash": "sha256:44b061f0aaee67c9c026e8ac240c166c91cf3130ff88ee9371a86f869faacc71"
+    },
+    {
+      "path": "lab/evals/artifact-delivery-instrument-v2/reviews/quarantine-disposition-2026-07-26.md",
+      "content_hash": "sha256:cced0bce9fcb96dbab8971b87541b88b55501530828c638e1825caf7b0d3c67c"
+    }
+  ],
+  "authority": {
+    "kind": "principal_direct_instruction",
+    "decided_at": "2026-07-26T23:11:07Z",
+    "receipt": "lab/evals/artifact-delivery-instrument-v2/reviews/quarantine-disposition-2026-07-26.md",
+    "content_hash": "sha256:cced0bce9fcb96dbab8971b87541b88b55501530828c638e1825caf7b0d3c67c"
+  }
+}

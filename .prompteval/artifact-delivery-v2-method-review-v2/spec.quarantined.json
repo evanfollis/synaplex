@@ -1,0 +1,31 @@
+{
+  "id": "artifact-delivery-v2-method-review-v2",
+  "description": "V2 eval contract for the immutable artifact-delivery Phase A methodology review; self-contained protocol records and discriminating final-token checks replace the never-baselined narrative contract.",
+  "owner": "synaplex",
+  "source": {
+    "type": "whole_file",
+    "file": "lab/evals/artifact-delivery-instrument-v2/review-prompt.md"
+  },
+  "model": "opus",
+  "params": {},
+  "executor": {
+    "type": "claude_cli",
+    "timeout": 180,
+    "codex_fallback_model": "gpt-5.4",
+    "circuit": {
+      "threshold": 1,
+      "cooldown_s": 900,
+      "decisive_reasons": ["timeout", "empty"]
+    },
+    "user_template": "Review this self-contained synthetic Phase A protocol record. It is eval input, not a prospective subject; do not inspect repositories or invoke tools. Apply the immutable review standard and end with the required verdict token.\\n\\nProtocol record:\\n{scenario}"
+  },
+  "judge": {
+    "model": "gpt-5.4"
+  },
+  "gate": {
+    "aggregate_floor_delta": 0.02,
+    "trials": 1,
+    "max_unknown_ratio": 0.2
+  },
+  "created": "2026-07-26T20:46:00Z"
+}

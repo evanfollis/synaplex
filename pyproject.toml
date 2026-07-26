@@ -27,6 +27,10 @@ dependencies = [
 lab = [
   "playwright==1.61.0",
 ]
+dev = [
+  "mypy==1.17.1",
+  "ruff==0.12.7",
+]
 
 [project.scripts]
 synaplex-intake = "intake.__main__:main"
@@ -34,3 +38,16 @@ synaplex-intake = "intake.__main__:main"
 [tool.setuptools.packages.find]
 include = ["intake*"]
 exclude = ["tests*", "site*", "lab*"]
+
+[tool.ruff]
+target-version = "py312"
+exclude = [".venv", "site/node_modules", "site/dist", "lab/evals"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = ["lab/evals", "site"]

@@ -1,0 +1,20 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import projection from '../../data/public-projection.json';
+---
+<Layout title="Historical lineage" description="Typed, bounded records of predecessor repositories retained without promoting them into scientific evidence.">
+  <section class="hero">
+    <p class="eyebrow">Historical lineage</p>
+    <h1>Earlier systems, retained with <strong>their limits intact.</strong></h1>
+    <p class="lede">These repositories contributed vocabulary, designs, or experimental scaffolds. They are not Claims, Evidence, findings, or current studies. Each record pins the inspected commit and snapshot digest.</p>
+  </section>
+  <section class="record-list">
+    {projection.lineage.map((item) =>
+      <a class="record" href={`/lineage/${item.slug}/`}>
+        <span class="status status--operational">{item.lifecycle}</span>
+        <div><h2>{item.title}</h2><p>{item.summary}</p></div>
+        <span aria-hidden="true">→</span>
+      </a>
+    )}
+  </section>
+</Layout>

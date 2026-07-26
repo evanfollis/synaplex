@@ -1,16 +1,26 @@
 {
   "prompt_version": "pv-38258c6e2891c210",
-  "spec_hash": "sh-abadc56f703cd643",
+  "spec_hash": "sh-e0647ff564d20f5e",
   "golden_hash": "gh-1d7cd2b299496ec6",
   "model": "sonnet",
   "params": {},
   "judge_model": "opus",
-  "run_id": "run-20260719T171510Z-45e399",
-  "ts": "2026-07-19T17:15:10Z",
+  "run_id": "run-20260726T223212Z-fc15f1",
+  "ts": "2026-07-26T22:37:16Z",
   "release": true,
   "passed": true,
   "accepted_from_cache": false,
+  "gate_policy": {
+    "basis": "must_pass_cases",
+    "advisory_cases_gate": false
+  },
   "aggregate": 1.0,
+  "required_aggregate": 1.0,
+  "judge_unknown_ratio": 0.0,
+  "gate": {
+    "passed": true,
+    "reasons": []
+  },
   "cases": {
     "gc-9781433610c210c6": {
       "pass": true,
@@ -69,5 +79,47 @@
       "must_pass": true
     }
   },
-  "all_pass_streak": 1
+  "all_pass_streak": 2,
+  "all_cases_passed": true,
+  "required_cases": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0
+  },
+  "advisory_cases": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0
+  },
+  "provider_provenance": {
+    "schema_version": "prompteval.provider-provenance.v1",
+    "run_id": "run-20260726T223212Z-fc15f1",
+    "requested_executor_model": "sonnet",
+    "requested_judge_model": "opus",
+    "providers": [
+      "codex"
+    ],
+    "successful_calls": 14,
+    "fallback_successes": 14,
+    "routes": [
+      {
+        "role": "executor",
+        "provider": "claude",
+        "model": "sonnet",
+        "status": "throttled",
+        "fallback_from": "",
+        "calls": 1
+      },
+      {
+        "role": "executor",
+        "provider": "codex",
+        "model": "gpt-5.4",
+        "status": "success",
+        "fallback_from": "claude",
+        "calls": 14
+      }
+    ],
+    "telemetry_ref": "/opt/workspace/runtime/.telemetry/events.jsonl#runId=run-20260726T223212Z-fc15f1",
+    "attempt_log": "/opt/workspace/runtime/prompteval/.provenance/run-20260726T223212Z-fc15f1.jsonl"
+  }
 }

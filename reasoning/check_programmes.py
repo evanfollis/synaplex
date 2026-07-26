@@ -22,18 +22,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-WORKSPACE_ROOT = Path("/opt/workspace")
+from synaplex_paths import CANON_SCHEMA_ROOT, REPO_ROOT, WORKSPACE_ROOT
+
 PROGRAMME_REL = "reasoning/programmes"
 PROGRAMME_ROOT = REPO_ROOT / PROGRAMME_REL
-SCHEMA_ROOT = (
-    WORKSPACE_ROOT
-    / "projects"
-    / "context-repository"
-    / "spec"
-    / "discovery-framework"
-    / "schemas"
-)
+SCHEMA_ROOT = CANON_SCHEMA_ROOT
 
 # Pinned fallback for discovery-framework v0.1.0. Used only when the schema
 # source cannot be read; the guard prints a warning in that case.

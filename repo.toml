@@ -1,0 +1,26 @@
+schema_version = 1
+name = "synaplex"
+shape = "monorepo"
+lifecycle = "active"
+agentic_risk = "agentic"
+canonical_repository = "https://github.com/evanfollis/synaplex"
+
+[workspaces.intake]
+path = "intake"
+agentic_risk = "none"
+
+[workspaces.reasoning]
+path = "reasoning"
+agentic_risk = "model-assisted"
+
+[workspaces.lab]
+path = "lab"
+agentic_risk = "agentic"
+
+[workspaces.knowledge]
+path = "knowledge"
+agentic_risk = "none"
+
+[workspaces.site]
+path = "site"
+agentic_risk = "none"

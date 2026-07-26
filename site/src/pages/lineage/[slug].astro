@@ -1,0 +1,49 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import projection from '../../data/public-projection.json';
+
+export function getStaticPaths() {
+  return projection.lineage.map((item) => ({ params: { slug: item.slug }, props: { item } }));
+}
+
+const { item } = Astro.props;
+---
+<Layout title={item.title} description={item.summary}>
+  <article>
+    <p class="eyebrow">Historical lineage · {item.lifecycle}</p>
+    <h1>{item.title}</h1>
+    <p class="lede">{item.summary}</p>
+
+    <section class="section">
+      <h2>Identity and custody</h2>
+      <dl>
+        <dt>Source commit</dt><dd><a href={`${item.repository_url}/tree/${item.source_commit}`}><code>{item.source_commit}</code></a></dd>
+        <dt>Snapshot digest</dt><dd><code>{item.snapshot_digest}</code></dd>
+        <dt>Digest method</dt><dd>SHA-256 of the bytes from <code>git archive --format=tar &lt;source_commit&gt;</code>.</dd>
+        <dt>License at snapshot</dt><dd>{item.license_status}</dd>
+      </dl>
+    </section>
+
+    <section class="section">
+      <h2>What verification established—and did not</h2>
+      <p><strong>{item.verification.status}:</strong> {item.verification.observed}</p>
+      <p>{item.verification.limits}</p>
+    </section>
+
+    <section class="section">
+      <h2>Retained assets</h2>
+      <ul>{item.retained_assets.map((asset) => <li><a href={asset.url}>{asset.label}</a></li>)}</ul>
+    </section>
+
+    <section class="section">
+      <h2>Excluded claims</h2>
+      <ul>{item.excluded_claims.map((claim) => <li>{claim}</li>)}</ul>
+    </section>
+
+    <aside class="card">
+      <h2>Epistemic boundary</h2>
+      <p>{item.boundary.statement}</p>
+      <p><strong>Not a Claim. Not Evidence. Not a finding. Not a current study.</strong></p>
+    </aside>
+  </article>
+</Layout>

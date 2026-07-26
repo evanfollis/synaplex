@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -40,13 +39,9 @@ from .ids import hash_file
 from .rules import CanonRefusal
 from .store import EMITTABLE_TYPES, REPO_ROOT
 from .view import CanonView
+from synaplex_paths import CANON_SCHEMA_ROOT
 
-SCHEMA_ROOT = Path(
-    os.environ.get(
-        "SYNAPLEX_CANON_SCHEMAS",
-        "/opt/workspace/projects/context-repository/spec/discovery-framework/schemas",
-    )
-)
+SCHEMA_ROOT = CANON_SCHEMA_ROOT
 
 PROGRAMME_REL = "reasoning/programmes"
 

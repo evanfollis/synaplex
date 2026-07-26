@@ -6,6 +6,8 @@ site/.wrangler/
 site/.env
 site/.env.local
 site/.env.production
+site/src/data/public-projection.json
+site/public/knowledge/public-projection.json
 
 # Python
 __pycache__/

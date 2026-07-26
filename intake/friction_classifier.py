@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from .friction import emit
+from synaplex_paths import RUNTIME_ROOT, SUPERVISOR_ROOT
 
 WINDOW_DAYS = 7
 FAILURE_THRESHOLD = 3
@@ -42,9 +43,9 @@ MAX_REF_CHARS = 512
 MAX_REPRESENTATIVE_REASONS = 5
 CLASS_TEXT_LIMIT = 96
 
-DEFAULT_EVENT_LOG = Path("/opt/workspace/runtime/friction/events.jsonl")
-DEFAULT_RUNTIME_ROOT = Path("/opt/workspace/runtime/friction")
-DEFAULT_SUPERVISOR_FRICTION = Path("/opt/workspace/supervisor/friction")
+DEFAULT_EVENT_LOG = RUNTIME_ROOT / "friction" / "events.jsonl"
+DEFAULT_RUNTIME_ROOT = RUNTIME_ROOT / "friction"
+DEFAULT_SUPERVISOR_FRICTION = SUPERVISOR_ROOT / "friction"
 
 _VOLATILE_PATTERNS = (
     (re.compile(r"https?://\S+", re.I), "<url>"),

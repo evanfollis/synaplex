@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-26T20:15:00Z",
+  "digest_method": "sha256 of `git archive --format=tar <source_commit>` bytes",
+  "artifacts": [
+    {
+      "id": "lineage:geometric-agent-primitives",
+      "slug": "geometric-agent-primitives",
+      "title": "Geometric Agent Primitives",
+      "repository_url": "https://github.com/evanfollis/geometric-agent-primitives",
+      "source_commit": "c6345dd3bb17d1f65cc61a543e080bc2669b9af4",
+      "snapshot_digest": "sha256:e4d98769f0073380d05026ff1b534bda31b25719dbb477dd0d34e36b54726b6c",
+      "license_status": "missing",
+      "lifecycle": "archive-planned",
+      "summary": "An earlier implementation vocabulary for agent substrates, worlds, lenses, and evolutionary operators; retained as superseded design lineage.",
+      "verification": {
+        "status": "partial",
+        "observed": "The wheel built; a bounded partial test selection reported 36 passing and 3 failing tests.",
+        "limits": "Full collection stopped with five import/collection errors. No current correctness, performance, or reproducibility claim is made."
+      },
+      "retained_assets": [
+        {"label": "Geometric constitution", "url": "https://github.com/evanfollis/geometric-agent-primitives/blob/c6345dd3bb17d1f65cc61a543e080bc2669b9af4/docs/GEOMETRIC_CONSTITUTION.md"},
+        {"label": "Architecture", "url": "https://github.com/evanfollis/geometric-agent-primitives/blob/c6345dd3bb17d1f65cc61a543e080bc2669b9af4/docs/ARCHITECTURE.md"}
+      ],
+      "excluded_claims": [
+        "The implementation is production-ready.",
+        "The geometric abstractions improve agent performance.",
+        "The archived tests form scientific Evidence."
+      ],
+      "boundary": {
+        "is_claim": false,
+        "is_evidence": false,
+        "is_finding": false,
+        "is_current_study": false,
+        "statement": "Historical implementation lineage only; it is outside current canon and every active or frozen study denominator."
+      }
+    },
+    {
+      "id": "lineage:ai-native",
+      "slug": "ai-native",
+      "title": "AI Native",
+      "repository_url": "https://github.com/evanfollis/ai-native",
+      "source_commit": "94f69d4f667946dd3192d0da5f0df276330ea56a",
+      "snapshot_digest": "sha256:0faec44fd977503bcb4d183d33a2cd6f01ffa388c34677ac1f08e69a78bfc85c",
+      "license_status": "missing",
+      "lifecycle": "archive-planned",
+      "summary": "A conceptual scaffold for an AI-native operating model and multi-agent kernel; retained for vocabulary and design-history inspection.",
+      "verification": {
+        "status": "failed",
+        "observed": "The packaging source uses an invalid Python import package name containing a hyphen.",
+        "limits": "There is no test suite, CI receipt, license, or reproducible operational result."
+      },
+      "retained_assets": [
+        {"label": "AI-native constitution", "url": "https://github.com/evanfollis/ai-native/blob/94f69d4f667946dd3192d0da5f0df276330ea56a/docs/AI-NATIVE_CONSTITUTION.md"},
+        {"label": "Component model", "url": "https://github.com/evanfollis/ai-native/blob/94f69d4f667946dd3192d0da5f0df276330ea56a/docs/AI-NATIVE_COMPONENTS.md"}
+      ],
+      "excluded_claims": [
+        "The scaffold is installable or operational.",
+        "Its safety model has been validated.",
+        "Its architecture is a current Synaplex subsystem."
+      ],
+      "boundary": {
+        "is_claim": false,
+        "is_evidence": false,
+        "is_finding": false,
+        "is_current_study": false,
+        "statement": "Historical conceptual lineage only; no content is promoted into canon or a current study."
+      }
+    },
+    {
+      "id": "lineage:worldview-alignment",
+      "slug": "worldview-alignment",
+      "title": "Worldview Alignment",
+      "repository_url": "https://github.com/evanfollis/worldview-alignment",
+      "source_commit": "24483b9ad0a4ec7101585be6579139104c9460bd",
+      "snapshot_digest": "sha256:032bae600dbc281cd05610d29395bc952c4242366b2bf12763c592b744061f0e",
+      "license_status": "MIT",
+      "lifecycle": "archive-planned",
+      "summary": "An experimental simulation of kernels, distortions, and social dynamics; retained as mathematical and implementation lineage, not as a validated alignment result.",
+      "verification": {
+        "status": "partial",
+        "observed": "The wheel built and the available run reported 58 passing and 6 failing tests.",
+        "limits": "The bounded migration did not repair or reproduce the mathematics to a green state, so maintenance and result claims are excluded."
+      },
+      "retained_assets": [
+        {"label": "Core kernels", "url": "https://github.com/evanfollis/worldview-alignment/blob/24483b9ad0a4ec7101585be6579139104c9460bd/k_cdd_plus/core/kernels.py"},
+        {"label": "Gradient tests", "url": "https://github.com/evanfollis/worldview-alignment/blob/24483b9ad0a4ec7101585be6579139104c9460bd/k_cdd_plus/tests/test_gradient_accuracy.py"}
+      ],
+      "excluded_claims": [
+        "The model establishes a theory of alignment.",
+        "The numerical results reproduce successfully.",
+        "The tests constitute current scientific Evidence."
+      ],
+      "boundary": {
+        "is_claim": false,
+        "is_evidence": false,
+        "is_finding": false,
+        "is_current_study": false,
+        "statement": "Historical experimental lineage only; the non-green reproduction explicitly prevents a maintained or finding label."
+      }
+    },
+    {
+      "id": "lineage:edg",
+      "slug": "edg",
+      "title": "Epistemic Differential Geometry",
+      "repository_url": "https://github.com/evanfollis/edg",
+      "source_commit": "be110e2644ca5c9ba089e1784cfbb1226a1a167d",
+      "snapshot_digest": "sha256:eb247dc9485908ab480a6641906f6c18bb541cec809b615ac767cf6dc7f5566d",
+      "license_status": "missing",
+      "lifecycle": "archive-planned",
+      "summary": "A speculative theory, schema, and service-contract scaffold for transport and holonomy across epistemic lenses.",
+      "verification": {
+        "status": "partial",
+        "observed": "Schemas and two fixtures validated in isolation.",
+        "limits": "Seven tests fail at fixture setup, numerical modules are empty, and declared Compose services lack Dockerfiles."
+      },
+      "retained_assets": [
+        {"label": "Theory note", "url": "https://github.com/evanfollis/edg/blob/be110e2644ca5c9ba089e1784cfbb1226a1a167d/docs/THEORY.md"},
+        {"label": "Architecture", "url": "https://github.com/evanfollis/edg/blob/be110e2644ca5c9ba089e1784cfbb1226a1a167d/docs/ARCHITECTURE.md"}
+      ],
+      "excluded_claims": [
+        "The formalism is mathematically established.",
+        "The service architecture is implemented.",
+        "Fixture validation is Evidence for the theory."
+      ],
+      "boundary": {
+        "is_claim": false,
+        "is_evidence": false,
+        "is_finding": false,
+        "is_current_study": false,
+        "statement": "Historical speculative lineage only; schema validity is not scientific validation."
+      }
+    }
+  ]
+}
