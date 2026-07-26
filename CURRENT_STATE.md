@@ -1,89 +1,84 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-26T23:15Z (blocked experiment quarantined; repository/lineage gate green)
+updated: 2026-07-26T23:40Z (July repository and typed-lineage migration deployed)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 remains deployed; v1.2.0 lineage migration merge-ready
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; public projection v1.2.0 live with archived lineage; zero findings
 ---
 
 # synaplex — current state
 
-## ADR-0050 repository and lineage migration — gates green, delivery pending (2026-07-26)
+## ADR-0050 repository and lineage migration — complete (2026-07-26)
 
-The reversible migration implementation is complete on a non-main delivery
-branch, but it is not promoted or deployed. `repo.toml` now conforms to the
-accepted central schema (`schema_version = 1`, root `name`, exact shape,
-lifecycle, risk, and `canonical_repository`) and honestly declares Synaplex as
-an active, agentic monorepo. Common front doors, stable `make` commands,
-architecture documentation, pinned CI, Ruff, mypy, test, canon, site, prompt,
-and deployment gates are present. Runtime, supervisor, context-repository,
-canon-schema, and conformance locations have compatible environment overrides.
+PR [#1](https://github.com/evanfollis/synaplex/pull/1) merged as
+`fb939fdea0ab8048b4611d09d5b6ec2dec6f29e4`. The final lifecycle and security
+closure is `acd717c2035c302fe0e57752ed0606ae3cb76cdd`. `repo.toml` conforms to the
+accepted central schema and honestly profiles Synaplex as an active, agentic
+monorepo. Stable `make` front doors, architecture documentation, Ruff, mypy,
+tests, prompt gates, deployment checks, pinned least-privilege CI, weekly
+Dependabot updates, and a two-language CodeQL workflow are live.
 
-The public projection implementation is v1.2.0 with digest
-`sha256:eb1ebc07b7cd4eed73acdebb589b0420f610f4d9c07caedae4d50c0cae93f788`
+The public projection is v1.2.0 with digest
+`sha256:e551c363d097ddf4b8477ecc7a6157e2c5512fe775cd132daf3adb871424f773`
 and counts 3 research / 0 findings / 3 mechanisms / 3 engineering cases /
-18 sources / 4 conjectures / 4 lineage records. A strict typed
-`LineageArtifact` source pins the inspected commits and reproducible
-`git archive` SHA-256 digests for geometric-agent-primitives, ai-native,
-worldview-alignment, and edg. Every record carries license status, observed
-verification limits, retained assets, excluded claims, and a schema-enforced
-not-Claim/Evidence/finding/current-study boundary. The records remain honestly
-`archive-planned`. `knowledge/public-projection.json` is the sole tracked
-projection; ignored site copies are verified byte-identical packaging outputs.
-The local Astro build produces 23 pages including `/lineage/` and four detail
-routes.
+18 sources / 4 conjectures / 4 lineage records. All four strict typed
+`LineageArtifact` records are `archived`. Each pins the inspected source commit
+and reproducible `git archive` SHA-256 digest and carries license status,
+bounded verification results, retained assets, excluded claims, and a
+schema-enforced not-Claim/Evidence/finding/current-study boundary.
 
-Deterministic gates are green: 54 unittest cases, typed blocked-experiment
+The predecessor archival sequence is complete. Public lineage pages were
+verified before predecessor changes; geometric-agent-primitives, ai-native,
+worldview-alignment, and edg then received explicit successor notices,
+repository descriptions/homepages/topics were updated, and all four
+repositories were archived. The notice commits are `c09e559`, `27e4a0b`,
+`6ec26f7`, and `c6215b7`, respectively. Worldview Alignment remains explicitly
+non-green at 58 passing / 6 failing tests and is not presented as a reproduced
+mathematical result.
+
+The exact final build is deployed at
+`https://f7c7f932.synaplex.pages.dev` and the apex `https://synaplex.ai`.
+External GETs returned 200 for both roots, `/lineage/`, all four lineage detail
+routes, and `/knowledge/public-projection.json`. Immutable and apex projection
+bytes are identical (`sha256:ba745e5aa0466e2336288b740b5a7d188df4336a52c62aed05351f8cafd5a626`);
+both report the projection digest and counts above, all lineage lifecycles
+`archived`, the quarantined Phase A claim absent, and zero findings.
+
+Local `make check` is green: 54 unittest cases, typed blocked-experiment
 lifecycle validation, 19/19 external canon conformance fixtures, Programme and
 canon guards, 10 launcher assertions, Ruff, mypy, strict JSON Schema
 validation, two accepted active prompt baselines, deploy-contract validation,
-and the 23-page site build. Versioned systemd unit sources use configurable paths,
-absolute subscription CLIs, owner-only umask, capability removal, and
-least-privilege sandboxes. The capture unit passed its live canary and is the
-scheduled timer target (systemd exposure 2.6 OK); the review unit is installed
-but deliberately inactive (3.3 OK), preserving Phase B.
+and a 23-page Astro build. GitHub Actions receipts are also green:
+`repository-contract` run
+[30225673440](https://github.com/evanfollis/synaplex/actions/runs/30225673440)
+and CodeQL run
+[30225673463](https://github.com/evanfollis/synaplex/actions/runs/30225673463).
+CI checks out the public canon conformance owner read-only at exact
+context-repository commit `96850d3f44e998e774eb67d3af1aa566ab710d57`
+through `SYNAPLEX_CONTEXT_REPOSITORY_ROOT`; canon was not copied or moved.
+Repository-native CodeQL and Dependabot configuration is complete. Account-level
+vulnerability alerts/security updates, secret scanning with push protection,
+and the deploy-compatible `main` branch rule are not claimed without primary
+settings receipts; the completion handoff gives executive the exact remaining
+GitHub API operations.
 
-Subscription capacity recovered and all three required loops were rerun
-sequentially with fresh, no-cache subscription-CLI evidence and metered
-credential variables removed. `cross-domain-conjecture-v2` passed 14/14,
-including both holdouts, in `run-20260726T223212Z-fc15f1`; its accepted prompt
-version remains `pv-38258c6e2891c210`. `synaplex-charter` passed 14/14,
-including both holdouts, in `run-20260726T223736Z-d8648e`; its accepted prompt
-version remains `pv-672b0c68035e587d`.
-
-The mandatory artifact-delivery review correctly rejected the exact frozen
-Phase A record in active-only release
-`run-20260726T221835Z-864f2c` (9/10) because the frozen artifact contract permits
-classified samples in an aborted run, does not enforce bijective archive
-acknowledgement coverage or mandatory raw-stream coverage, and leaves the
-provisioner/executor monotonic clock domain ambiguous. Those are substantive
-scientific-input defects, not provider or formatting failures.
-
-The principal therefore accepted an explicit quarantine disposition. A strict
-`lifecycle.json` now fixes the experiment at `BLOCKED_PRE_ENTRY`, with execution
-false, review route/unit inactive, Evidence prohibited, and public projection
-excluded. The checker verifies the schema, frozen-input and review-receipt
-digests, canon identities, absent baseline, quarantined eval spec, prompt
-inventory state, launcher refusal, unit non-installability, and absence from
-public metadata/projection/case lanes. The launcher exits 78 before loading a
-subscription CLI. The installed review service is static and inactive. All
-failed receipts and frozen bytes remain intact; no evaluator or criterion was
-weakened. `prompteval check .` now gates the two active prompts and passes with
-zero warnings, and `make check` is fully green.
+Fresh no-cache subscription-CLI releases remain accepted for
+`cross-domain-conjecture-v2` (`run-20260726T223212Z-fc15f1`, 14/14) and
+`synaplex-charter` (`run-20260726T223736Z-d8648e`, 14/14). The exact frozen
+artifact-delivery Phase A review remains a truthful rejection
+(`run-20260726T221835Z-864f2c`, 9/10). The principal-approved strict
+`lifecycle.json` fixes that experiment at `BLOCKED_PRE_ENTRY`: execution false,
+review route and unit inactive, Evidence prohibited, no baseline, and public
+projection excluded. The launcher exits 78 before loading a subscription CLI;
+all frozen inputs and failed receipts remain intact. No evaluator, holdout,
+canon envelope, subject, Evidence, or Phase B state was weakened or rewritten.
 
 The corrected canon-path handoff dated `2026-07-26T20-50-08Z` is implemented
-without moving canon or changing the schema digest: shared configuration now
-honors `SYNAPLEX_CANON_SCHEMAS` and `SYNAPLEX_CANON_CONFORMANCE`, defaults retain
-the sibling `schemas/` and `conformance/` layout, four path-configuration tests
-pass, and all 19 external conformance fixtures remain green. The quarantined
-malformed predecessor handoff remains preserved under `runtime/.handoff/REJECTED/`.
-
-Until the staged deployment, v1.1.0 remains live, predecessor READMEs/homepages and archive
-flags are untouched, and GitHub metadata/security settings are unchanged. No
-pre-existing cross-domain or charter holdout content, frozen input, canon
-envelope, subject, Evidence, or Phase B state was touched. The new
-artifact-delivery v2 loop's pre-baseline holdout lifecycle and failed receipts
-are preserved explicitly in its registry and runtime run records.
+and explicitly reconciled. Shared configuration honors
+`SYNAPLEX_CANON_SCHEMAS` and `SYNAPLEX_CANON_CONFORMANCE`, retains the sibling
+`schemas/` and `conformance/` defaults, and does not move canon or change its
+schema digest. The malformed predecessor handoff remains preserved in the
+runtime rejected-evidence lane.
 
 ## Layer-5 friction classifier review closure (2026-07-20)
 
