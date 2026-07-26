@@ -1,7 +1,7 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-26T20:24Z (ADR-0050 migration implemented locally; public delivery gated)
+updated: 2026-07-26T23:02Z (subscription capacity recovered; scientific prompt gate remains red)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 remains deployed; v1.2.0 lineage migration blocked before public delivery
 ---
@@ -33,7 +33,8 @@ projection; ignored site copies are verified byte-identical packaging outputs.
 The local Astro build produces 26 pages including `/lineage/` and four detail
 routes.
 
-Deterministic gates are green: 49 unittest cases, 19/19 external canon
+Deterministic gates are green through the prompt boundary: 53 unittest cases,
+19/19 external canon
 conformance fixtures, Programme and canon guards, launcher assertions, Ruff,
 mypy, strict JSON Schema validation, deploy-contract validation, and the
 26-page site build. Versioned systemd unit sources use configurable paths,
@@ -42,16 +43,42 @@ least-privilege sandboxes. The capture unit passed its live canary and is the
 scheduled timer target (systemd exposure 2.6 OK); the review unit is installed
 but deliberately inactive (3.3 OK), preserving Phase B.
 
-Public delivery is blocked by the mandatory prompt gate. Fresh no-cache releases
-`run-20260726T201056Z-5b739c`, `run-20260726T201237Z-10bc38`, and
-`run-20260726T201330Z-4bfbeb` exhausted both subscription-provider routes
-(bounded timeouts, then Claude session limit with Codex in timeout cooldown).
-No baseline changed and `prompteval check .` retains the existing 17 findings.
-See `reviews/repository-migration-prompt-baselines-blocked-2026-07-26.md`.
+Subscription capacity recovered and all three required loops were rerun
+sequentially with fresh, no-cache subscription-CLI evidence and metered
+credential variables removed. `cross-domain-conjecture-v2` passed 14/14,
+including both holdouts, in `run-20260726T223212Z-fc15f1`; its accepted prompt
+version remains `pv-38258c6e2891c210`. `synaplex-charter` passed 14/14,
+including both holdouts, in `run-20260726T223736Z-d8648e`; its accepted prompt
+version remains `pv-672b0c68035e587d`.
+
+Public delivery remains blocked by the mandatory artifact-delivery methodology
+gate. The never-baselined incompatible v1 eval contract is retired byte-for-byte
+with its old holdout digest preserved. Its v2 replacement uses self-contained
+Phase A records and discriminating final-token checks. The exact frozen Phase A
+record was rejected in active-only release
+`run-20260726T221835Z-864f2c` (9/10) because the frozen artifact contract permits
+classified samples in an aborted run, does not enforce bijective archive
+acknowledgement coverage or mandatory raw-stream coverage, and leaves the
+provisioner/executor monotonic clock domain ambiguous. Those are substantive
+scientific-input defects, not provider or formatting failures. The migration
+has no authority to edit frozen Phase A inputs, so no baseline was accepted.
+`prompteval check .` and `make check` fail closed only on the missing
+`artifact-delivery-v2-method-review-v2` baseline. See
+`reviews/repository-migration-prompt-baselines-blocked-2026-07-26.md`.
+
+The corrected canon-path handoff dated `2026-07-26T20-50-08Z` is implemented
+without moving canon or changing the schema digest: shared configuration now
+honors `SYNAPLEX_CANON_SCHEMAS` and `SYNAPLEX_CANON_CONFORMANCE`, defaults retain
+the sibling `schemas/` and `conformance/` layout, four path-configuration tests
+pass, and all 19 external conformance fixtures remain green. The quarantined
+malformed predecessor handoff remains preserved under `runtime/.handoff/REJECTED/`.
+
 Consequently v1.1.0 remains live, predecessor READMEs/homepages and archive
 flags are untouched, and GitHub metadata/security settings are unchanged. No
-holdout, frozen input, canon envelope, subject, Evidence, or Phase B state was
-touched.
+pre-existing cross-domain or charter holdout content, frozen input, canon
+envelope, subject, Evidence, or Phase B state was touched. The new
+artifact-delivery v2 loop's pre-baseline holdout lifecycle and failed receipts
+are preserved explicitly in its registry and runtime run records.
 
 ## Layer-5 friction classifier review closure (2026-07-20)
 

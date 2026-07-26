@@ -10,7 +10,13 @@
   "params": {},
   "executor": {
     "type": "claude_cli",
-    "timeout": 45,
+    "timeout": 180,
+    "codex_fallback_model": "gpt-5.4",
+    "circuit": {
+      "threshold": 1,
+      "cooldown_s": 900,
+      "decisive_reasons": ["timeout", "empty"]
+    },
     "user_template": "Classify this self-contained typed SourceObservation request. Return the discriminated result only.\\n\\n{scenario}"
   },
   "judge": {

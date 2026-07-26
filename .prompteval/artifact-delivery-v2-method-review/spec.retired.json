@@ -10,7 +10,7 @@
   "params": {},
   "executor": {
     "type": "claude_cli",
-    "timeout": 45,
+    "timeout": 180,
     "codex_fallback_model": "gpt-5.4",
     "circuit": {
       "threshold": 1,
