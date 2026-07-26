@@ -1,12 +1,57 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-20T11:23Z (Layer-5 corruption recovery reviewed and production-observed)
+updated: 2026-07-26T20:24Z (ADR-0050 migration implemented locally; public delivery gated)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 deployed
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY (unchanged); artifact-coherence-transfer-v1 INVALIDATED by Codex; apex DNS live; public projection v1.1.0 remains deployed; v1.2.0 lineage migration blocked before public delivery
 ---
 
 # synaplex — current state
+
+## ADR-0050 repository and lineage migration — implementation ready, delivery blocked (2026-07-26)
+
+The reversible migration implementation is complete on a non-main delivery
+branch, but it is not promoted or deployed. `repo.toml` now conforms to the
+accepted central schema (`schema_version = 1`, root `name`, exact shape,
+lifecycle, risk, and `canonical_repository`) and honestly declares Synaplex as
+an active, agentic monorepo. Common front doors, stable `make` commands,
+architecture documentation, pinned CI, Ruff, mypy, test, canon, site, prompt,
+and deployment gates are present. Runtime, supervisor, context-repository,
+canon-schema, and conformance locations have compatible environment overrides.
+
+The public projection implementation is v1.2.0 with digest
+`sha256:9eb6e1af64c657f5550a979b5b02cc9321e9bc6aa617ca9d27c57acd454ef885`
+and counts 4 research / 0 findings / 3 mechanisms / 4 engineering cases /
+18 sources / 4 conjectures / 4 lineage records. A strict typed
+`LineageArtifact` source pins the inspected commits and reproducible
+`git archive` SHA-256 digests for geometric-agent-primitives, ai-native,
+worldview-alignment, and edg. Every record carries license status, observed
+verification limits, retained assets, excluded claims, and a schema-enforced
+not-Claim/Evidence/finding/current-study boundary. The records remain honestly
+`archive-planned`. `knowledge/public-projection.json` is the sole tracked
+projection; ignored site copies are verified byte-identical packaging outputs.
+The local Astro build produces 26 pages including `/lineage/` and four detail
+routes.
+
+Deterministic gates are green: 49 unittest cases, 19/19 external canon
+conformance fixtures, Programme and canon guards, launcher assertions, Ruff,
+mypy, strict JSON Schema validation, deploy-contract validation, and the
+26-page site build. Versioned systemd unit sources use configurable paths,
+absolute subscription CLIs, owner-only umask, capability removal, and
+least-privilege sandboxes. The capture unit passed its live canary and is the
+scheduled timer target (systemd exposure 2.6 OK); the review unit is installed
+but deliberately inactive (3.3 OK), preserving Phase B.
+
+Public delivery is blocked by the mandatory prompt gate. Fresh no-cache releases
+`run-20260726T201056Z-5b739c`, `run-20260726T201237Z-10bc38`, and
+`run-20260726T201330Z-4bfbeb` exhausted both subscription-provider routes
+(bounded timeouts, then Claude session limit with Codex in timeout cooldown).
+No baseline changed and `prompteval check .` retains the existing 17 findings.
+See `reviews/repository-migration-prompt-baselines-blocked-2026-07-26.md`.
+Consequently v1.1.0 remains live, predecessor READMEs/homepages and archive
+flags are untouched, and GitHub metadata/security settings are unchanged. No
+holdout, frozen input, canon envelope, subject, Evidence, or Phase B state was
+touched.
 
 ## Layer-5 friction classifier review closure (2026-07-20)
 

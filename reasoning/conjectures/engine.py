@@ -5,10 +5,11 @@ import json, os, sys
 from pathlib import Path
 from jsonschema import Draft202012Validator
 from lab.runner.providers import default_pool
+from synaplex_paths import RUNTIME_ROOT
 ROOT=Path(__file__).resolve().parents[2]
 PROMPT=(ROOT/"reasoning/conjectures/conjecture-prompt.md").read_text()
 RESULT_SCHEMA=json.loads((ROOT/"reasoning/conjectures/result.schema.json").read_text())
-DEFAULT_TRACE=Path("/opt/workspace/runtime/conjectures/traces.jsonl")
+DEFAULT_TRACE=RUNTIME_ROOT/"conjectures/traces.jsonl"
 
 def build_input(source_records):
     return PROMPT+"\n\nSourceObservation records (not Evidence):\n"+json.dumps(source_records,ensure_ascii=False,indent=2)

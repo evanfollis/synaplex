@@ -22,15 +22,13 @@ import datetime
 import json
 import sys
 from pathlib import Path
-
 from intake.friction import emit_failure, emit_stuck, emit_success
 from intake.paths import INTAKE_ROOT, RUNTIME_ROOT
 from lab.canon.guard import run_checks as run_canon_guards
 from reasoning.check_programmes import run_checks as run_programme_checks
+from synaplex_paths import REPO_ROOT
 
-LAB_CANON_CANDIDATES = (
-    Path("/opt/workspace/projects/synaplex/lab/.canon/candidates")
-)
+LAB_CANON_CANDIDATES = REPO_ROOT / "lab" / ".canon" / "candidates"
 
 
 def _count_jsonl(p: Path) -> int:

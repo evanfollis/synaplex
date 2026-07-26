@@ -25,10 +25,10 @@ import json
 import sys
 from pathlib import Path
 
+from synaplex_paths import CANON_CONFORMANCE_ROOT
+
 REPO = Path(__file__).resolve().parents[2]
-CONFORMANCE = Path(
-    "/opt/workspace/projects/context-repository/spec/discovery-framework/conformance/cases"
-)
+CONFORMANCE = CANON_CONFORMANCE_ROOT / "cases"
 
 
 def run_case(case: dict) -> tuple[bool, str]:

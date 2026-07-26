@@ -7,13 +7,9 @@ artifacts accumulate — overridable via $SYNAPLEX_RUNTIME_ROOT for tests.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", "/opt/workspace"))
-RUNTIME_ROOT = Path(
-    os.environ.get("SYNAPLEX_RUNTIME_ROOT", str(WORKSPACE_ROOT / "runtime"))
-)
+from synaplex_paths import RUNTIME_ROOT, WORKSPACE_ROOT
 
 INTAKE_ROOT = RUNTIME_ROOT / "intake"
 RAW_ROOT = INTAKE_ROOT / "raw"

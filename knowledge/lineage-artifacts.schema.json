@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synaplex.ai/knowledge/lineage-artifacts.schema.json",
+  "title": "Synaplex historical lineage artifacts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "digest_method", "artifacts"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "digest_method": {"const": "sha256 of `git archive --format=tar <source_commit>` bytes"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "strings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "url"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "format": "uri", "pattern": "^https://github\\.com/"}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "observed", "limits"],
+      "properties": {
+        "status": {"enum": ["partial", "failed"]},
+        "observed": {"type": "string", "minLength": 1},
+        "limits": {"type": "string", "minLength": 1}
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_claim", "is_evidence", "is_finding", "is_current_study", "statement"],
+      "properties": {
+        "is_claim": {"const": false},
+        "is_evidence": {"const": false},
+        "is_finding": {"const": false},
+        "is_current_study": {"const": false},
+        "statement": {"type": "string", "minLength": 1}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "slug", "title", "repository_url", "source_commit",
+        "snapshot_digest", "license_status", "lifecycle", "summary",
+        "verification", "retained_assets", "excluded_claims", "boundary"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^lineage:[a-z0-9-]+$"},
+        "slug": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "title": {"type": "string", "minLength": 1},
+        "repository_url": {"type": "string", "format": "uri", "pattern": "^https://github\\.com/evanfollis/"},
+        "source_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "snapshot_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "license_status": {"enum": ["MIT", "missing"]},
+        "lifecycle": {"enum": ["archive-planned", "archived"]},
+        "summary": {"type": "string", "minLength": 1},
+        "verification": {"$ref": "#/$defs/verification"},
+        "retained_assets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/asset"}
+        },
+        "excluded_claims": {"$ref": "#/$defs/strings"},
+        "boundary": {"$ref": "#/$defs/boundary"}
+      }
+    }
+  }
+}

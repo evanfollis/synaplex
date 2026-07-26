@@ -3,6 +3,11 @@
   "note": "ADR-0039 coverage ratchet. Agent charters and study-specific model review prompts are governed.",
   "prompts": [
     {
+      "file": "AGENTS.md",
+      "status": "not-a-prompt",
+      "note": "Compatibility pointer only: it routes to the governed CLAUDE.md charter and adds no independent operating policy."
+    },
+    {
       "file": "CLAUDE.md",
       "id": "synaplex-charter",
       "status": "governed"

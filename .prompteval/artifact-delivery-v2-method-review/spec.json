@@ -10,6 +10,13 @@
   "params": {},
   "executor": {
     "type": "claude_cli",
+    "timeout": 45,
+    "codex_fallback_model": "gpt-5.4",
+    "circuit": {
+      "threshold": 1,
+      "cooldown_s": 900,
+      "decisive_reasons": ["timeout", "empty"]
+    },
     "user_template": "Review this synthetic protocol summary. The summary is test input, not a prospective subject. Apply the frozen review standard and end with the required verdict token.\\n\\nProtocol summary:\\n{scenario}"
   },
   "judge": {

@@ -6,7 +6,16 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from knowledge.generate import METADATA, STATUS, ProjectionError, _assert_public, build_projection
+from knowledge.generate import (
+    LINEAGE,
+    LINEAGE_SCHEMA,
+    METADATA,
+    OUTPUT,
+    STATUS,
+    ProjectionError,
+    _assert_public,
+    build_projection,
+)
 
 
 class ProjectionTests(unittest.TestCase):
@@ -45,8 +54,33 @@ class ProjectionTests(unittest.TestCase):
 
     def test_projection_counts_match_payloads(self):
         projection = build_projection()
-        for name in ("research", "findings", "mechanisms", "engineering_cases", "sources", "conjectures"):
+        for name in ("research", "findings", "mechanisms", "engineering_cases", "sources", "conjectures", "lineage"):
             self.assertEqual(projection["counts"][name], len(projection[name]))
+
+    def test_lineage_is_typed_and_outside_epistemic_lanes(self):
+        source = json.loads(LINEAGE.read_text())
+        schema = json.loads(LINEAGE_SCHEMA.read_text())
+        Draft202012Validator(
+            schema, format_checker=Draft202012Validator.FORMAT_CHECKER
+        ).validate(source)
+        projection = build_projection()
+        self.assertEqual(projection["counts"]["lineage"], 4)
+        for artifact in projection["lineage"]:
+            self.assertEqual(
+                artifact["boundary"],
+                {
+                    "is_claim": False,
+                    "is_evidence": False,
+                    "is_finding": False,
+                    "is_current_study": False,
+                    "statement": artifact["boundary"]["statement"],
+                },
+            )
+            self.assertRegex(artifact["source_commit"], r"^[a-f0-9]{40}$")
+            self.assertRegex(artifact["snapshot_digest"], r"^sha256:[a-f0-9]{64}$")
+
+    def test_only_authoritative_projection_is_tracked(self):
+        self.assertEqual(OUTPUT, METADATA.parent / "public-projection.json")
 
     def test_private_values_fail_closed(self):
         for value in ({"transcript_body": "private"}, {"x": "/opt/workspace/private"}, {"x": "file://lab/raw.json"}, {"x": "api_key=secret"}):
