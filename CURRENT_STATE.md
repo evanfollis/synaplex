@@ -1,12 +1,67 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-26T23:52Z (CodeQL v4 workflow verified)
+updated: 2026-07-27T00:12Z (Cadence lineage, dependency closure, and GitHub controls verified)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; public projection v1.2.0 live with archived lineage; zero findings
+phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; public projection v1.3.0 live with five archived lineage artifacts; zero findings
 ---
 
 # synaplex — current state
+
+## Cadence lineage and dependency closure — complete (2026-07-27)
+
+PR [#16](https://github.com/evanfollis/synaplex/pull/16) merged as
+`9a6fba913f20d0fecda19f4abc30183ac0933ac1` after its repository contract
+and both CodeQL language jobs passed. The exact merged main then passed
+`repository-contract` run
+[30226634214](https://github.com/evanfollis/synaplex/actions/runs/30226634214)
+and CodeQL run
+[30226634226](https://github.com/evanfollis/synaplex/actions/runs/30226634226).
+The two main-branch CodeQL analyses reported zero results across 87 Python and
+43 JavaScript/TypeScript rules.
+
+Cadence is the fifth strict typed `LineageArtifact`. It remains archived and
+unchanged at source commit `dd58ce4e1a6cc0baa777d4096c0d0a1710654c8a`,
+with reproducible `git archive` digest
+`sha256:c5cfd850f7021c9e9760ad5f2c7f0e1899ad03249fd50852f493ecf3645666f3`.
+The public record retains its NORTH_STAR, orchestrator, audit/event-log, and
+rollback-test assets while naming the inventory-only verification, large
+tracked logs/generated state, generated caches/package metadata, and missing
+LICENSE. It is mechanically not a Claim, Evidence, finding, current study, or
+validated delivery result.
+
+The public projection is v1.3.0 with digest
+`sha256:4ae99babff63e92c607978f80e18a89c235868fd91b2bbf1a21c104945585e98`
+and counts 3 research / 0 findings / 3 mechanisms / 3 engineering cases /
+18 sources / 4 conjectures / 5 lineage records. It is deployed from the exact
+merge at `https://9e4b3c3f.synaplex.pages.dev` and
+`https://synaplex.ai`. Clean external GETs returned 200 for the roots,
+`/lineage/cadence/`, and `/knowledge/public-projection.json`. Immutable and
+apex projection bytes are identical with byte digest
+`sha256:185146a73c32e2ca41b3cedad2e612c63d128f6df925b7464f5e0900d9b4cf19`.
+
+The site now builds on Node 24 with Astro 7.1.3, MDX 7.0.3, sitemap 3.7.3,
+Tailwind CSS and its Vite plugin at 4.3.3. The deprecated Astro Tailwind
+integration is removed. Ruff 0.16.0 and mypy 2.3.0 passed without suppressions
+or compatibility edits. Sharp 0.35.3 and svgo 4.0.2 close the high-severity
+transitive advisories; devalue 5.8.2 and postcss 8.5.23 are also consolidated.
+`npm audit --audit-level=high` reports zero vulnerabilities. All ten superseded
+Dependabot PRs (#5 and #7–#15) are closed and no open PR remains.
+
+Final local `make check` is green under Node 24.18.0: Ruff, mypy, 54 unittests,
+one mechanically quarantined experiment, 10 launcher assertions, 19/19
+external canon fixtures, Programme and canon guards, two accepted prompt
+baselines, strict projection/lineage JSON Schema checks, deployment contracts,
+and a 24-page Astro build. Like-for-like Chromium comparisons kept the home and
+lineage routes at their original dimensions, background, font stack, and
+headline size with mean absolute RGB deltas of 0.0220 and 0.0113.
+
+GitHub vulnerability alerts, Dependabot automated security fixes and security
+updates, secret scanning, and push protection are enabled with primary API
+receipts. Deploy-compatible `main` protection now requires strict successful
+contexts `check`, `Analyze (python)`, and `Analyze (javascript-typescript)`;
+force pushes and deletions are disabled, while review count and admin
+enforcement remain off so the checked Pages release path remains operable.
 
 ## ADR-0050 repository and lineage migration — complete (2026-07-26)
 
