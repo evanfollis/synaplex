@@ -29,8 +29,8 @@ lab = [
   "playwright==1.61.0",
 ]
 dev = [
-  "mypy==1.17.1",
-  "ruff==0.12.7",
+  "mypy==2.3.0",
+  "ruff==0.16.0",
 ]
 
 [project.scripts]

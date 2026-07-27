@@ -25,7 +25,7 @@ CONJECTURES = ROOT / "reasoning" / "conjectures" / "conjectures.json"
 CONJECTURES_SCHEMA = ROOT / "reasoning" / "conjectures" / "conjectures.schema.json"
 LIFECYCLE_SCHEMA = ROOT / "lab" / "evals" / "experiment-lifecycle.schema.json"
 OUTPUT = ROOT / "knowledge" / "public-projection.json"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 DECISION_KINDS = {"promote", "kill", "continue", "pivot", "amend_policy", "rollback_policy"}
 ACCEPTING_DECISION_KINDS = {"promote"}
 
