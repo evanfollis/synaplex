@@ -1,12 +1,59 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-27T00:12Z (Cadence lineage, dependency closure, and GitHub controls verified)
+updated: 2026-07-27T00:33Z (Cadence route identity and inbox service hardening verified)
 owner: executive (principal: evan)
 phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; public projection v1.3.0 live with five archived lineage artifacts; zero findings
 ---
 
 # synaplex — current state
+
+## Cadence route identity and inbox hardening — complete (2026-07-27)
+
+The final lifecycle projection is deployed at
+`https://14154a06.synaplex.pages.dev` and `https://synaplex.ai`. Fresh
+route-specific GETs to `/lineage/cadence/` on both origins returned identical
+5187-byte bodies with byte digest
+`sha256:f8a57cebbd817977e1929d977d474b2c564dae025ba08560de07f079f3cda4e8`.
+Both bodies contain the title `Cadence · synaplex`, canonical
+`https://synaplex.ai/lineage/cadence/`, five `Cadence` strings, and the exact
+“Not a Claim. Not Evidence. Not a finding. Not a current study.” boundary.
+This supersedes the earlier propagation-edge observation where an HTTP 200
+temporarily carried homepage identity; status alone is not the success
+criterion.
+
+The final Tailwind 4/Preflight visual comparison was rerun from the built site.
+Home and AI Native lineage retain their exact pre-migration dimensions,
+background, font stack, and 100.8px headline. Mean absolute RGB deltas remain
+0.0220 and 0.0113 on a 0–255 scale, with changed-channel ratios 0.000245 and
+0.000198. The rejected no-Preflight candidate caused the earlier roughly
+20–28% delta and taller pages; it was never shipped. Screenshot digests,
+normalized metrics, and the Cadence identity render are recorded in
+`docs/dependency-migration-2026-07.md`.
+
+`synaplex-inbox.service` is now installed and running under the dedicated
+`synaplex-inbox` identity with no capabilities or ambient capabilities,
+`NoNewPrivileges`, strict read-only system protection, private temp/devices,
+kernel and control-group protection, namespace/SUID restrictions, and
+localhost-only cgroup IP policy. The server needs no host write path:
+`ReadWritePaths` is empty and the inbox is explicit in `ReadOnlyPaths`.
+An exact-unit canary returned the same nonce-gated 4354-byte payload as the
+old service, digest
+`sha256:caff845d611110d2e6f1116263f864258f5393a6a861bb5266d50c753d37a5af`;
+the installed unit repeated that witness and listens only on
+`127.0.0.1:8088`. The runtime containment audit reports zero findings and
+`systemd-analyze security` improved from `9.6 UNSAFE` to `1.3 OK`.
+Independent executive/operator verification reproduced the effective controls,
+reported `NRestarts=0`, obtained the same 200/4354-byte nonce-scoped response
+and digest, and separately confirmed the central auditor's zero findings.
+
+The previous unit is retained mode 0600 at
+`/opt/workspace/runtime/.meta/synaplex-inbox.service.before-hardening-2026-07-27T00-27-39Z`
+for bounded rollback. The only dated exception is `PrivateNetwork=true`,
+because a separate loopback namespace would break the required host-loopback
+route; the fixed loopback bind plus default-deny/localhost-only IP policy is
+the compensating control. Full canary, rollback, install, and outcome details
+are in `docs/inbox-service-hardening-2026-07.md`.
 
 ## Cadence lineage and dependency closure — complete (2026-07-27)
 
@@ -34,7 +81,7 @@ The public projection is v1.3.0 with digest
 `sha256:4ae99babff63e92c607978f80e18a89c235868fd91b2bbf1a21c104945585e98`
 and counts 3 research / 0 findings / 3 mechanisms / 3 engineering cases /
 18 sources / 4 conjectures / 5 lineage records. It is deployed from the exact
-merge at `https://9e4b3c3f.synaplex.pages.dev` and
+final lifecycle state at `https://14154a06.synaplex.pages.dev` and
 `https://synaplex.ai`. Clean external GETs returned 200 for the roots,
 `/lineage/cadence/`, and `/knowledge/public-projection.json`. Immutable and
 apex projection bytes are identical with byte digest

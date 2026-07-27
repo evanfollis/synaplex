@@ -1,0 +1,51 @@
+[Unit]
+Description=Synaplex nonce-gated inbox server
+After=network.target
+
+[Service]
+Type=simple
+User=synaplex-inbox
+Group=synaplex-inbox
+WorkingDirectory=/opt/workspace/runtime/inbox
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 /opt/workspace/supervisor/scripts/lib/inbox-server.py
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+MemoryMax=128M
+TasksMax=16
+
+# The server reads static inbox material and requires no host write path.
+ReadOnlyPaths=/opt/workspace/runtime/inbox
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectProc=invisible
+ProcSubset=pid
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RemoveIPC=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Host-loopback reachability is required; cgroup egress remains localhost-only.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=multi-user.target
