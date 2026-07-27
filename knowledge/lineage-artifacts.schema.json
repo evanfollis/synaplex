@@ -11,8 +11,8 @@
     "digest_method": {"const": "sha256 of `git archive --format=tar <source_commit>` bytes"},
     "artifacts": {
       "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
+      "minItems": 5,
+      "maxItems": 5,
       "items": {"$ref": "#/$defs/artifact"}
     }
   },

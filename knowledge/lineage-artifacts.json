@@ -1,8 +1,43 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-07-26T20:15:00Z",
+  "generated_at": "2026-07-26T23:58:00Z",
   "digest_method": "sha256 of `git archive --format=tar <source_commit>` bytes",
   "artifacts": [
+    {
+      "id": "lineage:cadence",
+      "slug": "cadence",
+      "title": "Cadence",
+      "repository_url": "https://github.com/evanfollis/cadence",
+      "source_commit": "dd58ce4e1a6cc0baa777d4096c0d0a1710654c8a",
+      "snapshot_digest": "sha256:c5cfd850f7021c9e9760ad5f2c7f0e1899ad03249fd50852f493ecf3645666f3",
+      "license_status": "missing",
+      "lifecycle": "archived",
+      "summary": "An early AI-native orchestration prototype with agent roles, an orchestrator, audit trails, and rollback machinery; retained as superseded implementation lineage.",
+      "verification": {
+        "status": "partial",
+        "observed": "A clean, pinned source snapshot contains the canonical NORTH_STAR, agent-role and orchestration code, audit/event-log machinery, rollback paths, notebooks, and 12 tracked test files.",
+        "limits": "This migration performed a source inventory, not a validation run. The snapshot tracks roughly 3.1 MB of event and LLM logs plus roughly 3.1 MB of generated root state and notebooks, includes generated cache and package metadata, and has no LICENSE."
+      },
+      "retained_assets": [
+        {"label": "Canonical NORTH_STAR", "url": "https://github.com/evanfollis/cadence/blob/dd58ce4e1a6cc0baa777d4096c0d0a1710654c8a/docs/NORTH_STAR.md"},
+        {"label": "Development orchestrator", "url": "https://github.com/evanfollis/cadence/blob/dd58ce4e1a6cc0baa777d4096c0d0a1710654c8a/src/cadence/dev/orchestrator.py"},
+        {"label": "Agent event log", "url": "https://github.com/evanfollis/cadence/blob/dd58ce4e1a6cc0baa777d4096c0d0a1710654c8a/src/cadence/audit/agent_event_log.py"},
+        {"label": "Failed rollback test", "url": "https://github.com/evanfollis/cadence/blob/dd58ce4e1a6cc0baa777d4096c0d0a1710654c8a/tests/test_failed_rollback.py"}
+      ],
+      "excluded_claims": [
+        "Cadence is a current Synaplex subsystem.",
+        "Tracked logs, notebooks, or generated state are scientific Evidence.",
+        "The presence of tests establishes a validated delivery result.",
+        "The archived implementation is production-ready or maintained."
+      ],
+      "boundary": {
+        "is_claim": false,
+        "is_evidence": false,
+        "is_finding": false,
+        "is_current_study": false,
+        "statement": "Historical archived lineage only; the source inventory does not enter canon, a study denominator, or the public findings lane."
+      }
+    },
     {
       "id": "lineage:geometric-agent-primitives",
       "slug": "geometric-agent-primitives",

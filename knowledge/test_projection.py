@@ -73,7 +73,16 @@ class ProjectionTests(unittest.TestCase):
             schema, format_checker=Draft202012Validator.FORMAT_CHECKER
         ).validate(source)
         projection = build_projection()
-        self.assertEqual(projection["counts"]["lineage"], 4)
+        self.assertEqual(projection["counts"]["lineage"], 5)
+        cadence = next(
+            artifact
+            for artifact in projection["lineage"]
+            if artifact["id"] == "lineage:cadence"
+        )
+        self.assertEqual(cadence["lifecycle"], "archived")
+        self.assertEqual(cadence["license_status"], "missing")
+        self.assertEqual(cadence["verification"]["status"], "partial")
+        self.assertIn("not a validation run", cadence["verification"]["limits"])
         for artifact in projection["lineage"]:
             self.assertEqual(
                 artifact["boundary"],

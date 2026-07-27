@@ -2,7 +2,7 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 
 // Canonical site URL. Production deploy target is synaplex.ai (apex).
 // Override at build time with ASTRO_SITE env var for staging previews.
@@ -14,8 +14,10 @@ export default defineConfig({
   integrations: [
     mdx(),
     sitemap(),
-    tailwind({ applyBaseStyles: false }),
   ],
+  vite: {
+    plugins: [tailwindcss()],
+  },
   build: {
     format: 'directory',
   },
