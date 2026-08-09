@@ -26,7 +26,7 @@ dependencies = [
 # `lab/evals/artifact-coherence-transfer-v1/TOOLING.md`.
 [project.optional-dependencies]
 lab = [
-  "playwright==1.61.0",
+  "playwright==1.62.0",
 ]
 dev = [
   "mypy==2.3.0",
