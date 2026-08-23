@@ -29,7 +29,7 @@ lab = [
   "playwright==1.61.0",
 ]
 dev = [
-  "mypy==2.3.0",
+  "mypy==2.3.1",
   "ruff==0.16.0",
 ]
 
