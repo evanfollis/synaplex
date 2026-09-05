@@ -1,12 +1,47 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-07-27T00:33Z (Cadence route identity and inbox service hardening verified)
+updated: 2026-09-05T04:10Z (production intake verified; v3 methodological preflight stopped before entry)
 owner: executive (principal: evan)
-phase: artifact-delivery-instrument-v2 BLOCKED_PRE_ENTRY and quarantined; artifact-coherence-transfer-v1 INVALIDATED by Codex; public projection v1.3.0 live with five archived lineage artifacts; zero findings
+phase: production services healthy; artifact-delivery-instrument-v2 remains BLOCKED_PRE_ENTRY and quarantined; exploratory v3 preflight rejected before freeze or entry; public projection v1.3.0 live with five archived lineage artifacts; zero findings
 ---
 
 # synaplex — current state
+
+## Production recovery audit and research-loop boundary — 2026-09-05
+
+The operational server path is functioning properly. The intake, score,
+digest, synthesize, integrity, and friction-classifier systemd timers are
+active, and their latest service results are successful. The 2026-09-05 intake
+cycle fetched 200 RSS, 100 arXiv, and 92 Hacker News records (392 total), and
+scoring processed all 392. The latest completed weekly synthesis covers ISO
+week 35 (2026-08-24 through 2026-08-30). The hardened inbox service is active
+with zero restarts. Fresh external GETs returned 200 for `https://synaplex.ai/`
+and `/knowledge/public-projection.json`; the projection retains byte digest
+`sha256:185146a73c32e2ca41b3cedad2e612c63d128f6df925b7464f5e0900d9b4cf19`
+and still truthfully reports zero findings.
+
+The research loop is not yet producing findings. The frozen
+`artifact-delivery-instrument-v2` record remains quarantined after the
+principal's 2026-07-26 `PROTOCOL_NOT_READY` decision; it was neither edited nor
+retried. An exploratory v3 successor was built only far enough to perform
+text/schema preflight. Repeated positive-control reviews still returned
+`PROTOCOL_NOT_READY`, so the draft was stopped before freeze, fixture creation,
+subject entry, probe execution, Evidence, or publication. Its governed-prompt
+working set and `lab/evals/` draft were removed. The exact disposition and
+eight blocking corrections are recorded in
+`lab/observations/artifact-delivery-v3-methodological-preflight-blocked-2026-09-05.md`.
+
+The next admissible step is a newly named successor design that corrects the
+allocation mathematics, process-birth boundary, universal raw custody,
+sealing state machine, atomic marker semantics, exhaustive transport table,
+closed archive enumeration, and absorbing late invalidation. It must then be
+registered with audited positive, negative, and sealed holdout cases and earn
+a fresh no-cache accepted baseline. A later independent session must review
+the exact frozen Phase A package before any probe entry. Abandoned private
+ceremony material from the rejected draft is retained mode 0600 under
+`/opt/workspace/runtime/reviews/synaplex-artifact-delivery-v3-phase-a/` and is
+explicitly non-reusable.
 
 ## Cadence route identity and inbox hardening — complete (2026-07-27)
 
