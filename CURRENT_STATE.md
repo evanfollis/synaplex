@@ -1,12 +1,24 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-09-05T04:10Z (production intake verified; v3 methodological preflight stopped before entry)
+updated: 2026-09-05T04:20Z (production recovery verified; two high dependency alerts remediated)
 owner: executive (principal: evan)
 phase: production services healthy; artifact-delivery-instrument-v2 remains BLOCKED_PRE_ENTRY and quarantined; exploratory v3 preflight rejected before freeze or entry; public projection v1.3.0 live with five archived lineage artifacts; zero findings
 ---
 
 # synaplex — current state
+
+## September dependency security closure — 2026-09-05
+
+The two high-severity default-branch Dependabot findings were actionable
+transitive npm dependencies and are patched without a framework or application
+dependency major change. `site/package-lock.json` now resolves `js-yaml` 4.3.2
+for `GHSA-5p4m-2wfm-xmqj` and `nanoid` 3.3.18 for
+`GHSA-2v37-7h3g-55p8` / `CVE-2026-67213`. A clean Node 24.18.0/npm 11.16.0
+install reports zero production vulnerabilities, and the complete repository
+gate remains green. Exact paths and verification are in
+`docs/dependency-security-2026-09.md`. No research or quarantine artifact was
+changed.
 
 ## Production recovery audit and research-loop boundary — 2026-09-05
 
