@@ -1,12 +1,38 @@
 ---
 name: synaplex current state
 description: Front door for the synaplex.ai system — publication + evaluation lab + operational pipeline. Read first every session.
-updated: 2026-09-05T04:20Z (production recovery verified; two high dependency alerts remediated)
+updated: 2026-09-11T13:50Z (critical+high Dependabot CVEs closed; Astro 7.3.2, svgo 4.1.0, sharp 0.35.4 deployed)
 owner: executive (principal: evan)
 phase: production services healthy; artifact-delivery-instrument-v2 remains BLOCKED_PRE_ENTRY and quarantined; exploratory v3 preflight rejected before freeze or entry; public projection v1.3.0 live with five archived lineage artifacts; zero findings
 ---
 
 # synaplex — current state
+
+## September dependency security closure — 2026-09-11 (second batch)
+
+Two critical Astro CVEs (GHSA-26w7-cxv4-gfx2, GHSA-376h-93r7-7g6f) and four
+high-severity SVGO/sharp CVEs were reported against astro 7.1.3, svgo 4.0.2,
+and sharp 0.35.3. All six Dependabot alerts are now closed. The fix was a
+single direct-dependency bump: `astro` 7.1.3 → 7.3.2 in `site/package.json`,
+which transitively resolves svgo 4.0.2 → 4.1.0 and sharp 0.35.3 → 0.35.4. The
+full repository `make check` passed under Node 24.18.0; projection digest and
+zero-findings state are unchanged
+(`sha256:185146a73c32e2ca41b3cedad2e612c63d128f6df925b7464f5e0900d9b4cf19`).
+PR [#48](https://github.com/evanfollis/synaplex/pull/48) merged as `6dac77d`.
+CI and CodeQL passed on the exact commit. Deployed to Cloudflare Pages as
+immutable `https://58667074.synaplex.pages.dev`; apex and immutable URLs both
+verified by body identity (projection digest match). GitHub Dependabot: 0 open
+alerts. Adversarial review: PASS (codex EROFS-blocked, Claude used as fallback;
+one MONITOR item noted — see below). Full security doc in
+`docs/dependency-security-2026-09.md` §Second batch.
+
+**MONITOR (pre-existing, not introduced by this upgrade)**: `@astrojs/mdx 7.0.3`
+declares `@astrojs/markdown-satteri ^0.3.1` as optional peer; Astro 7.3.2
+ships satteri `0.4.1` which is outside that range and unreachable from mdx's
+module scope. The site has zero `.mdx` files today so no build failure occurs.
+The first `.mdx` file added will surface a `ModuleNotFoundError` at build time.
+Fix when needed: `npm install @astrojs/markdown-satteri@^0.4.1` (hoist to top
+level) or upgrade `@astrojs/mdx` to a version that ships the correct satteri.
 
 ## September dependency security closure — 2026-09-05
 
